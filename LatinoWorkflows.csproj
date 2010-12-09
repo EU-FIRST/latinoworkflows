@@ -1,0 +1,70 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{EDE88AFF-1053-4175-B91C-4E683426706A}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>LatinoServices</RootNamespace>
+    <AssemblyName>LatinoServices</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;THROW_EXCEPTIONS</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Data\RssFeedComponent.cs" />
+    <Compile Include="TextMining\Annotation.cs" />
+    <Compile Include="TextMining\DocumentConsumer.cs" />
+    <Compile Include="TextMining\Document.cs" />
+    <Compile Include="TextMining\DocumentCorpus.cs" />
+    <Compile Include="Log.cs" />
+    <Compile Include="StreamDataConsumer.cs" />
+    <Compile Include="StreamDataProducer.cs" />
+    <Compile Include="IDataConsumer.cs" />
+    <Compile Include="IDataProducer.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="StreamDataProcessor.cs" />
+    <Compile Include="GenericStreamDataConsumer.cs" />
+    <Compile Include="TextMining\DocumentProcessor.cs" />
+    <Compile Include="TextMining\RegexTokenizerComponent.cs" />
+    <Content Include="TODO.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Latino\Latino.csproj">
+      <Project>{FFA3AB32-D56A-4544-BCF2-CBC51B57550B}</Project>
+      <Name>Latino</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
