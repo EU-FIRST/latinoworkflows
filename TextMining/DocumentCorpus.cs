@@ -21,7 +21,7 @@ namespace Latino.Workflows.TextMining
        |
        '-----------------------------------------------------------------------
     */
-    public class DocumentCorpus //ICloneable<DocumentCorpus>
+    public class DocumentCorpus : ICloneable<DocumentCorpus>
     {
         private ArrayList<Document> mDocuments
             = new ArrayList<Document>();
@@ -58,9 +58,11 @@ namespace Latino.Workflows.TextMining
         {
             Utils.ThrowException(documents == null ? new ArgumentNullException("documents") : null);
 #if THROW_EXCEPTIONS
+            Set<Document> tmp = new Set<Document>();
             foreach (Document document in documents)
             {
-                if (document == null || mDocuments.Contains(document)) { throw new ArgumentValueException("documents"); }
+                if (document == null || tmp.Contains(document)) { throw new ArgumentValueException("documents"); }
+                tmp.Add(document);
             }
 #endif
             mDocuments.InsertRange(index, documents); // throws ArgumentOutOfRangeException
@@ -85,6 +87,20 @@ namespace Latino.Workflows.TextMining
         public ArrayList<Document>.ReadOnly Documents
         {
             get { return mDocuments; }
+        }
+
+        // *** ICloneable<DocumentCorpus> interface implementation ***
+
+        public DocumentCorpus Clone()
+        {
+            DocumentCorpus clone = new DocumentCorpus();
+            clone.mDocuments = mDocuments.DeepClone();
+            return clone;
+        }
+
+        object ICloneable.Clone()
+        {
+            return Clone();
         }
     }
 }

@@ -21,7 +21,7 @@ namespace Latino.Workflows.TextMining
        |
        '-----------------------------------------------------------------------
     */
-    public class Annotation //ICloneable<Annotation>
+    public class Annotation : ICloneable<Annotation>
     {
         private int mId
             = -1;
@@ -104,6 +104,24 @@ namespace Latino.Workflows.TextMining
                 return true;
             }
             return false;
+        }
+
+        // *** ICloneable<Annotation> interface implementation ***
+
+        public Annotation Clone()
+        {
+            Annotation clone = new Annotation(mSpanStart, mSpanEnd, mType);
+            clone.SetId(mId);
+            foreach (KeyValuePair<string, string> item in mFeatures)
+            {
+                clone.mFeatures.Add(item.Key, item.Value);
+            }
+            return clone;
+        }
+
+        object ICloneable.Clone()
+        {
+            return Clone();
         }
     }
 }

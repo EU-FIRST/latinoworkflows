@@ -2,10 +2,13 @@
 [x] Headers
 [x] Test
 [x] DocumentCorpus 
-[ ] Commit
-[ ] cloning of documents, annotations, document corpus, references to documents 
-[ ] graceful shutdown of data producers
+[x] Commit
+[x] cloning of documents, annotations, document corpus
+[x] references to documents 
+[x] graceful shutdown of data producers
+[ ] commit
 [ ] Error checking
+[ ] commit
 [ ] GenericStreamDataConsumer.cs
 [ ] RegexTokenizerComponent.cs
 [ ] logging

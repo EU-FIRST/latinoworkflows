@@ -21,9 +21,9 @@ namespace Latino.Workflows.TextMining
        |
        '-----------------------------------------------------------------------
     */
-    public class Document //ICloneable<Document>
+    public class Document : ICloneable<Document>
     {
-        private string mText
+        private Ref<string> mText
             = "";
         private ArrayList<Annotation> mAnnotations
             = new ArrayList<Annotation>();
@@ -117,6 +117,21 @@ namespace Latino.Workflows.TextMining
         public Annotation GetAnnotationAt(int idx)
         {
             return mAnnotations[idx]; // throws ArgumentOutOfRangeException
+        }
+
+        // *** ICloneable<Document> interface implementation
+
+        public Document Clone()
+        {
+            Document clone = new Document("");
+            clone.mText = mText; // *** text is not cloned, just referenced
+            clone.mAnnotations = mAnnotations.DeepClone();
+            return clone;
+        }
+
+        object ICloneable.Clone()
+        {
+            return Clone();
         }
     }
 }

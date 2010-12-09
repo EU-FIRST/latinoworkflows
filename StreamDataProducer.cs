@@ -27,6 +27,8 @@ namespace Latino.Workflows
             = new Set<IDataConsumer>();
         private int mSleep
             = 1;
+        protected bool mStop
+            = false;
         private Thread mThread
             = null;
         private bool mCloneDataOnFork
@@ -43,6 +45,7 @@ namespace Latino.Workflows
             if (mThread == null || !mThread.IsAlive)
             {
                 mThread = new Thread(new ThreadStart(ProduceDataLoop));
+                mStop = false;
                 mThread.Start();                
             }
         }
@@ -56,6 +59,12 @@ namespace Latino.Workflows
             }
         }
 
+        public void GracefulStop()
+        {
+            mStop = true;
+            while (mThread.IsAlive) { Thread.Sleep(1); }
+        }
+
         public int Sleep
         {
             get { return mSleep; }
@@ -64,12 +73,13 @@ namespace Latino.Workflows
 
         private void ProduceDataLoop()
         {
-            while (true)
+            while (!mStop)
             {
                 try
                 {
                     // produce data
                     object data = ProduceData();
+                    if (mStop) { return; }
                     // dispatch data
                     if (mDataConsumers.Count > 1 && mCloneDataOnFork)
                     {
@@ -90,6 +100,7 @@ namespace Latino.Workflows
                 {
                     Log.Critical(exc);
                 }
+                if (mStop) { return; }
                 Thread.Sleep(mSleep);
             }
         }
