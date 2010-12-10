@@ -20,7 +20,7 @@ namespace Latino.Workflows.TextMining
     */
     public abstract class DocumentConsumer : StreamDataConsumer
     {
-        protected override void ConsumeData(object data)
+        protected override void ConsumeData(IDataProducer sender, object data)
         {
             DocumentCorpus corpus = (DocumentCorpus)data;
             foreach (Document document in corpus.Documents)

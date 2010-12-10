@@ -10,6 +10,8 @@
  *
  ***************************************************************************/
 
+using System;
+
 namespace Latino.Workflows
 {
     /* .-----------------------------------------------------------------------
@@ -31,38 +33,40 @@ namespace Latino.Workflows
             set { mCloneDataOnFork = value; }
         }
 
-        protected override void ConsumeData(object data)
+        protected override void ConsumeData(IDataProducer sender, object data)
         {
             // process data
-            data = ProcessData(data);
+            data = ProcessData(sender, data);
             // dispatch data
             if (mDataConsumers.Count > 1 && mCloneDataOnFork)
             {
                 foreach (IDataConsumer dataConsumer in mDataConsumers)
                 {
-                    dataConsumer.ReceiveData(Utils.Clone(data, /*deepClone=*/true));
+                    dataConsumer.ReceiveData(this, Utils.Clone(data, /*deepClone=*/true));
                 }
             }
             else 
             {
                 foreach (IDataConsumer dataConsumer in mDataConsumers)
                 {
-                    dataConsumer.ReceiveData(data);
+                    dataConsumer.ReceiveData(this, data);
                 }
             }
         }
 
-        protected abstract object ProcessData(object data);
+        protected abstract object ProcessData(IDataProducer sender, object data);
 
         // *** IDataProducer interface implementation ***
 
         public void Subscribe(IDataConsumer dataConsumer)
         {
+            Utils.ThrowException(dataConsumer == null ? new ArgumentNullException("dataConsumer") : null);
             mDataConsumers.Add(dataConsumer);
         }
 
         public void Unsubscribe(IDataConsumer dataConsumer)
         {
+            Utils.ThrowException(dataConsumer == null ? new ArgumentNullException("dataConsumer") : null);
             if (mDataConsumers.Contains(dataConsumer))
             {
                 mDataConsumers.Remove(dataConsumer);

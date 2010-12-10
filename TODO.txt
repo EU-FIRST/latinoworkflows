@@ -6,10 +6,13 @@
 [x] cloning of documents, annotations, document corpus
 [x] references to documents 
 [x] graceful shutdown of data producers
-[ ] commit
-[ ] Error checking
+[x] commit
+[x] Error checking
 [ ] commit
 [ ] GenericStreamDataConsumer.cs
+[ ] Stop / Resume on data consumers
 [ ] RegexTokenizerComponent.cs
 [ ] logging
+[ ] fixed queue size
+
 

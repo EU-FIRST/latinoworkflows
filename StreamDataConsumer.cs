@@ -24,8 +24,8 @@ namespace Latino.Workflows
     */
     public abstract class StreamDataConsumer : IDataConsumer
     {
-        private Queue<object> mQueue
-            = new Queue<object>();
+        private Queue<Pair<IDataProducer, object>> mQueue
+            = new Queue<Pair<IDataProducer, object>>();
         private bool mThreadAlive
             = false;
         private Thread mThread;
@@ -42,7 +42,7 @@ namespace Latino.Workflows
                 while (true)
                 {
                     // get data
-                    object data;
+                    Pair<IDataProducer, object> data;
                     lock (mQueue)
                     {
                         data = mQueue.Dequeue();
@@ -50,7 +50,7 @@ namespace Latino.Workflows
                     // consume data
                     try
                     {
-                        ConsumeData(data);
+                        ConsumeData(data.First, data.Second);
                     }
                     catch (Exception exc)
                     {
@@ -67,15 +67,17 @@ namespace Latino.Workflows
             } 
         }
 
-        protected abstract void ConsumeData(object data);
+        protected abstract void ConsumeData(IDataProducer sender, object data);
 
         // *** IDataConsumer interface implementation ***
 
-        public void ReceiveData(object data)
+        public void ReceiveData(IDataProducer sender, object data)
         {
+            Utils.ThrowException(data == null ? new ArgumentNullException("data") : null);
+            // *** note that setting sender to null is allowed
             lock (mQueue)
             {
-                mQueue.Enqueue(data);
+                mQueue.Enqueue(new Pair<IDataProducer, object>(sender, data));
                 if (!mThreadAlive)
                 {
                     mThreadAlive = true;

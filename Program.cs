@@ -9,14 +9,14 @@ namespace Latino.Workflows
     {
         protected override object ProduceData()
         {
-            Thread.Sleep(250);
+            Thread.Sleep(1000);
             return "";
         }
     }
 
     class A : StreamDataProcessor
     {
-        protected override object ProcessData(object data)
+        protected override object ProcessData(IDataProducer sender, object data)
         {
             Thread.Sleep(1000);
             return (string)data + "A";
@@ -25,7 +25,7 @@ namespace Latino.Workflows
 
     class B : StreamDataProcessor
     {
-        protected override object ProcessData(object data)
+        protected override object ProcessData(IDataProducer sender, object data)
         {
             Thread.Sleep(2000);
             return (string)data + "B";
@@ -34,7 +34,7 @@ namespace Latino.Workflows
 
     class C : StreamDataProcessor
     {
-        protected override object ProcessData(object data)
+        protected override object ProcessData(IDataProducer sender, object data)
         {
             Thread.Sleep(3000);
             return (string)data + "C";
@@ -43,7 +43,7 @@ namespace Latino.Workflows
 
     class D : StreamDataProcessor
     {
-        protected override object ProcessData(object data)
+        protected override object ProcessData(IDataProducer sender, object data)
         {
             Thread.Sleep(4000);
             return (string)data + "D";
@@ -52,7 +52,7 @@ namespace Latino.Workflows
 
     class Y : StreamDataConsumer
     {
-        protected override void ConsumeData(object data)
+        protected override void ConsumeData(IDataProducer sender, object data)
         {
             Console.WriteLine((string)data);
         }
@@ -79,7 +79,10 @@ namespace Latino.Workflows
             d.Subscribe(y);
 
             x.Start();
-            //Console.ReadLine();
+            Console.ReadLine();
+            Console.WriteLine("stop");
+            x.GracefulStop();
+            Console.ReadLine();
         }
     }
 }

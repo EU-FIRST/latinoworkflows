@@ -68,7 +68,11 @@ namespace Latino.Workflows
         public int Sleep
         {
             get { return mSleep; }
-            set { mSleep = value; }
+            set 
+            {
+                Utils.ThrowException(value < 0 ? new ArgumentOutOfRangeException("Sleep") : null);
+                mSleep = value; 
+            }
         }
 
         private void ProduceDataLoop()
@@ -85,14 +89,14 @@ namespace Latino.Workflows
                     {
                         foreach (IDataConsumer dataConsumer in mDataConsumers)
                         {
-                            dataConsumer.ReceiveData(Utils.Clone(data, /*deepClone=*/true));
+                            dataConsumer.ReceiveData(this, Utils.Clone(data, /*deepClone=*/true));
                         }
                     }
                     else 
                     {
                         foreach (IDataConsumer dataConsumer in mDataConsumers)
                         {
-                            dataConsumer.ReceiveData(data);
+                            dataConsumer.ReceiveData(this, data);
                         }
                     }
                 }
@@ -111,11 +115,13 @@ namespace Latino.Workflows
 
         public void Subscribe(IDataConsumer dataConsumer)
         {
+            Utils.ThrowException(dataConsumer == null ? new ArgumentNullException("dataConsumer") : null);
             mDataConsumers.Add(dataConsumer);
         }
 
         public void Unsubscribe(IDataConsumer dataConsumer)
         {
+            Utils.ThrowException(dataConsumer == null ? new ArgumentNullException("dataConsumer") : null);
             if (mDataConsumers.Contains(dataConsumer))
             {
                 mDataConsumers.Remove(dataConsumer);

@@ -20,7 +20,7 @@ namespace Latino.Workflows.TextMining
     */
     public abstract class DocumentProcessor : StreamDataProcessor
     {
-        protected override object ProcessData(object data)
+        protected override object ProcessData(IDataProducer sender, object data)
         {
             DocumentCorpus corpus = (DocumentCorpus)data;
             foreach (Document document in corpus.Documents)

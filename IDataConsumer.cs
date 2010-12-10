@@ -20,6 +20,6 @@ namespace Latino.Workflows
     */
     public interface IDataConsumer
     {
-        void ReceiveData(object data);
+        void ReceiveData(IDataProducer sender, object data);
     }
 }
