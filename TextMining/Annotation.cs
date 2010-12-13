@@ -36,9 +36,10 @@ namespace Latino.Workflows.TextMining
             Utils.ThrowException(spanStart < 0 ? new ArgumentOutOfRangeException("spanStart") : null);
             Utils.ThrowException(SpanEnd < spanStart ? new ArgumentOutOfRangeException("SpanEnd") : null);
             Utils.ThrowException(type == null ? new ArgumentNullException("type") : null);
+            Utils.ThrowException((type.Contains(",") || type.Contains("*")) ? new ArgumentValueException("type") : null);
             mSpanStart = spanStart;
-            mSpanEnd = spanEnd;
-            mType = type;
+            mSpanEnd = spanEnd;            
+            mType = type.Trim().ToLower();
         }
 
         internal void SetId(int id)
@@ -104,6 +105,15 @@ namespace Latino.Workflows.TextMining
                 return true;
             }
             return false;
+        }
+
+        internal TextBlock GetAnnotatedBlock(Ref<string> text)
+        {
+            //Utils.ThrowException((text == null || text.Val == null) ? new ArgumentNullException("text") : null);
+            //Utils.ThrowException(mSpanStart >= text.Val.Length ? new ArgumentOutOfRangeException("SpanStart") : null);
+            //Utils.ThrowException(mSpanEnd >= text.Val.Length ? new ArgumentOutOfRangeException("SpanEnd") : null);
+            TextBlock block = new TextBlock(mSpanStart, mSpanEnd, mType, text.Val.Substring(mSpanStart, mSpanEnd - mSpanStart + 1), mFeatures);
+            return block;
         }
 
         // *** ICloneable<Annotation> interface implementation ***

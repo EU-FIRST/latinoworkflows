@@ -68,15 +68,20 @@ namespace Latino.Workflows
             B b = new B();
             C c = new C();
             D d = new D();
+            GenericStreamDataConsumer gsdc = new GenericStreamDataConsumer();
+            gsdc.OnConsumeData += delegate(IDataProducer sender, object data) 
+            {
+                Console.WriteLine((string)data);
+            };
             Y y = new Y();
 
             x.Subscribe(a);
             a.Subscribe(b);
-            b.Subscribe(y);
+            b.Subscribe(gsdc);
 
             x.Subscribe(c);
             c.Subscribe(d);
-            d.Subscribe(y);
+            d.Subscribe(gsdc);
 
             x.Start();
             Console.ReadLine();

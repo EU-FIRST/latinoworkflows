@@ -34,6 +34,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\RssFeedComponent.cs" />
+    <Compile Include="GenericStreamDataProducer.cs" />
     <Compile Include="TextMining\Annotation.cs" />
     <Compile Include="TextMining\DocumentConsumer.cs" />
     <Compile Include="TextMining\Document.cs" />
@@ -47,7 +48,9 @@
     <Compile Include="StreamDataProcessor.cs" />
     <Compile Include="GenericStreamDataConsumer.cs" />
     <Compile Include="TextMining\DocumentProcessor.cs" />
+    <Compile Include="GenericStreamDataProcessor.cs" />
     <Compile Include="TextMining\RegexTokenizerComponent.cs" />
+    <Compile Include="TextMining\TextBlock.cs" />
     <Content Include="TODO.txt" />
   </ItemGroup>
   <ItemGroup>

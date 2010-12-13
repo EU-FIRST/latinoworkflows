@@ -8,11 +8,13 @@
 [x] graceful shutdown of data producers
 [x] commit
 [x] Error checking
-[ ] commit
-[ ] GenericStreamDataConsumer.cs
-[ ] Stop / Resume on data consumers
+[x] commit
+[x] Generic stream data producer, consumer, processor
+[x] simple data selection language for annotated documents
+[x] commit
 [ ] RegexTokenizerComponent.cs
+[ ] Stop / Resume on data consumers
 [ ] logging
-[ ] fixed queue size
-
+[ ] fixed-size queue 
+[ ] powerful query language for retrieving text blocks
 

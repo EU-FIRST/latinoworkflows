@@ -119,6 +119,46 @@ namespace Latino.Workflows.TextMining
             return mAnnotations[idx]; // throws ArgumentOutOfRangeException
         }
 
+        public ArrayList<TextBlock> GetAnnotatedBlocks(string query) // TODO: more powerful query language for retrieving text blocks
+        {
+            Utils.ThrowException(query == null ? new ArgumentNullException("query") : null);
+            Utils.ThrowException(query == "" ? new ArgumentValueException("query") : null);
+            string[] tmp = query.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+            ArrayList<string> annotTypes = new ArrayList<string>(tmp.Length);
+            foreach (string annotType in tmp) { if (annotType.Trim() != "") { annotTypes.Add(annotType.Trim().ToLower()); } }
+            Set<string> availTypes = new Set<string>();
+            foreach (Annotation annot in mAnnotations) { availTypes.Add(annot.Type); }
+            foreach (string annotType in annotTypes)
+            {
+                if (availTypes.Contains(annotType))
+                {
+                    return GetAnnotatedBlocksByType(annotType);
+                }
+                else if (annotType == "*")
+                {
+                    return new ArrayList<TextBlock>(new TextBlock[] { new TextBlock(0, mText.Val.Length - 1, "*", mText.Val, /*features=*/new Dictionary<string, string>()) });
+                }
+            }
+            return null;
+        }
+
+        private ArrayList<TextBlock> GetAnnotatedBlocksByType(string annotType) 
+        {
+            //Utils.ThrowException(annotType == null ? new ArgumentNullException("annotType") : null);
+            //annotType = annotType.Trim().ToLower();
+            //Utils.ThrowException(annotType == "" ? new ArgumentValueException("annotType") : null);
+            ArrayList<TextBlock> blocks = new ArrayList<TextBlock>();
+            foreach (Annotation annot in mAnnotations)
+            {
+                if (annot.Type == annotType)
+                { 
+                    // extract text block
+                    blocks.Add(annot.GetAnnotatedBlock(mText));
+                }
+            }
+            return blocks;
+        }
+
         // *** ICloneable<Document> interface implementation
 
         public Document Clone()

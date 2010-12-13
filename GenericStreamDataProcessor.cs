@@ -2,8 +2,8 @@
  *
  *  This file is part of LATINO. See http://latino.sf.net
  *
- *  File:    GenericStreamDataConsumer.cs
- *  Desc:    Generic (customizable) stream data consumer
+ *  File:    GenericStreamDataProcessor.cs
+ *  Desc:    Generic (customizable) stream data processor
  *  Created: Dec-2010
  *
  *  Authors: Miha Grcar
@@ -14,23 +14,24 @@ namespace Latino.Workflows
 {
     /* .-----------------------------------------------------------------------
        |
-       |  Class GenericStreamDataConsumer
+       |  Class GenericStreamDataProcessor
        |
        '-----------------------------------------------------------------------
     */
-    public class GenericStreamDataConsumer : StreamDataConsumer
+    public class GenericStreamDataProcessor : StreamDataProcessor
     {
-        public delegate void ConsumeDataHandler(IDataProducer sender, object data);
+        public delegate object ProcessDataHandler(IDataProducer sender, object data);
 
-        public event ConsumeDataHandler OnConsumeData
+        public event ProcessDataHandler OnProcessData
             = null;
 
-        protected override void ConsumeData(IDataProducer sender, object data)
+        protected override object ProcessData(IDataProducer sender, object data)
         {
-            if (OnConsumeData != null)
+            if (OnProcessData != null)
             {
-                OnConsumeData(sender, data);
+                return OnProcessData(sender, data);
             }
+            return data;
         }
     }
 }
