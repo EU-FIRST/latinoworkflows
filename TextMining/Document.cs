@@ -12,6 +12,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Xml;
+using System.Xml.Serialization;
+using System.Xml.Schema;
+using System.IO;
+using System.Reflection;
 
 namespace Latino.Workflows.TextMining
 {
@@ -21,14 +26,18 @@ namespace Latino.Workflows.TextMining
        |
        '-----------------------------------------------------------------------
     */
-    public class Document : ICloneable<Document>
+    [XmlSchemaProvider("ProvideSchema")]
+    public class Document : ICloneable<Document>, System.Xml.Serialization.IXmlSerializable
     {
-        private Ref<string> mText
-            = "";
+        private Ref<string> mText;
+        private string mName;
         private ArrayList<Annotation> mAnnotations
             = new ArrayList<Annotation>();
         private static AnnotationComparer mAnnotationComparer
             = new AnnotationComparer();
+        private Dictionary<string, string> mFeatures
+            = new Dictionary<string, string>();
+        private Features mFeaturesInterface;
 
         private class AnnotationComparer : IComparer<Annotation>
         {
@@ -40,10 +49,27 @@ namespace Latino.Workflows.TextMining
             }
         }
 
-        public Document(string text)
+        public Document(string name, string text)
         {
             Utils.ThrowException(text == null ? new ArgumentNullException("text") : null);
-            mText = text;
+            Utils.ThrowException(name == null ? new ArgumentNullException("name") : null);
+            mName = name;
+            mText = text;            
+            mFeaturesInterface = new Features(mFeatures);
+        }
+
+        private Document() : this("", "") // required for serialization
+        { 
+        }
+
+        public Features Features
+        {
+            get { return mFeaturesInterface; }
+        }
+
+        public string Name
+        {
+            get { return mName; }
         }
 
         public string Text
@@ -119,7 +145,7 @@ namespace Latino.Workflows.TextMining
             return mAnnotations[idx]; // throws ArgumentOutOfRangeException
         }
 
-        public ArrayList<TextBlock> GetAnnotatedBlocks(string query) // TODO: more powerful query language for retrieving text blocks
+        public TextBlock[] GetAnnotatedBlocks(string query) // TODO: more powerful query language for retrieving text blocks
         {
             Utils.ThrowException(query == null ? new ArgumentNullException("query") : null);
             Utils.ThrowException(query == "" ? new ArgumentValueException("query") : null);
@@ -132,11 +158,11 @@ namespace Latino.Workflows.TextMining
             {
                 if (availTypes.Contains(annotType))
                 {
-                    return GetAnnotatedBlocksByType(annotType);
+                    return GetAnnotatedBlocksByType(annotType).ToArray();
                 }
                 else if (annotType == "*")
                 {
-                    return new ArrayList<TextBlock>(new TextBlock[] { new TextBlock(0, mText.Val.Length - 1, "*", mText.Val, /*features=*/new Dictionary<string, string>()) });
+                    return new TextBlock[] { new TextBlock(0, mText.Val.Length - 1, "*", mText.Val, /*features=*/new Dictionary<string, string>()) };
                 }
             }
             return null;
@@ -163,7 +189,7 @@ namespace Latino.Workflows.TextMining
 
         public Document Clone()
         {
-            Document clone = new Document("");
+            Document clone = new Document(mName, "");
             clone.mText = mText; // *** text is not cloned, just referenced
             clone.mAnnotations = mAnnotations.DeepClone();
             return clone;
@@ -172,6 +198,81 @@ namespace Latino.Workflows.TextMining
         object ICloneable.Clone()
         {
             return Clone();
+        }
+
+        // *** IXmlSerializable interface implementation ***
+
+        public static XmlQualifiedName ProvideSchema(XmlSchemaSet schemaSet)
+        {
+            Utils.ThrowException(schemaSet == null ? new ArgumentNullException("schemaSet") : null);
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            Stream stream = null;
+            foreach (string name in assembly.GetManifestResourceNames())
+            {
+                if (name.EndsWith("DocumentCorpusSchema.xsd"))
+                {
+                    stream = assembly.GetManifestResourceStream(name);
+                    break;
+                }
+            }
+            XmlSchema schema = XmlSchema.Read(stream, null);
+            schemaSet.Add(schema);
+            stream.Close();
+            return new XmlQualifiedName("Document", "http://freekoders.org/latino");
+        }
+
+        public XmlSchema GetSchema()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ReadXml(XmlReader reader)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void WriteXml(XmlWriter writer, bool writeTopElement)
+        {
+            Utils.ThrowException(writer == null ? new ArgumentNullException("writer") : null);
+            string ns = "http://freekoders.org/latino";
+            if (writeTopElement) { writer.WriteStartElement("Document", ns); }
+            writer.WriteElementString("Text", ns, mText);
+            writer.WriteElementString("Name", ns, mName);
+            writer.WriteStartElement("Annotations", ns);
+            foreach (Annotation annot in mAnnotations)
+            {
+                writer.WriteStartElement("Annotation", ns);
+                writer.WriteElementString("Id", ns, annot.Id.ToString());
+                writer.WriteElementString("SpanStart", ns, annot.SpanStart.ToString());
+                writer.WriteElementString("SpanEnd", ns, annot.SpanEnd.ToString());
+                writer.WriteElementString("Type", ns, annot.Type);
+                writer.WriteStartElement("Features", ns);
+                foreach (KeyValuePair<string, string> keyVal in annot.Features)
+                {
+                    writer.WriteStartElement("Feature", ns);
+                    writer.WriteElementString("Name", ns, keyVal.Key);
+                    writer.WriteElementString("Value", ns, keyVal.Value);
+                    writer.WriteEndElement();
+                }
+                writer.WriteEndElement();
+                writer.WriteEndElement();      
+            }
+            writer.WriteEndElement();
+            writer.WriteStartElement("Features", ns);
+            foreach (KeyValuePair<string, string> keyVal in mFeatures)
+            {
+                writer.WriteStartElement("Feature", ns);
+                writer.WriteElementString("Name", ns, keyVal.Key);
+                writer.WriteElementString("Value", ns, keyVal.Value);
+                writer.WriteEndElement();
+            }            
+            writer.WriteEndElement();
+            if (writeTopElement) { writer.WriteEndElement(); }
+        }
+
+        public void WriteXml(XmlWriter writer)
+        {
+            WriteXml(writer, /*writeTopElement=*/false); // throws ArgumentNullException
         }
     }
 }

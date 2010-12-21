@@ -5,10 +5,12 @@
     <ProductVersion>8.0.50727</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{EDE88AFF-1053-4175-B91C-4E683426706A}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>LatinoServices</RootNamespace>
     <AssemblyName>LatinoServices</AssemblyName>
+    <StartupObject>
+    </StartupObject>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -28,8 +30,13 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="MDG, Version=1.2.9.0, Culture=neutral, PublicKeyToken=98927b61ec42a6b8">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Data\Idms\Debug\MDG.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
@@ -49,6 +56,7 @@
     <Compile Include="GenericStreamDataConsumer.cs" />
     <Compile Include="TextMining\DocumentProcessor.cs" />
     <Compile Include="GenericStreamDataProcessor.cs" />
+    <Compile Include="TextMining\Features.cs" />
     <Compile Include="TextMining\RegexTokenizerComponent.cs" />
     <Compile Include="TextMining\TextBlock.cs" />
     <Content Include="TODO.txt" />
@@ -58,6 +66,11 @@
       <Project>{FFA3AB32-D56A-4544-BCF2-CBC51B57550B}</Project>
       <Name>Latino</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="TextMining\Schema\DocumentCorpusSchema.xsd">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />

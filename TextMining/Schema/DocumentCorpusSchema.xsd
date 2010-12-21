@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema id="DocumentCorpusSchema" targetNamespace="http://freekoders.org/latino" elementFormDefault="qualified" 
+           xmlns="http://freekoders.org/latino" xmlns:mstns="http://freekoders.org/latino" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:complexType name="DocumentCorpus">
+    <xs:sequence>
+      <xs:element minOccurs="1" maxOccurs="1" name="Features" type="ArrayOfFeatures" />
+      <xs:element minOccurs="1" maxOccurs="1" name="Documents" type="ArrayOfDocuments" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ArrayOfDocuments">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="Document" type="Document" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="Document">
+    <xs:sequence>
+      <xs:element minOccurs="1" maxOccurs="1" name="Text" type="xs:string" />
+      <xs:element minOccurs="1" maxOccurs="1" name="Name" type="xs:string" />
+      <xs:element minOccurs="1" maxOccurs="1" name="Annotations" type="ArrayOfAnnotations" />
+      <xs:element minOccurs="1" maxOccurs="1" name="Features" type="ArrayOfFeatures" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ArrayOfAnnotations">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="Annotation" type="Annotation" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="Annotation">
+    <xs:sequence>
+      <xs:element minOccurs="1" maxOccurs="1" name="Id" type="xs:int" />
+      <xs:element minOccurs="1" maxOccurs="1" name="SpanStart" type="xs:int" />
+      <xs:element minOccurs="1" maxOccurs="1" name="SpanEnd" type="xs:int" />
+      <xs:element minOccurs="1" maxOccurs="1" name="Type" type="xs:string" />
+      <xs:element minOccurs="1" maxOccurs="1" name="Features" type="ArrayOfFeatures" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ArrayOfFeatures">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="Feature" type="Feature" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="Feature">
+    <xs:sequence>
+      <xs:element minOccurs="1" maxOccurs="1" name="Name" type="xs:string" />
+      <xs:element minOccurs="1" maxOccurs="1" name="Value" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

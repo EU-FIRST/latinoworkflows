@@ -27,7 +27,32 @@ namespace Latino.Workflows
             Console.WriteLine(message);
         }
 
+        public static void Critical(string message)
+        {
+            Console.WriteLine(message);
+        }
+
+        public static void Critical(string message, Exception exc)
+        {
+            Console.WriteLine(exc);
+        }
+
         public static void Critical(Exception exc)
+        {
+            Console.WriteLine(exc);
+        }
+
+        public static void Warning(string message)
+        {
+            Console.WriteLine(message);
+        }
+
+        public static void Warning(string message, Exception exc)
+        {
+            Console.WriteLine(exc);
+        }
+
+        public static void Warning(Exception exc)
         {
             Console.WriteLine(exc);
         }

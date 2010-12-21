@@ -30,16 +30,18 @@ namespace Latino.Workflows.TextMining
         private int mSpanEnd;
         private Dictionary<string, string> mFeatures
             = new Dictionary<string, string>();
-
+        private Features mFeaturesInterface;
+        
         public Annotation(int spanStart, int spanEnd, string type)
         {
             Utils.ThrowException(spanStart < 0 ? new ArgumentOutOfRangeException("spanStart") : null);
-            Utils.ThrowException(SpanEnd < spanStart ? new ArgumentOutOfRangeException("SpanEnd") : null);
+            Utils.ThrowException(spanEnd < spanStart ? new ArgumentOutOfRangeException("SpanEnd") : null);
             Utils.ThrowException(type == null ? new ArgumentNullException("type") : null);
             Utils.ThrowException((type.Contains(",") || type.Contains("*")) ? new ArgumentValueException("type") : null);
             mSpanStart = spanStart;
             mSpanEnd = spanEnd;            
             mType = type.Trim().ToLower();
+            mFeaturesInterface = new Features(mFeatures);
         }
 
         internal void SetId(int id)
@@ -67,44 +69,9 @@ namespace Latino.Workflows.TextMining
             get { return mSpanEnd; }
         }
 
-        public Dictionary<string, string>.KeyCollection Features
+        public Features Features
         {
-            get { return mFeatures.Keys; }
-        }
-
-        public void SetFeatureValue(string name, string val)
-        {
-            Utils.ThrowException(name == null ? new ArgumentNullException("name") : null);
-            if (mFeatures.ContainsKey(name))
-            {
-                mFeatures[name] = val;
-            }
-            else
-            {
-                mFeatures.Add(name, val);
-            }
-        }
-
-        public string GetFeatureValue(string name)
-        {
-            Utils.ThrowException(name == null ? new ArgumentNullException("name") : null);
-            string value;
-            if (mFeatures.TryGetValue(name, out value))
-            {
-                return value;
-            }
-            return null;
-        }
-
-        public bool RemoveFeature(string name)
-        {
-            Utils.ThrowException(name == null ? new ArgumentNullException("name") : null);
-            if (mFeatures.ContainsKey(name))
-            {
-                mFeatures.Remove(name);
-                return true;
-            }
-            return false;
+            get { return mFeaturesInterface; }
         }
 
         internal TextBlock GetAnnotatedBlock(Ref<string> text)

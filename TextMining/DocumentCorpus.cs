@@ -12,6 +12,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Xml;
+using System.Xml.Serialization;
+using System.Xml.Schema;
+using System.Reflection;
+using System.IO;
 
 namespace Latino.Workflows.TextMining
 {
@@ -21,10 +26,24 @@ namespace Latino.Workflows.TextMining
        |
        '-----------------------------------------------------------------------
     */
-    public class DocumentCorpus : ICloneable<DocumentCorpus>
+    [XmlSchemaProvider("ProvideSchema")]
+    public class DocumentCorpus : ICloneable<DocumentCorpus>, System.Xml.Serialization.IXmlSerializable
     {
         private ArrayList<Document> mDocuments
             = new ArrayList<Document>();
+        private Dictionary<string, string> mFeatures
+            = new Dictionary<string, string>();
+        private Features mFeaturesInterface;
+
+        public DocumentCorpus()
+        {
+            mFeaturesInterface = new Features(mFeatures);
+        }
+
+        public Features Features
+        {
+            get { return mFeaturesInterface; }
+        }
 
         public void Add(Document document)
         {
@@ -101,6 +120,65 @@ namespace Latino.Workflows.TextMining
         object ICloneable.Clone()
         {
             return Clone();
+        }
+
+        // *** IXmlSerializable interface implementation ***
+
+        public static XmlQualifiedName ProvideSchema(XmlSchemaSet schemaSet)
+        {
+            Utils.ThrowException(schemaSet == null ? new ArgumentNullException("schemaSet") : null);
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            Stream stream = null;
+            foreach (string name in assembly.GetManifestResourceNames())
+            {
+                if (name.EndsWith("DocumentCorpusSchema.xsd"))
+                {
+                    stream = assembly.GetManifestResourceStream(name);
+                    break;
+                }
+            }
+            XmlSchema schema = XmlSchema.Read(stream, null);      
+            schemaSet.Add(schema);
+            stream.Close();
+            return new XmlQualifiedName("DocumentCorpus", "http://freekoders.org/latino");
+        }
+
+        public XmlSchema GetSchema()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ReadXml(XmlReader reader)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void WriteXml(XmlWriter writer, bool writeTopElement)
+        {
+            Utils.ThrowException(writer == null ? new ArgumentNullException("writer") : null);
+            string ns = "http://freekoders.org/latino";
+            if (writeTopElement) { writer.WriteStartElement("DocumentCorpus", ns); }
+            writer.WriteStartElement("Features", ns);
+            foreach (KeyValuePair<string, string> keyVal in mFeatures)
+            {
+                writer.WriteStartElement("Feature", ns);
+                writer.WriteElementString("Name", ns, keyVal.Key);
+                writer.WriteElementString("Value", ns, keyVal.Value);
+                writer.WriteEndElement();
+            }
+            writer.WriteEndElement();
+            writer.WriteStartElement("Documents", ns);
+            foreach (Document doc in mDocuments)
+            {
+                doc.WriteXml(writer, /*writeTopElement=*/true);
+            }
+            writer.WriteEndElement();
+            if (writeTopElement) { writer.WriteEndElement(); }
+        }
+
+        public void WriteXml(XmlWriter writer)
+        {
+            WriteXml(writer, /*writeTopElement=*/false); // throws ArgumentNullException
         }
     }
 }

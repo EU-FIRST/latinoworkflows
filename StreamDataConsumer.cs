@@ -62,7 +62,7 @@ namespace Latino.Workflows
                         mThreadAlive = mQueue.Count > 0;
                         if (!mThreadAlive) { break; }
                     }
-                } 
+                }
                 Thread.CurrentThread.Suspend();
             } 
         }

@@ -2,6 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using Latino.Workflows.TextMining;
+using Latino.Workflows.Data;
+using System.Text.RegularExpressions;
+using System.Xml;
+using System.IO;
 
 namespace Latino.Workflows
 {
@@ -63,31 +68,58 @@ namespace Latino.Workflows
         static void Main(string[] args)
         {
             Console.WriteLine("hello worlds!");
-            X x = new X();
-            A a = new A();
-            B b = new B();
-            C c = new C();
-            D d = new D();
-            GenericStreamDataConsumer gsdc = new GenericStreamDataConsumer();
-            gsdc.OnConsumeData += delegate(IDataProducer sender, object data) 
-            {
-                Console.WriteLine((string)data);
-            };
-            Y y = new Y();
+            //X x = new X();
+            //A a = new A();
+            //B b = new B();
+            //C c = new C();
+            //D d = new D();
+            //GenericStreamDataConsumer gsdc = new GenericStreamDataConsumer();
+            //gsdc.OnConsumeData += delegate(IDataProducer sender, object data) 
+            //{
+            //    Console.WriteLine((string)data);
+            //};
+            //Y y = new Y();
 
-            x.Subscribe(a);
-            a.Subscribe(b);
-            b.Subscribe(gsdc);
+            //x.Subscribe(a);
+            //a.Subscribe(b);
+            //b.Subscribe(gsdc);
 
-            x.Subscribe(c);
-            c.Subscribe(d);
-            d.Subscribe(gsdc);
+            //x.Subscribe(c);
+            //c.Subscribe(d);
+            //d.Subscribe(gsdc);
 
-            x.Start();
-            Console.ReadLine();
-            Console.WriteLine("stop");
-            x.GracefulStop();
-            Console.ReadLine();
+            //x.Start();
+            //Console.ReadLine();
+            //Console.WriteLine("stop");
+            //x.GracefulStop();
+            //Console.ReadLine();
+
+            //DocumentCorpus corpus = new DocumentCorpus();
+            //Document doc = new Document("This is a very short document. This is some boilerplate.");
+            //corpus.Add(doc);
+            //Annotation annot = new Annotation(0, 29, "content_block");
+            ////doc.AddAnnotation(annot);
+            //RegexTokenizerComponent tok = new RegexTokenizerComponent();
+            //tok.ReceiveData(null, corpus);
+
+            //Regex mCharsetRegex
+            //    = new Regex(@"((charset)|(encoding))\s*=\s*(([""'](?<enc>[^""']+)[""'])|((?<enc>[^\s>""']+)))", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            //Console.WriteLine(mCharsetRegex.Match(@"<?xml version=""1.0"" encoding=""ISO-8859-1""?>").Success);
+
+            //RssFeedComponent rss = new RssFeedComponent(@"http://feeds.abcnews.com/abcnews/moneyheadlines");
+            //rss.Start();
+
+            Document doc = new Document("name", "bla bla");
+            Document doc2 = new Document("name2", "bla bla 2");
+            doc.AddAnnotation(new Annotation(0, 100, "waka waka"));
+            StringWriter sw;
+            XmlTextWriter writer = new XmlTextWriter(sw = new StringWriter());
+            DocumentCorpus c = new DocumentCorpus();
+            c.Add(doc);
+            c.Add(doc2);
+            c.WriteXml(writer);
+            Console.WriteLine(sw);
         }
     }
 }

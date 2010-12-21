@@ -83,20 +83,23 @@ namespace Latino.Workflows
                 {
                     // produce data
                     object data = ProduceData();
-                    if (mStop) { return; }
-                    // dispatch data
-                    if (mDataConsumers.Count > 1 && mCloneDataOnFork)
+                    if (data != null)
                     {
-                        foreach (IDataConsumer dataConsumer in mDataConsumers)
+                        if (mStop) { return; }
+                        // dispatch data
+                        if (mDataConsumers.Count > 1 && mCloneDataOnFork)
                         {
-                            dataConsumer.ReceiveData(this, Utils.Clone(data, /*deepClone=*/true));
+                            foreach (IDataConsumer dataConsumer in mDataConsumers)
+                            {
+                                dataConsumer.ReceiveData(this, Utils.Clone(data, /*deepClone=*/true));
+                            }
                         }
-                    }
-                    else 
-                    {
-                        foreach (IDataConsumer dataConsumer in mDataConsumers)
+                        else
                         {
-                            dataConsumer.ReceiveData(this, data);
+                            foreach (IDataConsumer dataConsumer in mDataConsumers)
+                            {
+                                dataConsumer.ReceiveData(this, data);
+                            }
                         }
                     }
                 }

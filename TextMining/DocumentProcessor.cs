@@ -10,6 +10,8 @@
  *
  ***************************************************************************/
 
+using System;
+
 namespace Latino.Workflows.TextMining
 {
     /* .-----------------------------------------------------------------------
@@ -22,6 +24,7 @@ namespace Latino.Workflows.TextMining
     {
         protected override object ProcessData(IDataProducer sender, object data)
         {
+            Utils.ThrowException(!(data is DocumentCorpus) ? new ArgumentTypeException("data") : null);
             DocumentCorpus corpus = (DocumentCorpus)data;
             foreach (Document document in corpus.Documents)
             {
