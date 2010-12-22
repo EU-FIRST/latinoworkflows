@@ -13,9 +13,14 @@
 [x] simple data selection language for annotated documents
 [x] commit
 [x] RegexTokenizerComponent.cs
-[ ] Stop / Resume on data consumers
+[x] RssFeedComponent (initial ver)
+[x] Document corpus XML serialization
+[x] commit
+[x] Stop / Resume on data consumers
+[x] RssFeedComponent (RC)
 [ ] commit
 [ ] logging
 [ ] fixed-size queue 
 [ ] powerful query language for retrieving text blocks
+[ ] handle RSS comments
 

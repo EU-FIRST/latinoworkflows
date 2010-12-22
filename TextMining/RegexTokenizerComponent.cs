@@ -54,7 +54,7 @@ namespace Latino.Workflows.TextMining
         {
             TextBlock[] textBlocks = document.GetAnnotatedBlocks(SRC_ANNOT_TYPE);
             foreach (TextBlock textBlock in textBlocks)
-            { 
+            {                
                 // do tokenization, add annotations to document
                 mTokenizer.Text = textBlock.Text;
                 for (RegexTokenizer.Enumerator e = (RegexTokenizer.Enumerator)mTokenizer.GetEnumerator(); e.MoveNext(); )
@@ -63,6 +63,7 @@ namespace Latino.Workflows.TextMining
                     Annotation annot = new Annotation(textBlock.SpanStart + e.CurrentTokenIdx, textBlock.SpanStart + e.CurrentTokenIdx + e.Current.Length - 1, DEST_ANNOT_TYPE);
                     document.AddAnnotation(annot);
                 }
+                if (mStopped) { return; }
             }
         }
     }

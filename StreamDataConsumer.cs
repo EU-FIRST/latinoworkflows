@@ -28,11 +28,40 @@ namespace Latino.Workflows
             = new Queue<Pair<IDataProducer, object>>();
         private bool mThreadAlive
             = false;
+        protected bool mStopped
+            = false;
         private Thread mThread;
 
         public StreamDataConsumer()
         { 
             mThread = new Thread(new ThreadStart(ProcessQueue));
+        }
+
+        public void Stop()
+        {
+            lock (mQueue)
+            {
+                mStopped = true;
+                mQueue.Clear();
+                if ((mThread.ThreadState | ThreadState.Suspended) != 0) 
+                {
+                    mThread.Resume();
+                }
+                mThreadAlive = false;
+            }
+            while (mThread.IsAlive) { Thread.Sleep(1); }
+        }
+
+        public void Resume()
+        {
+            //lock (mQueue)
+            //{
+                if (mStopped)
+                {
+                    mThread = new Thread(new ThreadStart(ProcessQueue));
+                    mStopped = false;
+                }
+            //}
         }
 
         private void ProcessQueue()
@@ -45,6 +74,7 @@ namespace Latino.Workflows
                     Pair<IDataProducer, object> data;
                     lock (mQueue)
                     {
+                        if (mStopped) { return; }
                         data = mQueue.Dequeue();
                     }
                     // consume data
@@ -59,6 +89,7 @@ namespace Latino.Workflows
                     // check if more data available
                     lock (mQueue)
                     {
+                        if (mStopped) { return; }
                         mThreadAlive = mQueue.Count > 0;
                         if (!mThreadAlive) { break; }
                     }
@@ -77,18 +108,21 @@ namespace Latino.Workflows
             // *** note that setting sender to null is allowed
             lock (mQueue)
             {
-                mQueue.Enqueue(new Pair<IDataProducer, object>(sender, data));
-                if (!mThreadAlive)
+                if (!mStopped)
                 {
-                    mThreadAlive = true;
-                    if (!mThread.IsAlive)
+                    mQueue.Enqueue(new Pair<IDataProducer, object>(sender, data));
+                    if (!mThreadAlive)
                     {
-                        mThread.Start();
-                    }
-                    else
-                    {
-                        while (mThread.ThreadState != ThreadState.Suspended) { Thread.Sleep(1); }                    
-                        mThread.Resume();
+                        mThreadAlive = true;
+                        if (!mThread.IsAlive)
+                        {
+                            mThread.Start();
+                        }
+                        else
+                        {
+                            while ((mThread.ThreadState | ThreadState.Suspended) == 0) { Thread.Sleep(1); }
+                            mThread.Resume();
+                        }
                     }
                 }
             }

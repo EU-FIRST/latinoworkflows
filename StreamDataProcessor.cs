@@ -37,6 +37,7 @@ namespace Latino.Workflows
         {
             // process data
             data = ProcessData(sender, data);
+            if (mStopped) { return; }
             // dispatch data
             if (mDataConsumers.Count > 1 && mCloneDataOnFork)
             {

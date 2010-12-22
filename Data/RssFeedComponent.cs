@@ -14,7 +14,8 @@ using System;
 using System.Collections.Generic;
 using System.Xml;
 using System.IO;
-using System.Text.RegularExpressions;
+using System.Security.Cryptography;
+using System.Text;
 using System.Web;
 using Latino.Web;
 using Latino.Workflows.TextMining;
@@ -24,8 +25,14 @@ namespace Latino.Workflows.Data
     public class RssFeedComponent : StreamDataProducer
     {
         private string mUrl;
-        private DateTime mLastUpdateTime
-            = DateTime.MinValue;
+        private Set<Guid> mSetOld
+            = new Set<Guid>();
+        private Queue<Guid> mQueueOld
+            = new Queue<Guid>();
+        private const int mNumOld
+            = 1000; // *** this is currently hardcoded
+        private const string mTimeFmt
+            = "ddd, dd MMM yyyy HH:mm:ss K"; // RFC 822 format (incl. time zone)
         private static Set<string> mChannelElements
             = new Set<string>(new string[] { "title", "link", "description", "language", "copyright", "managingEditor", "pubDate", "category" });
         private static Set<string> mItemElements
@@ -37,81 +44,102 @@ namespace Latino.Workflows.Data
             Utils.ThrowException(!Uri.IsWellFormedUriString(url, UriKind.Absolute) ? new ArgumentValueException("url") : null);
             Utils.ThrowException(Array.IndexOf(new string[] { "http", "https" }, new Uri(url).Scheme) < 0 ? new ArgumentValueException("url") : null);
             mUrl = url;
-            Sleep = 3600000; // poll every hour by default
+            SleepBetweenPolls = 300000; // poll every 5 minutes by default
         }
 
-        //public RssFeedComponent(string url, DateTime lastUpdateTime) : this(url) // throws ArgumentNullException, ArgumentValueException
-        //{
-        //  ...
-        //}
-
-        private void Skip(XmlTextReader reader, string attrName)
+        private static void Skip(XmlTextReader reader, string attrName)
         {
             if (reader.IsEmptyElement) { return; }
             while (reader.Read() && !(reader.NodeType == XmlNodeType.EndElement && reader.Name == attrName)) ;
         }
 
-        private string ReadValue(XmlTextReader reader, string attrName)
+        private static string ReadValue(XmlTextReader reader, string attrName)
         {
             if (reader.IsEmptyElement) { return ""; }
             string text = "";
             while (reader.Read() && reader.NodeType != XmlNodeType.Text && reader.NodeType != XmlNodeType.CDATA && !(reader.NodeType == XmlNodeType.EndElement && reader.Name == attrName)) ;
-            if (reader.NodeType == XmlNodeType.Text || reader.NodeType == XmlNodeType.CDATA)
+            if (reader.NodeType == XmlNodeType.Text)
             {
-                text = HttpUtility.HtmlDecode(reader.Value); // *** decode inside CDATA?
+                text = HttpUtility.HtmlDecode(reader.Value); 
+                Skip(reader, attrName);
+            }
+            else if (reader.NodeType == XmlNodeType.CDATA)
+            {
+                text = reader.Value; // no decoding for CDATA
                 Skip(reader, attrName);
             }
             return text;
         }
 
-        private Document ProcessItem(Dictionary<string, string> itemAttr)
-        {              
-            string content = ""; 
-            if (itemAttr.ContainsKey("link"))
-            { 
-                // get referenced Web page
-                try
+        private static Guid MakeGuid(string title, string desc)
+        {
+            MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider();
+            return new Guid(md5.ComputeHash(Encoding.UTF8.GetBytes(string.Format("{0} {1}", title, desc))));
+        }
+
+        private void ProcessItem(Dictionary<string, string> itemAttr, DocumentCorpus corpus)
+        {
+            string name = "";
+            itemAttr.TryGetValue("title", out name);
+            string desc = "";
+            itemAttr.TryGetValue("description", out desc);
+            Guid guid = MakeGuid(name, desc);
+            if (!mSetOld.Contains(guid))
+            {                
+                if (mSetOld.Count + 1 > mNumOld)
                 {
-                    content = WebUtils.GetWebPageDetectEncoding(itemAttr["link"]);                    
+                    mSetOld.Remove(mQueueOld.Dequeue());
                 }
-                catch (Exception e)
+                mQueueOld.Enqueue(guid);
+                mSetOld.Add(guid);
+                DateTime time = DateTime.Now;
+                string content = "";
+                if (itemAttr.ContainsKey("link"))
                 {
-                    Log.Warning(e);
+                    // get referenced Web page
+                    try
+                    {
+                        content = WebUtils.GetWebPageDetectEncoding(itemAttr["link"]);
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Warning(e);
+                    }
                 }
-            }
-            if (content == "")
-            {
-                if (itemAttr.ContainsKey("description"))
+                if (content == "")
                 {
-                    content = itemAttr["description"];
+                    if (itemAttr.ContainsKey("description"))
+                    {
+                        content = itemAttr["description"];
+                    }
+                    else if (itemAttr.ContainsKey("title"))
+                    {
+                        content = itemAttr["title"];
+                    }
                 }
-                else if (itemAttr.ContainsKey("title"))
+                //Console.WriteLine("name = \"{0}\"", name);
+                //Console.WriteLine("html = \"{0}\"", content);
+                if (itemAttr.ContainsKey("comments"))
                 {
-                    content = itemAttr["title"];
+                    // TODO: handle comments 
                 }
+                itemAttr.Add("_guid", guid.ToString());
+                itemAttr.Add("_time", time.ToString(mTimeFmt)); 
+                Document document = new Document(name, content);
+                //Console.WriteLine("Item attributes:");
+                foreach (KeyValuePair<string, string> attr in itemAttr)
+                {
+                    //Console.WriteLine("{0} = \"{1}\"", attr.Key, attr.Value);
+                    document.Features.SetFeatureValue(attr.Key, attr.Value);
+                }
+                corpus.Add(document);
             }
-            string name;
-            itemAttr.TryGetValue("title", out name);            
-            //Console.WriteLine("name = \"{0}\"", name);
-            //Console.WriteLine("html = \"{0}\"", content);
-            if (itemAttr.ContainsKey("comments"))
-            { 
-                // handle comments 
-                Console.WriteLine("!");
-            }
-            Document document = new Document(name, content);
-            Console.WriteLine("Item attributes:");         
-            foreach (KeyValuePair<string, string> attr in itemAttr)
-            {
-                Console.WriteLine("{0} = \"{1}\"", attr.Key, attr.Value);
-                document.Features.SetFeatureValue(attr.Key, attr.Value);
-            }
-            return document;
         }
 
         protected override object ProduceData()
         {
             // get RSS XML
+            DateTime timeStart = DateTime.Now;
             string xml;
             try
             {
@@ -156,7 +184,9 @@ namespace Latino.Workflows.Data
                             }
                         }
                     }
-                    corpus.Add(ProcessItem(itemAttr));
+                    if (mStopped) { return null; }
+                    ProcessItem(itemAttr, corpus);
+                    if (mStopped) { return null; }
                 }            
             }
             reader.Close();
@@ -202,13 +232,32 @@ namespace Latino.Workflows.Data
                 }
             }
             reader.Close();
-            //Console.WriteLine("Channel attributes:");
-            foreach (KeyValuePair<string, string> attr in channelAttr)
+            if (corpus.Documents.Count > 0)
             {
-                //Console.WriteLine("{0} = \"{1}\"", attr.Key, attr.Value);
-                corpus.Features.SetFeatureValue(attr.Key, attr.Value);
+                channelAttr.Add("_provider", GetType().ToString());
+                channelAttr.Add("_source", mUrl);
+                channelAttr.Add("_sleepBetweenPolls", SleepBetweenPolls.ToString());
+                channelAttr.Add("_timeStart", timeStart.ToString(mTimeFmt));
+                channelAttr.Add("_timeEnd", DateTime.Now.ToString(mTimeFmt));
+                //Console.WriteLine("Channel attributes:");
+                foreach (KeyValuePair<string, string> attr in channelAttr)
+                {
+                    //Console.WriteLine("{0} = \"{1}\"", attr.Key, attr.Value);
+                    corpus.Features.SetFeatureValue(attr.Key, attr.Value);
+                }
+                Console.WriteLine("Got {0} news.", corpus.Documents.Count);
+                return corpus;
             }
-            return corpus;
+            else
+            {
+                return null;
+            }
+        }
+
+        public void ResetHistory()
+        {
+            mSetOld.Clear();
+            mQueueOld.Clear();
         }
     }
 }

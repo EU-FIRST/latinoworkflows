@@ -88,7 +88,7 @@ namespace Latino.Workflows.TextMining
         public Annotation Clone()
         {
             Annotation clone = new Annotation(mSpanStart, mSpanEnd, mType);
-            clone.SetId(mId);
+            clone.mId = mId;
             foreach (KeyValuePair<string, string> item in mFeatures)
             {
                 clone.mFeatures.Add(item.Key, item.Value);

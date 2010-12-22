@@ -27,8 +27,9 @@ namespace Latino.Workflows.TextMining
             Utils.ThrowException(!(data is DocumentCorpus) ? new ArgumentTypeException("data") : null);
             DocumentCorpus corpus = (DocumentCorpus)data;
             foreach (Document document in corpus.Documents)
-            {
+            {                
                 ProcessDocument(document);
+                if (mStopped) { return corpus; }
             }
             return corpus;
         }

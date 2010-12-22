@@ -21,5 +21,6 @@ namespace Latino.Workflows
     public interface IDataConsumer
     {
         void ReceiveData(IDataProducer sender, object data);
+        void Stop();
     }
 }

@@ -39,6 +39,12 @@ namespace Latino.Workflows.TextMining
             = new Dictionary<string, string>();
         private Features mFeaturesInterface;
 
+        /* .-----------------------------------------------------------------------
+           |
+           |  Class AnnotationComparer
+           |
+           '-----------------------------------------------------------------------
+        */
         private class AnnotationComparer : IComparer<Annotation>
         {
             // *** IComparer<Annotation> interface implementation ***
@@ -162,7 +168,7 @@ namespace Latino.Workflows.TextMining
                 }
                 else if (annotType == "*")
                 {
-                    return new TextBlock[] { new TextBlock(0, mText.Val.Length - 1, "*", mText.Val, /*features=*/new Dictionary<string, string>()) };
+                    return new TextBlock[] { new TextBlock(0, mText.Val.Length - 1, "*", mText.Val, mFeatures) };
                 }
             }
             return null;

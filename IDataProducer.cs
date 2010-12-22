@@ -22,5 +22,6 @@ namespace Latino.Workflows
     {
         void Subscribe(IDataConsumer dataConsumer);
         void Unsubscribe(IDataConsumer dataConsumer);
+        void Stop();
     }
 }
