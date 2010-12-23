@@ -18,6 +18,8 @@
 [x] commit
 [x] Stop / Resume on data consumers
 [x] RssFeedComponent (RC)
+[x] commit
+[x] Document corpus XML serialization (read + test)
 [ ] commit
 [ ] logging
 [ ] fixed-size queue 

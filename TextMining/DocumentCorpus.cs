@@ -45,7 +45,7 @@ namespace Latino.Workflows.TextMining
             get { return mFeaturesInterface; }
         }
 
-        public void Add(Document document)
+        public void AddDocument(Document document)
         {
             Utils.ThrowException(document == null ? new ArgumentNullException("document") : null);
             Utils.ThrowException(mDocuments.Contains(document) ? new ArgumentValueException("document") : null);
@@ -57,7 +57,7 @@ namespace Latino.Workflows.TextMining
             Utils.ThrowException(documents == null ? new ArgumentNullException("documents") : null);
             foreach (Document document in documents)
             {
-                Add(document); // throws ArgumentNullException, ArgumentValueException
+                AddDocument(document); // throws ArgumentNullException, ArgumentValueException
             }
         }
 
@@ -150,7 +150,35 @@ namespace Latino.Workflows.TextMining
 
         public void ReadXml(XmlReader reader)
         {
-            throw new NotImplementedException();
+            Utils.ThrowException(reader == null ? new ArgumentNullException("reader") : null);
+            mDocuments.Clear();
+            mFeatures.Clear();
+            while (reader.Read())
+            {
+                if (reader.NodeType == XmlNodeType.Element && reader.Name == "Feature" && !reader.IsEmptyElement)
+                {
+                    string featName = "not set";
+                    string featVal = "";
+                    while (reader.Read() && !(reader.NodeType == XmlNodeType.EndElement && reader.Name == "Feature"))
+                    {
+                        if (reader.NodeType == XmlNodeType.Element && reader.Name == "Name")
+                        {
+                            featName = Utils.XmlReadValue(reader, "Name");
+                        }
+                        else if (reader.NodeType == XmlNodeType.Element && reader.Name == "Value")
+                        {
+                            featVal = Utils.XmlReadValue(reader, "Value");
+                        }
+                    }
+                    Features.SetFeatureValue(featName, featVal);
+                }
+                else if (reader.NodeType == XmlNodeType.Element && reader.Name == "Document" && !reader.IsEmptyElement)
+                {
+                    Document doc = new Document();
+                    doc.ReadXml(reader);
+                    AddDocument(doc);
+                }
+            }
         }
 
         public void WriteXml(XmlWriter writer, bool writeTopElement)

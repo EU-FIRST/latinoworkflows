@@ -47,30 +47,6 @@ namespace Latino.Workflows.Data
             SleepBetweenPolls = 300000; // poll every 5 minutes by default
         }
 
-        private static void Skip(XmlTextReader reader, string attrName)
-        {
-            if (reader.IsEmptyElement) { return; }
-            while (reader.Read() && !(reader.NodeType == XmlNodeType.EndElement && reader.Name == attrName)) ;
-        }
-
-        private static string ReadValue(XmlTextReader reader, string attrName)
-        {
-            if (reader.IsEmptyElement) { return ""; }
-            string text = "";
-            while (reader.Read() && reader.NodeType != XmlNodeType.Text && reader.NodeType != XmlNodeType.CDATA && !(reader.NodeType == XmlNodeType.EndElement && reader.Name == attrName)) ;
-            if (reader.NodeType == XmlNodeType.Text)
-            {
-                text = HttpUtility.HtmlDecode(reader.Value); 
-                Skip(reader, attrName);
-            }
-            else if (reader.NodeType == XmlNodeType.CDATA)
-            {
-                text = reader.Value; // no decoding for CDATA
-                Skip(reader, attrName);
-            }
-            return text;
-        }
-
         private static Guid MakeGuid(string title, string desc)
         {
             MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider();
@@ -132,7 +108,7 @@ namespace Latino.Workflows.Data
                     //Console.WriteLine("{0} = \"{1}\"", attr.Key, attr.Value);
                     document.Features.SetFeatureValue(attr.Key, attr.Value);
                 }
-                corpus.Add(document);
+                corpus.AddDocument(document);
             }
         }
 
@@ -167,7 +143,7 @@ namespace Latino.Workflows.Data
                             if (mItemElements.Contains(reader.Name))
                             {
                                 string attrName = reader.Name;
-                                string value = ReadValue(reader, attrName);
+                                string value = Utils.XmlReadValue(reader, attrName);
                                 string oldValue;
                                 if (itemAttr.TryGetValue(attrName, out oldValue))
                                 {
@@ -180,7 +156,7 @@ namespace Latino.Workflows.Data
                             }
                             else
                             {
-                                Skip(reader, reader.Name);
+                                Utils.XmlSkip(reader, reader.Name);
                             }
                         }
                     }
@@ -203,7 +179,7 @@ namespace Latino.Workflows.Data
                         {
                             if (reader.Name == "item")
                             {
-                                Skip(reader, "item");
+                                Utils.XmlSkip(reader, "item");
                             }
                             else 
                             {
@@ -211,7 +187,7 @@ namespace Latino.Workflows.Data
                                 if (mChannelElements.Contains(reader.Name))
                                 {
                                     string attrName = reader.Name;
-                                    string value = ReadValue(reader, attrName);
+                                    string value = Utils.XmlReadValue(reader, attrName);
                                     string oldValue;
                                     if (channelAttr.TryGetValue(attrName, out oldValue))
                                     {
@@ -224,7 +200,7 @@ namespace Latino.Workflows.Data
                                 }
                                 else
                                 {
-                                    Skip(reader, reader.Name);
+                                    Utils.XmlSkip(reader, reader.Name);
                                 }
                             }
                         }

@@ -116,8 +116,8 @@ namespace Latino.Workflows
             StringWriter sw;
             XmlTextWriter writer = new XmlTextWriter(sw = new StringWriter());
             DocumentCorpus c = new DocumentCorpus();
-            c.Add(doc);
-            c.Add(doc2);
+            c.AddDocument(doc);
+            c.AddDocument(doc2);
             c.WriteXml(writer);
             Console.WriteLine(sw);
         }

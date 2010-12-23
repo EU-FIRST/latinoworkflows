@@ -64,7 +64,7 @@ namespace Latino.Workflows.TextMining
             mFeaturesInterface = new Features(mFeatures);
         }
 
-        private Document() : this("", "") // required for serialization
+        internal Document() : this("", "") // required for serialization
         { 
         }
 
@@ -234,7 +234,93 @@ namespace Latino.Workflows.TextMining
 
         public void ReadXml(XmlReader reader)
         {
-            throw new NotImplementedException();
+            Utils.ThrowException(reader == null ? new ArgumentNullException("reader") : null);
+            mAnnotations.Clear();
+            mFeatures.Clear();
+            mText = mName = "";
+            while (reader.Read() && !(reader.NodeType == XmlNodeType.EndElement && reader.Name == "Document"))
+            {
+                if (reader.NodeType == XmlNodeType.Element && reader.Name == "Name")
+                {
+                    mName = Utils.XmlReadValue(reader, "Name");
+                }
+                else if (reader.NodeType == XmlNodeType.Element && reader.Name == "Text")
+                {
+                    mText = Utils.XmlReadValue(reader, "Text");
+                }
+                else if (reader.NodeType == XmlNodeType.Element && reader.Name == "Annotation" && !reader.IsEmptyElement)
+                {
+                    int spanStart = 0;
+                    int spanEnd = 0;
+                    string annotType = "not set";
+                    int annotId = -1;
+                    ArrayList<Pair<string, string>> features = new ArrayList<Pair<string, string>>();
+                    while (reader.Read() && !(reader.NodeType == XmlNodeType.EndElement && reader.Name == "Annotation"))
+                    {
+                        if (reader.NodeType == XmlNodeType.Element && reader.Name == "Id")
+                        {
+                            annotId = Convert.ToInt32(Utils.XmlReadValue(reader, "Id")); 
+                        }
+                        else if (reader.NodeType == XmlNodeType.Element && reader.Name == "SpanStart")
+                        {
+                            spanStart = Convert.ToInt32(Utils.XmlReadValue(reader, "SpanStart")); 
+                        }
+                        else if (reader.NodeType == XmlNodeType.Element && reader.Name == "SpanEnd")
+                        {
+                            spanEnd = Convert.ToInt32(Utils.XmlReadValue(reader, "SpanEnd")); 
+                        }
+                        else if (reader.NodeType == XmlNodeType.Element && reader.Name == "Type")
+                        {
+                            annotType = Utils.XmlReadValue(reader, "Type");
+                        }
+                        else if (reader.NodeType == XmlNodeType.Element && reader.Name == "Type")
+                        {
+                            annotType = Utils.XmlReadValue(reader, "Type");
+                        }
+                        else if (reader.NodeType == XmlNodeType.Element && reader.Name == "Feature" && !reader.IsEmptyElement)
+                        {
+                            string featName = "not set";
+                            string featVal = "";
+                            while (reader.Read() && !(reader.NodeType == XmlNodeType.EndElement && reader.Name == "Feature"))
+                            {
+                                if (reader.NodeType == XmlNodeType.Element && reader.Name == "Name")
+                                {
+                                    featName = Utils.XmlReadValue(reader, "Name");
+                                }
+                                else if (reader.NodeType == XmlNodeType.Element && reader.Name == "Value")
+                                {
+                                    featVal = Utils.XmlReadValue(reader, "Value");
+                                }
+                            }
+                            features.Add(new Pair<string, string>(featName, featVal));
+                        }
+                    }
+                    Annotation annot = new Annotation(spanStart, spanEnd, annotType);
+                    annot.SetId(annotId);
+                    AddAnnotation(annot);
+                    foreach (Pair<string, string> feature in features)
+                    {
+                        annot.Features.SetFeatureValue(feature.First, feature.Second);
+                    }
+                }
+                else if (reader.NodeType == XmlNodeType.Element && reader.Name == "Feature" && !reader.IsEmptyElement)
+                {
+                    string featName = "not set";
+                    string featVal = "";
+                    while (reader.Read() && !(reader.NodeType == XmlNodeType.EndElement && reader.Name == "Feature"))
+                    {
+                        if (reader.NodeType == XmlNodeType.Element && reader.Name == "Name")
+                        {
+                            featName = Utils.XmlReadValue(reader, "Name");
+                        }
+                        else if (reader.NodeType == XmlNodeType.Element && reader.Name == "Value")
+                        {
+                            featVal = Utils.XmlReadValue(reader, "Value");
+                        }
+                    }
+                    Features.SetFeatureValue(featName, featVal);
+                }                
+            }
         }
 
         public void WriteXml(XmlWriter writer, bool writeTopElement)
@@ -242,8 +328,8 @@ namespace Latino.Workflows.TextMining
             Utils.ThrowException(writer == null ? new ArgumentNullException("writer") : null);
             string ns = "http://freekoders.org/latino";
             if (writeTopElement) { writer.WriteStartElement("Document", ns); }
-            writer.WriteElementString("Text", ns, mText);
             writer.WriteElementString("Name", ns, mName);
+            writer.WriteElementString("Text", ns, mText);            
             writer.WriteStartElement("Annotations", ns);
             foreach (Annotation annot in mAnnotations)
             {
