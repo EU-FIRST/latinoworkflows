@@ -39,36 +39,45 @@ namespace Latino.Workflows
 
         public void Stop()
         {
+            Utils.ThrowException(!IsRunning ? new InvalidOperationException() : null);
             lock (mQueue)
             {
                 mStopped = true;
-                mQueue.Clear();
-                if ((mThread.ThreadState | ThreadState.Suspended) != 0) 
+                if (!mThreadAlive)
                 {
+                    //Console.WriteLine("suspended");
+                    while ((mThread.ThreadState & ThreadState.Suspended) == 0) { Thread.Sleep(1); }
                     mThread.Resume();
                 }
-                mThreadAlive = false;
+                //else
+                //{
+                //    Console.WriteLine("working, please wait ...");
+                //}
             }
-            while (mThread.IsAlive) { Thread.Sleep(1); }
         }
 
         public void Resume()
         {
-            //lock (mQueue)
-            //{
-                if (mStopped)
-                {
-                    mThread = new Thread(new ThreadStart(ProcessQueue));
-                    mStopped = false;
-                }
-            //}
+            Utils.ThrowException(IsRunning ? new InvalidOperationException() : null);
+            lock (mQueue)
+            {
+                mStopped = false;
+                mThread = new Thread(new ThreadStart(ProcessQueue));
+                mThreadAlive = mQueue.Count > 0;
+                if (mThreadAlive) { mThread.Start(); }
+            }
+        }
+
+        public bool IsRunning
+        {
+            get { return mThread.IsAlive; }
         }
 
         private void ProcessQueue()
         {
-            while (true)
+            while (!mStopped)
             {
-                while (true)
+                while (!mStopped)
                 {
                     // get data
                     Pair<IDataProducer, object> data;
@@ -108,24 +117,29 @@ namespace Latino.Workflows
             // *** note that setting sender to null is allowed
             lock (mQueue)
             {
-                if (!mStopped)
+                mQueue.Enqueue(new Pair<IDataProducer, object>(sender, data));
+                if (!mThreadAlive && !mStopped)
                 {
-                    mQueue.Enqueue(new Pair<IDataProducer, object>(sender, data));
-                    if (!mThreadAlive)
+                    mThreadAlive = true;
+                    if (!mThread.IsAlive)
                     {
-                        mThreadAlive = true;
-                        if (!mThread.IsAlive)
-                        {
-                            mThread.Start();
-                        }
-                        else
-                        {
-                            while ((mThread.ThreadState | ThreadState.Suspended) == 0) { Thread.Sleep(1); }
-                            mThread.Resume();
-                        }
+                        mThread.Start();
+                    }
+                    else
+                    {
+                        while ((mThread.ThreadState & ThreadState.Suspended) == 0) { Thread.Sleep(1); }
+                        mThread.Resume();
                     }
                 }
             }
+        }
+
+        // *** IDisposable interface implementation ***
+
+        public void Dispose()
+        {
+            Stop();
+            while (IsRunning) { Thread.Sleep(1); }
         }
     }
 }

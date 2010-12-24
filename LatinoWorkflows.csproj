@@ -40,12 +40,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Data\RssFeedComponent.cs" />
+    <Compile Include="TextMining\LnDocComponent.cs" />
+    <Compile Include="TextMining\RssFeedComponent.cs" />
     <Compile Include="GenericStreamDataProducer.cs" />
-    <Compile Include="TextMining\Annotation.cs" />
+    <Compile Include="TextMining\DocumentCorpus\Annotation.cs" />
     <Compile Include="TextMining\DocumentConsumer.cs" />
-    <Compile Include="TextMining\Document.cs" />
-    <Compile Include="TextMining\DocumentCorpus.cs" />
+    <Compile Include="TextMining\DocumentCorpus\Document.cs" />
+    <Compile Include="TextMining\DocumentCorpus\DocumentCorpus.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="StreamDataConsumer.cs" />
     <Compile Include="StreamDataProducer.cs" />
@@ -56,9 +57,10 @@
     <Compile Include="GenericStreamDataConsumer.cs" />
     <Compile Include="TextMining\DocumentProcessor.cs" />
     <Compile Include="GenericStreamDataProcessor.cs" />
-    <Compile Include="TextMining\Features.cs" />
+    <Compile Include="TextMining\DocumentCorpus\Features.cs" />
     <Compile Include="TextMining\RegexTokenizerComponent.cs" />
-    <Compile Include="TextMining\TextBlock.cs" />
+    <Compile Include="TextMining\DocumentCorpus\TextBlock.cs" />
+    <Compile Include="WorkflowUtils.cs" />
     <Content Include="TODO.txt" />
   </ItemGroup>
   <ItemGroup>
@@ -68,7 +70,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="TextMining\Schema\DocumentCorpusSchema.xsd">
+    <EmbeddedResource Include="TextMining\DocumentCorpus\DocumentCorpusSchema.xsd">
       <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>

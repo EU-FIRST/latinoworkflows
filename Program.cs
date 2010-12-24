@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using Latino.Workflows.TextMining;
-using Latino.Workflows.Data;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.IO;

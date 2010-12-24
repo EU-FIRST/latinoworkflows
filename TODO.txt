@@ -20,9 +20,15 @@
 [x] RssFeedComponent (RC)
 [x] commit
 [x] Document corpus XML serialization (read + test)
+[x] commit
+[x] thread safety probl. in StreamDataConsumer Stop
+[x] DocumentCorpus cloning revision
 [ ] commit
+[ ] thread-safe DocumentCorpus
 [ ] logging
 [ ] fixed-size queue 
 [ ] powerful query language for retrieving text blocks
 [ ] handle RSS comments
+
+
 

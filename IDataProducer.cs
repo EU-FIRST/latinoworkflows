@@ -10,6 +10,8 @@
  *
  ***************************************************************************/
 
+using System;
+
 namespace Latino.Workflows
 {
     /* .-----------------------------------------------------------------------
@@ -18,10 +20,12 @@ namespace Latino.Workflows
        |
        '-----------------------------------------------------------------------
     */
-    public interface IDataProducer
+    public interface IDataProducer : IDisposable
     {
         void Subscribe(IDataConsumer dataConsumer);
         void Unsubscribe(IDataConsumer dataConsumer);
         void Stop();
+        void Resume();
+        bool IsRunning { get; }
     }
 }

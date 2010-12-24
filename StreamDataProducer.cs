@@ -25,7 +25,7 @@ namespace Latino.Workflows
     {
         private Set<IDataConsumer> mDataConsumers
             = new Set<IDataConsumer>();
-        private int mSleep
+        private int mTimeBetweenPolls
             = 1;
         protected bool mStopped
             = false;
@@ -42,27 +42,35 @@ namespace Latino.Workflows
 
         public void Start()
         {
-            if (mThread == null || !mThread.IsAlive)
-            {
-                mThread = new Thread(new ThreadStart(ProduceDataLoop));
-                mStopped = false;
-                mThread.Start();                
-            }
+            Utils.ThrowException(IsRunning ? new InvalidOperationException() : null);
+            mThread = new Thread(new ThreadStart(ProduceDataLoop));
+            mStopped = false;
+            mThread.Start();                
         }
 
         public void Stop()
         {
+            Utils.ThrowException(!IsRunning ? new InvalidOperationException() : null);
             mStopped = true;
-            while (mThread.IsAlive) { Thread.Sleep(1); }
         }
 
-        public int SleepBetweenPolls
+        public void Resume()
         {
-            get { return mSleep; }
+            Start(); // throws InvalidOperationException
+        }
+
+        public bool IsRunning
+        {
+            get { return mThread != null && mThread.IsAlive; }
+        }
+
+        public int TimeBetweenPolls
+        {
+            get { return mTimeBetweenPolls; }
             set 
             {
-                Utils.ThrowException(value < 0 ? new ArgumentOutOfRangeException("Sleep") : null);
-                mSleep = value; 
+                Utils.ThrowException(value < 0 ? new ArgumentOutOfRangeException("TimeBetweenPolls") : null);
+                mTimeBetweenPolls = value; 
             }
         }
 
@@ -76,7 +84,6 @@ namespace Latino.Workflows
                     object data = ProduceData();
                     if (data != null)
                     {
-                        if (mStopped) { return; }
                         // dispatch data
                         if (mDataConsumers.Count > 1 && mCloneDataOnFork)
                         {
@@ -98,8 +105,13 @@ namespace Latino.Workflows
                 {
                     Log.Critical(exc);
                 }
-                if (mStopped) { return; }
-                Thread.Sleep(mSleep);
+                int sleepTime = Math.Min(500, mTimeBetweenPolls);
+                DateTime start = DateTime.Now;
+                while ((DateTime.Now - start).TotalMilliseconds < mTimeBetweenPolls)
+                {
+                    if (mStopped) { return; }    
+                    Thread.Sleep(sleepTime);
+                }
             }
         }
 
@@ -120,6 +132,14 @@ namespace Latino.Workflows
             {
                 mDataConsumers.Remove(dataConsumer);
             }
+        }
+
+        // *** IDisposable interface implementation ***
+
+        public void Dispose()
+        {
+            Stop();
+            while (IsRunning) { Thread.Sleep(1); }
         }
     }
 }

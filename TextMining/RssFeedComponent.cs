@@ -18,10 +18,15 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Web;
 using Latino.Web;
-using Latino.Workflows.TextMining;
 
-namespace Latino.Workflows.Data
+namespace Latino.Workflows.TextMining
 {
+    /* .-----------------------------------------------------------------------
+       |
+       |  Class RssFeedComponent
+       |
+       '-----------------------------------------------------------------------
+    */
     public class RssFeedComponent : StreamDataProducer
     {
         private string mUrl;
@@ -31,8 +36,6 @@ namespace Latino.Workflows.Data
             = new Queue<Guid>();
         private const int mNumOld
             = 1000; // *** this is currently hardcoded
-        private const string mTimeFmt
-            = "ddd, dd MMM yyyy HH:mm:ss K"; // RFC 822 format (incl. time zone)
         private static Set<string> mChannelElements
             = new Set<string>(new string[] { "title", "link", "description", "language", "copyright", "managingEditor", "pubDate", "category" });
         private static Set<string> mItemElements
@@ -44,7 +47,13 @@ namespace Latino.Workflows.Data
             Utils.ThrowException(!Uri.IsWellFormedUriString(url, UriKind.Absolute) ? new ArgumentValueException("url") : null);
             Utils.ThrowException(Array.IndexOf(new string[] { "http", "https" }, new Uri(url).Scheme) < 0 ? new ArgumentValueException("url") : null);
             mUrl = url;
-            SleepBetweenPolls = 300000; // poll every 5 minutes by default
+            TimeBetweenPolls = 300000; // poll every 5 minutes by default
+        }
+
+        public void ForgetHistory()
+        {
+            mSetOld.Clear();
+            mQueueOld.Clear();
         }
 
         private static Guid MakeGuid(string title, string desc)
@@ -100,7 +109,7 @@ namespace Latino.Workflows.Data
                     // TODO: handle comments 
                 }
                 itemAttr.Add("_guid", guid.ToString());
-                itemAttr.Add("_time", time.ToString(mTimeFmt)); 
+                itemAttr.Add("_time", time.ToString(WorkflowUtils.TimeFmt)); 
                 Document document = new Document(name, content);
                 //Console.WriteLine("Item attributes:");
                 foreach (KeyValuePair<string, string> attr in itemAttr)
@@ -160,9 +169,7 @@ namespace Latino.Workflows.Data
                             }
                         }
                     }
-                    if (mStopped) { return null; }
                     ProcessItem(itemAttr, corpus);
-                    if (mStopped) { return null; }
                 }            
             }
             reader.Close();
@@ -212,9 +219,9 @@ namespace Latino.Workflows.Data
             {
                 channelAttr.Add("_provider", GetType().ToString());
                 channelAttr.Add("_source", mUrl);
-                channelAttr.Add("_sleepBetweenPolls", SleepBetweenPolls.ToString());
-                channelAttr.Add("_timeStart", timeStart.ToString(mTimeFmt));
-                channelAttr.Add("_timeEnd", DateTime.Now.ToString(mTimeFmt));
+                channelAttr.Add("_timeBetweenPolls", TimeBetweenPolls.ToString());
+                channelAttr.Add("_timeStart", timeStart.ToString(WorkflowUtils.TimeFmt));
+                channelAttr.Add("_timeEnd", DateTime.Now.ToString(WorkflowUtils.TimeFmt));
                 //Console.WriteLine("Channel attributes:");
                 foreach (KeyValuePair<string, string> attr in channelAttr)
                 {
@@ -228,12 +235,6 @@ namespace Latino.Workflows.Data
             {
                 return null;
             }
-        }
-
-        public void ResetHistory()
-        {
-            mSetOld.Clear();
-            mQueueOld.Clear();
         }
     }
 }

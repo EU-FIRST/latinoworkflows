@@ -63,7 +63,6 @@ namespace Latino.Workflows.TextMining
                     Annotation annot = new Annotation(textBlock.SpanStart + e.CurrentTokenIdx, textBlock.SpanStart + e.CurrentTokenIdx + e.Current.Length - 1, DEST_ANNOT_TYPE);
                     document.AddAnnotation(annot);
                 }
-                if (mStopped) { return; }
             }
         }
     }

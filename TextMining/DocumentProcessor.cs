@@ -29,7 +29,6 @@ namespace Latino.Workflows.TextMining
             foreach (Document document in corpus.Documents)
             {                
                 ProcessDocument(document);
-                if (mStopped) { return corpus; }
             }
             return corpus;
         }
