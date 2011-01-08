@@ -27,7 +27,7 @@ namespace Latino.Workflows
             = new Set<IDataConsumer>();
         private int mTimeBetweenPolls
             = 1;
-        protected bool mStopped
+        private bool mStopped
             = false;
         private Thread mThread
             = null;
@@ -139,7 +139,7 @@ namespace Latino.Workflows
         public void Dispose()
         {
             Stop();
-            while (IsRunning) { Thread.Sleep(1); }
+            while (IsRunning) { Thread.Sleep(100); }
         }
     }
 }

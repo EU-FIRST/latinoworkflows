@@ -28,7 +28,7 @@ namespace Latino.Workflows
             = new Queue<Pair<IDataProducer, object>>();
         private bool mThreadAlive
             = false;
-        protected bool mStopped
+        private bool mStopped
             = false;
         private Thread mThread;
 
@@ -45,14 +45,9 @@ namespace Latino.Workflows
                 mStopped = true;
                 if (!mThreadAlive)
                 {
-                    //Console.WriteLine("suspended");
                     while ((mThread.ThreadState & ThreadState.Suspended) == 0) { Thread.Sleep(1); }
                     mThread.Resume();
                 }
-                //else
-                //{
-                //    Console.WriteLine("working, please wait ...");
-                //}
             }
         }
 
@@ -139,7 +134,7 @@ namespace Latino.Workflows
         public void Dispose()
         {
             Stop();
-            while (IsRunning) { Thread.Sleep(1); }
+            while (IsRunning) { Thread.Sleep(100); }
         }
     }
 }

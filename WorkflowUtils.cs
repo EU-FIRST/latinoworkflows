@@ -37,7 +37,7 @@ namespace Latino.Workflows
         //                += new GenericStreamDataConsumer.ConsumeDataHandler(delegate(IDataProducer producer, object data) { outData = data; });
         //            processor.Subscribe(consumer);
         //            ((IDataConsumer)processor).ReceiveData(null, inData);
-        //            while (outData == null) { Thread.Sleep(1); }
+        //            while (outData == null) { Thread.Sleep(100); }
         //        }
         //    }
         //    return outData;

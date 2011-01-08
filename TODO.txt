@@ -23,7 +23,7 @@
 [x] commit
 [x] thread safety probl. in StreamDataConsumer Stop
 [x] DocumentCorpus cloning revision
-[ ] commit
+[x] commit
 [ ] thread-safe DocumentCorpus
 [ ] logging
 [ ] fixed-size queue 

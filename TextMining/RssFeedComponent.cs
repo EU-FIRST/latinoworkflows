@@ -30,11 +30,9 @@ namespace Latino.Workflows.TextMining
     public class RssFeedComponent : StreamDataProducer
     {
         private string mUrl;
-        private Set<Guid> mSetOld
-            = new Set<Guid>();
-        private Queue<Guid> mQueueOld
-            = new Queue<Guid>();
-        private const int mNumOld
+        private Pair<Set<Guid>, Queue<Guid>> mHistory
+            = new Pair<Set<Guid>, Queue<Guid>>(new Set<Guid>(), new Queue<Guid>());
+        private const int mHistorySize
             = 1000; // *** this is currently hardcoded
         private static Set<string> mChannelElements
             = new Set<string>(new string[] { "title", "link", "description", "language", "copyright", "managingEditor", "pubDate", "category" });
@@ -52,8 +50,8 @@ namespace Latino.Workflows.TextMining
 
         public void ForgetHistory()
         {
-            mSetOld.Clear();
-            mQueueOld.Clear();
+            mHistory.First.Clear();
+            mHistory.Second.Clear();
         }
 
         private static Guid MakeGuid(string title, string desc)
@@ -69,14 +67,14 @@ namespace Latino.Workflows.TextMining
             string desc = "";
             itemAttr.TryGetValue("description", out desc);
             Guid guid = MakeGuid(name, desc);
-            if (!mSetOld.Contains(guid))
+            if (!mHistory.First.Contains(guid))
             {                
-                if (mSetOld.Count + 1 > mNumOld)
+                if (mHistory.First.Count + 1 > mHistorySize)
                 {
-                    mSetOld.Remove(mQueueOld.Dequeue());
+                    mHistory.First.Remove(mHistory.Second.Dequeue());
                 }
-                mQueueOld.Enqueue(guid);
-                mSetOld.Add(guid);
+                mHistory.First.Add(guid);
+                mHistory.Second.Enqueue(guid);                
                 DateTime time = DateTime.Now;
                 string content = "";
                 if (itemAttr.ContainsKey("link"))
@@ -184,31 +182,24 @@ namespace Latino.Workflows.TextMining
                     {
                         if (reader.NodeType == XmlNodeType.Element)
                         {
-                            if (reader.Name == "item")
+                            // handle channel attributes                               
+                            if (mChannelElements.Contains(reader.Name))
                             {
-                                Utils.XmlSkip(reader, "item");
-                            }
-                            else 
-                            {
-                                // handle channel attributes                               
-                                if (mChannelElements.Contains(reader.Name))
+                                string attrName = reader.Name;
+                                string value = Utils.XmlReadValue(reader, attrName);
+                                string oldValue;
+                                if (channelAttr.TryGetValue(attrName, out oldValue))
                                 {
-                                    string attrName = reader.Name;
-                                    string value = Utils.XmlReadValue(reader, attrName);
-                                    string oldValue;
-                                    if (channelAttr.TryGetValue(attrName, out oldValue))
-                                    {
-                                        channelAttr[attrName] = oldValue + " ;; " + value;
-                                    }
-                                    else
-                                    {
-                                        channelAttr.Add(attrName, value);
-                                    }
+                                    channelAttr[attrName] = oldValue + " ;; " + value;
                                 }
                                 else
                                 {
-                                    Utils.XmlSkip(reader, reader.Name);
+                                    channelAttr.Add(attrName, value);
                                 }
+                            }
+                            else
+                            {
+                                Utils.XmlSkip(reader, reader.Name);
                             }
                         }
                     }
@@ -229,10 +220,15 @@ namespace Latino.Workflows.TextMining
                     corpus.Features.SetFeatureValue(attr.Key, attr.Value);
                 }
                 Console.WriteLine("Got {0} news.", corpus.Documents.Count);
+                foreach (Document doc in corpus.Documents)
+                {
+                    Console.WriteLine(doc.Features.GetFeatureValue("pubDate"));
+                }
                 return corpus;
             }
             else
             {
+                Console.Write(".");
                 return null;
             }
         }
