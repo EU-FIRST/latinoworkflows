@@ -11,7 +11,8 @@
  ***************************************************************************/
 
 using System;
-using System.Threading;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace Latino.Workflows
 {
@@ -23,8 +24,18 @@ namespace Latino.Workflows
     */
     public static class WorkflowUtils
     {
-        public const string TimeFmt
-            = "ddd, dd MMM yyyy HH:mm:ss K"; // RFC 822 format (incl. time zone)
+        public static void SetProcessorAffinity(ulong mask)
+        {
+            Utils.ThrowException(mask == 0 ? new ArgumentOutOfRangeException("mask") : null);
+            Utils.ThrowException(mask > Math.Pow(2, Environment.ProcessorCount) - 1 ? new ArgumentOutOfRangeException("mask") : null);
+            Process.GetCurrentProcess().ProcessorAffinity = (IntPtr)mask;
+        }
+
+        public static void SetProcessorAffinity(string mask)
+        {
+            Utils.ThrowException(mask == null ? new ArgumentNullException("mask") : null);
+            SetProcessorAffinity(Convert.ToUInt64(mask, 2)); // throws ArgumentException, FormatException, OverflowException, ArgumentOutOfRangeException
+        }
 
         //public static object InvokeStreamDataProcessor(Type processorType, object inData)
         //{

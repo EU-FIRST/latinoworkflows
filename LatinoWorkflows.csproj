@@ -40,6 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Persistance\DocumentCorpusWriterComponent.cs" />
     <Compile Include="TextMining\LnDocComponent.cs" />
     <Compile Include="TextMining\RssFeedComponent.cs" />
     <Compile Include="GenericStreamDataProducer.cs" />
@@ -60,6 +61,7 @@
     <Compile Include="TextMining\DocumentCorpus\Features.cs" />
     <Compile Include="TextMining\RegexTokenizerComponent.cs" />
     <Compile Include="TextMining\DocumentCorpus\TextBlock.cs" />
+    <Compile Include="TextMining\RssHistory.cs" />
     <Compile Include="WorkflowUtils.cs" />
     <Content Include="TODO.txt" />
   </ItemGroup>

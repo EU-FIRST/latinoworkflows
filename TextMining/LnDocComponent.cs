@@ -48,13 +48,13 @@ namespace Latino.Workflows.TextMining
                 {
                     doc = new Document(line.Substring(0, splitIdx).Trim(), line.Substring(splitIdx).Trim());
                 }
-                doc.Features.SetFeatureValue("_time", DateTime.Now.ToString(WorkflowUtils.TimeFmt));
+                doc.Features.SetFeatureValue("_time", DateTime.Now.ToString(Utils.DATE_TIME_SIMPLE));
                 corpus.AddDocument(doc);
             }
             corpus.Features.SetFeatureValue("_provider", GetType().ToString());
             corpus.Features.SetFeatureValue("_isNamedDoc", mIsNamedDoc.ToString());
-            corpus.Features.SetFeatureValue("_timeStart", timeStart.ToString(WorkflowUtils.TimeFmt));
-            corpus.Features.SetFeatureValue("_timeEnd", DateTime.Now.ToString(WorkflowUtils.TimeFmt));            
+            corpus.Features.SetFeatureValue("_timeStart", timeStart.ToString(Utils.DATE_TIME_SIMPLE));
+            corpus.Features.SetFeatureValue("_timeEnd", DateTime.Now.ToString(Utils.DATE_TIME_SIMPLE));            
             return corpus;
         }
     }

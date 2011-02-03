@@ -33,6 +33,17 @@ namespace Latino.Workflows
             = null;
         private bool mCloneDataOnFork
             = true;
+        protected Log mLog;
+
+        public StreamDataProducer()
+        {
+            mLog = new Log(GetType().ToString());
+        }
+
+        public Log Logging
+        {
+            get { return mLog; }
+        }
 
         public bool CloneDataOnFork
         {
@@ -43,14 +54,17 @@ namespace Latino.Workflows
         public void Start()
         {
             Utils.ThrowException(IsRunning ? new InvalidOperationException() : null);
+            mLog.Debug("Start", "Starting ...");
             mThread = new Thread(new ThreadStart(ProduceDataLoop));
             mStopped = false;
-            mThread.Start();                
+            mThread.Start();
+            mLog.Debug("Start", "Started.");
         }
 
         public void Stop()
-        {
+        {            
             Utils.ThrowException(!IsRunning ? new InvalidOperationException() : null);
+            mLog.Debug("Stop", "Stopping ...");
             mStopped = true;
         }
 
@@ -81,9 +95,10 @@ namespace Latino.Workflows
                 try
                 {
                     // produce data
-                    object data = ProduceData();
+                    object data = ProduceData();                    
                     if (data != null)
                     {
+                        mLog.Debug("ProduceDataLoop", "Produced data of type {0}.", data.GetType());
                         // dispatch data
                         if (mDataConsumers.Count > 1 && mCloneDataOnFork)
                         {
@@ -103,16 +118,17 @@ namespace Latino.Workflows
                 }
                 catch (Exception exc)
                 {
-                    Log.Critical(exc);
+                    mLog.Critical("ProduceDataLoop", exc);
                 }
                 int sleepTime = Math.Min(500, mTimeBetweenPolls);
                 DateTime start = DateTime.Now;
                 while ((DateTime.Now - start).TotalMilliseconds < mTimeBetweenPolls)
                 {
-                    if (mStopped) { return; }    
+                    if (mStopped) { mLog.Info("ProduceDataLoop", "Stopped."); return; }    
                     Thread.Sleep(sleepTime);
                 }
             }
+            mLog.Info("ProduceDataLoop", "Stopped.");
         }
 
         protected abstract object ProduceData();
@@ -138,8 +154,14 @@ namespace Latino.Workflows
 
         public void Dispose()
         {
-            Stop();
-            while (IsRunning) { Thread.Sleep(100); }
+            mLog.Debug("Dispose", "Disposing ...");
+            if (IsRunning)
+            {
+                Stop();
+                while (IsRunning) { Thread.Sleep(100); }
+            }
+            mLog.Debug("Dispose", "Disposed.");
         }
     }
 }
+

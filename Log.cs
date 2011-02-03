@@ -3,7 +3,7 @@
  *  This file is part of LATINO. See http://latino.sf.net
  *
  *  File:    Log.cs
- *  Desc:    Common logging utilities
+ *  Desc:    Logging utility
  *  Created: Dec-2010
  *
  *  Authors: Miha Grcar
@@ -11,6 +11,8 @@
  ***************************************************************************/
 
 using System;
+
+// TODO: per-instance level, per-instance type...
 
 namespace Latino.Workflows
 {
@@ -20,41 +22,172 @@ namespace Latino.Workflows
        |
        '-----------------------------------------------------------------------
     */
-    public static class Log
+    public class Log
     {
-        public static void Info(string message)
-        {
-            Console.WriteLine(message);
+        public enum Type
+        { 
+            Console = 1,
+            //File    = 2
         }
 
-        public static void Critical(string message)
-        {
-            Console.WriteLine(message);
+        public enum Level
+        { 
+            Debug    = 0,
+            Info     = 1,
+            Warn     = 2,
+            Critical = 3,
+            Off      = 4
         }
 
-        public static void Critical(string message, Exception exc)
+        private string mObjName;
+        private static Level mLevel
+            = Level.Debug; //Level.Info;
+
+        private static object mLogLock
+            = new object();
+
+        public Log(string objName)
         {
-            Console.WriteLine(exc);
+            Utils.ThrowException(objName == null ? new ArgumentNullException("objName") : null);
+            mObjName = objName;
         }
 
-        public static void Critical(Exception exc)
+        public string ObjectName
         {
-            Console.WriteLine(exc);
+            get { return mObjName; }
+            set 
+            {
+                Utils.ThrowException(value == null ? new ArgumentNullException("ObjectName") : null);
+                mObjName = value; 
+            }
         }
 
-        public static void Warning(string message)
+        public static Level LogLevel
         {
-            Console.WriteLine(message);
+            get { return mLevel; }
+            set { mLevel = value; }
         }
 
-        public static void Warning(string message, Exception exc)
+        // *** public interface ***
+
+        public void Debug(string funcName, string message, params object[] args)
         {
-            Console.WriteLine(exc);
+            Utils.ThrowException(funcName == null ? new ArgumentNullException("funcName") : null); 
+            Utils.ThrowException(message == null ? new ArgumentNullException("message") : null); 
+            if (mLevel == Level.Debug)
+            {
+                lock (mLogLock)
+                {
+                    DebugConsole(funcName, string.Format(message, args));
+                }
+            }
         }
 
-        public static void Warning(Exception exc)
+        public void Info(string funcName, string message, params object[] args)
         {
-            Console.WriteLine(exc);
+            Utils.ThrowException(funcName == null ? new ArgumentNullException("funcName") : null);
+            Utils.ThrowException(message == null ? new ArgumentNullException("message") : null); 
+            if (mLevel <= Level.Info)
+            {
+                lock (mLogLock)
+                {
+                    InfoConsole(funcName, string.Format(message, args));
+                }
+            }
+        }
+
+        public void Warning(string funcName, string message, params object[] args)
+        {
+            Utils.ThrowException(funcName == null ? new ArgumentNullException("funcName") : null);
+            Utils.ThrowException(message == null ? new ArgumentNullException("message") : null); 
+            if (mLevel <= Level.Warn)
+            {
+                lock (mLogLock)
+                {
+                    WarningConsole(funcName, string.Format(message, args));
+                }
+            }
+        }
+
+        public void Warning(string funcName, Exception e)
+        {
+            Utils.ThrowException(funcName == null ? new ArgumentNullException("funcName") : null);
+            Utils.ThrowException(e == null ? new ArgumentNullException("e") : null);
+            Utils.ThrowException(e.Message == null ? new ArgumentNullException("e.Message") : null);
+            if (mLevel <= Level.Warn)
+            {
+                lock (mLogLock)
+                {
+                    WarningConsole(funcName, /*message=*/null, e);
+                }
+            }
+        }
+
+        public void Critical(string funcName, string message, params object[] args)
+        {
+            Utils.ThrowException(funcName == null ? new ArgumentNullException("funcName") : null);
+            Utils.ThrowException(message == null ? new ArgumentNullException("message") : null); 
+            if (mLevel <= Level.Critical)
+            {
+                lock (mLogLock)
+                {
+                    CriticalConsole(funcName, string.Format(message, args));
+                }
+            }
+        }
+
+        public void Critical(string funcName, Exception e)
+        {
+            Utils.ThrowException(funcName == null ? new ArgumentNullException("funcName") : null);
+            Utils.ThrowException(e == null ? new ArgumentNullException("e") : null);
+            Utils.ThrowException(e.Message == null ? new ArgumentNullException("e.Message") : null);
+            if (mLevel <= Level.Critical)
+            {
+                lock (mLogLock)
+                {
+                    CriticalConsole(funcName, /*message=*/null, e);
+                }
+            }
+        }
+
+        // *** console output ***
+
+        private void DebugConsole(string funcName, string message)
+        {
+            Console.WriteLine("{0:yyyy-MM-dd HH:mm:ss} {1} {2}", DateTime.Now, mObjName, funcName);
+            Console.WriteLine("DEBUG: {0}", message);
+        }
+
+        private void InfoConsole(string funcName, string message)
+        {
+            Console.WriteLine("{0:yyyy-MM-dd HH:mm:ss} {1} {2}", DateTime.Now, mObjName, funcName);
+            Console.WriteLine("INFO: {0}", message);
+        }
+
+        private void WarningConsole(string funcName, string message)
+        {
+            Console.WriteLine("{0:yyyy-MM-dd HH:mm:ss} {1} {2}", DateTime.Now, mObjName, funcName);
+            Console.WriteLine("WARN: {0}", message);
+        }
+
+        private void WarningConsole(string funcName, string message, Exception e)
+        {
+            Console.WriteLine("{0:yyyy-MM-dd HH:mm:ss} {1} {2}", DateTime.Now, mObjName, funcName);
+            Console.WriteLine("WARN: {0}", message == null ? e.Message : message);
+            if (e.StackTrace != null) { Console.WriteLine(e.StackTrace); }
+        }
+
+        private void CriticalConsole(string funcName, string message)
+        {
+            Console.WriteLine("{0:yyyy-MM-dd HH:mm:ss} {1} {2}", DateTime.Now, mObjName, funcName);
+            Console.WriteLine("CRITICAL: {0}", message);
+        }
+
+        private void CriticalConsole(string funcName, string message, Exception e)
+        {
+            Console.WriteLine("{0:yyyy-MM-dd HH:mm:ss} {1} {2}", DateTime.Now, mObjName, funcName);
+            Console.WriteLine("CRITICAL: {0}", message == null ? e.Message : message);
+            if (e.StackTrace != null) { Console.WriteLine(e.StackTrace); }
         }
     }
 }

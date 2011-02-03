@@ -24,8 +24,12 @@
 [x] thread safety probl. in StreamDataConsumer Stop
 [x] DocumentCorpus cloning revision
 [x] commit
-[ ] thread-safe DocumentCorpus
-[ ] logging
+[x] logging
+[x] RSS comp.: don't parse channel attribs if no new items
+[x] remove useless using from RSS comp and dacq
+[x] test enums and serialization in latino
+[ ] commit
+[ ] move log to latino, enable overriding static settings
 [ ] fixed-size queue 
 [ ] powerful query language for retrieving text blocks
 [ ] handle RSS comments

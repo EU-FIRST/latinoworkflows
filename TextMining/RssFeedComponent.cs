@@ -17,6 +17,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
+using System.Net;
 using Latino.Web;
 
 namespace Latino.Workflows.TextMining
@@ -30,10 +31,10 @@ namespace Latino.Workflows.TextMining
     public class RssFeedComponent : StreamDataProducer
     {
         private string mUrl;
-        private Pair<Set<Guid>, Queue<Guid>> mHistory
-            = new Pair<Set<Guid>, Queue<Guid>>(new Set<Guid>(), new Queue<Guid>());
-        private const int mHistorySize
-            = 1000; // *** this is currently hardcoded
+        private bool mIncludeRawFormat
+            = false;
+        private RssHistory mHistory
+            = new RssHistory();
         private static Set<string> mChannelElements
             = new Set<string>(new string[] { "title", "link", "description", "language", "copyright", "managingEditor", "pubDate", "category" });
         private static Set<string> mItemElements
@@ -48,10 +49,25 @@ namespace Latino.Workflows.TextMining
             TimeBetweenPolls = 300000; // poll every 5 minutes by default
         }
 
-        public void ForgetHistory()
+        public string Url
         {
-            mHistory.First.Clear();
-            mHistory.Second.Clear();
+            get { return mUrl; }
+        }
+
+        public bool IncludeRawFormat
+        {
+            get { return mIncludeRawFormat; }
+            set { mIncludeRawFormat = value; }
+        }
+
+        public RssHistory History
+        {
+            get { return mHistory; }
+            set 
+            {
+                Utils.ThrowException(value == null ? new ArgumentNullException("History") : null);
+                mHistory = value; 
+            }
         }
 
         private static Guid MakeGuid(string title, string desc)
@@ -67,14 +83,10 @@ namespace Latino.Workflows.TextMining
             string desc = "";
             itemAttr.TryGetValue("description", out desc);
             Guid guid = MakeGuid(name, desc);
-            if (!mHistory.First.Contains(guid))
-            {                
-                if (mHistory.First.Count + 1 > mHistorySize)
-                {
-                    mHistory.First.Remove(mHistory.Second.Dequeue());
-                }
-                mHistory.First.Add(guid);
-                mHistory.Second.Enqueue(guid);                
+            mLog.Info("ProcessItem", "Found item \"{0}\" [{1}].", Utils.MakeOneLine(name, /*compact=*/true), guid.ToString("N"));
+            if (!mHistory.Contains(guid))
+            {
+                mHistory.AddToHistory(guid);              
                 DateTime time = DateTime.Now;
                 string content = "";
                 if (itemAttr.ContainsKey("link"))
@@ -82,11 +94,18 @@ namespace Latino.Workflows.TextMining
                     // get referenced Web page
                     try
                     {
-                        content = WebUtils.GetWebPageDetectEncoding(itemAttr["link"]);
+                        mLog.Info("ProcessItem", "Getting HTML from {0} ...", itemAttr["link"]);
+                        content = WebUtils.GetWebPageJsint(itemAttr["link"]);
+                        if (mIncludeRawFormat)
+                        {
+                            CookieContainer cookies = null;
+                            string ascii = WebUtils.GetWebPage(itemAttr["link"], /*refUrl=*/null, ref cookies, Encoding.GetEncoding("ISO-8859-1"));
+                            itemAttr.Add("raw", ascii);
+                        }
                     }
                     catch (Exception e)
                     {
-                        Log.Warning(e);
+                        mLog.Warning("ProcessItem", e);
                     }
                 }
                 if (content == "")
@@ -107,7 +126,7 @@ namespace Latino.Workflows.TextMining
                     // TODO: handle comments 
                 }
                 itemAttr.Add("_guid", guid.ToString());
-                itemAttr.Add("_time", time.ToString(WorkflowUtils.TimeFmt)); 
+                itemAttr.Add("_time", time.ToString(Utils.DATE_TIME_SIMPLE)); 
                 Document document = new Document(name, content);
                 //Console.WriteLine("Item attributes:");
                 foreach (KeyValuePair<string, string> attr in itemAttr)
@@ -126,17 +145,19 @@ namespace Latino.Workflows.TextMining
             string xml;
             try
             {
+                mLog.Info("ProduceData", "Getting RSS XML from {0} ...", mUrl);
                 xml = WebUtils.GetWebPageDetectEncoding(mUrl);
             }
             catch (Exception e)
-            { 
-                Log.Warning(e); 
+            {
+                mLog.Warning("ProduceData", e); 
                 return null; 
             }
             Dictionary<string, string> channelAttr = new Dictionary<string, string>();
             DocumentCorpus corpus = new DocumentCorpus();
             XmlTextReader reader = new XmlTextReader(new StringReader(xml));
             // first pass: items
+            mLog.Info("ProduceData", "Reading items ...");
             while (reader.Read())
             {
                 if (reader.NodeType == XmlNodeType.Element && reader.Name == "item" && !reader.IsEmptyElement)
@@ -152,6 +173,7 @@ namespace Latino.Workflows.TextMining
                                 string attrName = reader.Name;
                                 string value = Utils.XmlReadValue(reader, attrName);
                                 string oldValue;
+                                if (attrName == "pubDate") { string tmp = Utils.NormalizeDateTimeStr(value); if (tmp != null) { value = tmp; } }
                                 if (itemAttr.TryGetValue(attrName, out oldValue))
                                 {
                                     itemAttr[attrName] = oldValue + " ;; " + value;
@@ -172,63 +194,61 @@ namespace Latino.Workflows.TextMining
             }
             reader.Close();
             reader = new XmlTextReader(new StringReader(xml));
-            // second pass: channel attributes
-            while (reader.Read())
+            if (corpus.Documents.Count > 0)
             {
-                if (reader.NodeType == XmlNodeType.Element && reader.Name == "channel" && !reader.IsEmptyElement)
+                // second pass: channel attributes
+                mLog.Info("ProduceData", "Reading channel attributes ...");
+                while (reader.Read())
                 {
-                    // handle channel
-                    while (reader.Read() && !(reader.NodeType == XmlNodeType.EndElement && reader.Name == "channel"))
+                    if (reader.NodeType == XmlNodeType.Element && reader.Name == "channel" && !reader.IsEmptyElement)
                     {
-                        if (reader.NodeType == XmlNodeType.Element)
+                        // handle channel
+                        while (reader.Read() && !(reader.NodeType == XmlNodeType.EndElement && reader.Name == "channel"))
                         {
-                            // handle channel attributes                               
-                            if (mChannelElements.Contains(reader.Name))
+                            if (reader.NodeType == XmlNodeType.Element)
                             {
-                                string attrName = reader.Name;
-                                string value = Utils.XmlReadValue(reader, attrName);
-                                string oldValue;
-                                if (channelAttr.TryGetValue(attrName, out oldValue))
+                                // handle channel attributes                               
+                                if (mChannelElements.Contains(reader.Name))
                                 {
-                                    channelAttr[attrName] = oldValue + " ;; " + value;
+                                    string attrName = reader.Name;
+                                    string value = Utils.XmlReadValue(reader, attrName);
+                                    string oldValue;
+                                    if (attrName == "pubDate") { string tmp = Utils.NormalizeDateTimeStr(value); if (tmp != null) { value = tmp; } }
+                                    if (channelAttr.TryGetValue(attrName, out oldValue))
+                                    {
+                                        channelAttr[attrName] = oldValue + " ;; " + value;
+                                    }
+                                    else
+                                    {
+                                        channelAttr.Add(attrName, value);
+                                    }
                                 }
                                 else
                                 {
-                                    channelAttr.Add(attrName, value);
+                                    Utils.XmlSkip(reader, reader.Name);
                                 }
-                            }
-                            else
-                            {
-                                Utils.XmlSkip(reader, reader.Name);
                             }
                         }
                     }
                 }
-            }
-            reader.Close();
-            if (corpus.Documents.Count > 0)
-            {
+                reader.Close();
                 channelAttr.Add("_provider", GetType().ToString());
                 channelAttr.Add("_source", mUrl);
                 channelAttr.Add("_timeBetweenPolls", TimeBetweenPolls.ToString());
-                channelAttr.Add("_timeStart", timeStart.ToString(WorkflowUtils.TimeFmt));
-                channelAttr.Add("_timeEnd", DateTime.Now.ToString(WorkflowUtils.TimeFmt));
+                channelAttr.Add("_timeStart", timeStart.ToString(Utils.DATE_TIME_SIMPLE));
+                channelAttr.Add("_timeEnd", DateTime.Now.ToString(Utils.DATE_TIME_SIMPLE));
                 //Console.WriteLine("Channel attributes:");
                 foreach (KeyValuePair<string, string> attr in channelAttr)
                 {
                     //Console.WriteLine("{0} = \"{1}\"", attr.Key, attr.Value);
                     corpus.Features.SetFeatureValue(attr.Key, attr.Value);
                 }
-                Console.WriteLine("Got {0} news.", corpus.Documents.Count);
-                foreach (Document doc in corpus.Documents)
-                {
-                    Console.WriteLine(doc.Features.GetFeatureValue("pubDate"));
-                }
+                mLog.Info("ProduceData", "{0} new items.", corpus.Documents.Count);
                 return corpus;
             }
             else
             {
-                Console.Write(".");
+                mLog.Info("ProduceData", "No new items.");
                 return null;
             }
         }
