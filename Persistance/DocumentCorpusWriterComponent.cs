@@ -47,12 +47,14 @@ namespace Latino.Workflows.Persistance
             XmlWriter writer = XmlWriter.Create(stringWriter = new StringWriter(), xmlSettings); 
             corpus.WriteXml(writer, /*writeTopElement=*/true);
             writer.Close();
-            bool success = mConnection.ExecuteNonQuery("insert into Corpora (id, xml, title, provider, source, timeStart, timeEnd) values (?, ?, ?, ?, ?, ?, ?)", 
+            bool success = mConnection.ExecuteNonQuery("insert into Corpora (id, xml, title, provider, language, sourceUrl, source, timeStart, timeEnd) values (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
                 corpusId, 
                 stringWriter.ToString(),
                 Utils.Trunc(corpus.Features.GetFeatureValue("title"), 4000),
                 Utils.Trunc(corpus.Features.GetFeatureValue("_provider"), 4000),
-                Utils.Trunc(corpus.Features.GetFeatureValue("_source"), 4000),
+                Utils.Trunc(corpus.Features.GetFeatureValue("language"), 4000),
+                Utils.Trunc(corpus.Features.GetFeatureValue("_sourceUrl"), 4000),
+                corpus.Features.GetFeatureValue("_source"),
                 Utils.Trunc(corpus.Features.GetFeatureValue("_timeStart"), 30),
                 Utils.Trunc(corpus.Features.GetFeatureValue("_timeEnd"), 30));
             if (!success) { mLog.Warning("ConsumeData", "Unable to write to database."); }

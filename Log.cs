@@ -24,10 +24,10 @@ namespace Latino.Workflows
     */
     public class Log
     {
-        public enum Type
+        public enum Type 
         { 
             Console = 1,
-            //File    = 2
+            File    = 2
         }
 
         public enum Level
@@ -42,6 +42,10 @@ namespace Latino.Workflows
         private string mObjName;
         private static Level mLevel
             = Level.Debug; //Level.Info;
+        private static string mFileName
+            = null;
+        private static Type mType
+            = Type.Console;
 
         private static object mLogLock
             = new object();
@@ -78,7 +82,10 @@ namespace Latino.Workflows
             {
                 lock (mLogLock)
                 {
-                    DebugConsole(funcName, string.Format(message, args));
+                    if ((mType & Type.Console) != 0)
+                    {
+                        DebugConsole(funcName, string.Format(message, args));
+                    }
                 }
             }
         }
@@ -91,7 +98,10 @@ namespace Latino.Workflows
             {
                 lock (mLogLock)
                 {
-                    InfoConsole(funcName, string.Format(message, args));
+                    if ((mType & Type.Console) != 0)
+                    {
+                        InfoConsole(funcName, string.Format(message, args));
+                    }
                 }
             }
         }
@@ -104,7 +114,10 @@ namespace Latino.Workflows
             {
                 lock (mLogLock)
                 {
-                    WarningConsole(funcName, string.Format(message, args));
+                    if ((mType & Type.Console) != 0)
+                    {
+                        WarningConsole(funcName, string.Format(message, args));
+                    }
                 }
             }
         }
@@ -118,7 +131,10 @@ namespace Latino.Workflows
             {
                 lock (mLogLock)
                 {
-                    WarningConsole(funcName, /*message=*/null, e);
+                    if ((mType & Type.Console) != 0)
+                    {
+                        WarningConsole(funcName, /*message=*/null, e);
+                    }
                 }
             }
         }
@@ -131,7 +147,10 @@ namespace Latino.Workflows
             {
                 lock (mLogLock)
                 {
-                    CriticalConsole(funcName, string.Format(message, args));
+                    if ((mType & Type.Console) != 0)
+                    {
+                        CriticalConsole(funcName, string.Format(message, args));
+                    }
                 }
             }
         }
@@ -145,12 +164,15 @@ namespace Latino.Workflows
             {
                 lock (mLogLock)
                 {
-                    CriticalConsole(funcName, /*message=*/null, e);
+                    if ((mType & Type.Console) != 0)
+                    {
+                        CriticalConsole(funcName, /*message=*/null, e);
+                    }
                 }
             }
         }
 
-        // *** console output ***
+        // *** console and file output ***
 
         private void DebugConsole(string funcName, string message)
         {

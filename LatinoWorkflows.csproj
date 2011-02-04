@@ -36,11 +36,13 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Persistance\DocumentCorpusWriterComponent.cs" />
+    <Compile Include="TextMining\DocumentCorpus\Tree.cs" />
     <Compile Include="TextMining\LnDocComponent.cs" />
     <Compile Include="TextMining\RssFeedComponent.cs" />
     <Compile Include="GenericStreamDataProducer.cs" />
@@ -53,7 +55,6 @@
     <Compile Include="StreamDataProducer.cs" />
     <Compile Include="IDataConsumer.cs" />
     <Compile Include="IDataProducer.cs" />
-    <Compile Include="Program.cs" />
     <Compile Include="StreamDataProcessor.cs" />
     <Compile Include="GenericStreamDataConsumer.cs" />
     <Compile Include="TextMining\DocumentProcessor.cs" />
@@ -63,6 +64,9 @@
     <Compile Include="TextMining\DocumentCorpus\TextBlock.cs" />
     <Compile Include="TextMining\RssHistory.cs" />
     <Compile Include="WorkflowUtils.cs" />
+    <EmbeddedResource Include="TextMining\DocumentCorpus\Resources\DocumentTemplate.htm" />
+    <EmbeddedResource Include="TextMining\DocumentCorpus\Resources\IndexTemplate.htm" />
+    <EmbeddedResource Include="TextMining\DocumentCorpus\Resources\Style.css" />
     <Content Include="TODO.txt" />
   </ItemGroup>
   <ItemGroup>
