@@ -33,6 +33,8 @@ namespace Latino.Workflows.TextMining
         private string mUrl;
         private bool mIncludeRawFormat
             = false;
+        private bool mIncludeRssXml
+            = false;
         private RssHistory mHistory
             = new RssHistory();
         private static Set<string> mChannelElements
@@ -58,6 +60,12 @@ namespace Latino.Workflows.TextMining
         {
             get { return mIncludeRawFormat; }
             set { mIncludeRawFormat = value; }
+        }
+
+        public bool IncludeRssXml
+        {
+            get { return mIncludeRssXml; }
+            set { mIncludeRssXml = value; }
         }
 
         public RssHistory History
@@ -233,7 +241,8 @@ namespace Latino.Workflows.TextMining
                 }
                 reader.Close();
                 channelAttr.Add("_provider", GetType().ToString());
-                channelAttr.Add("_source", mUrl);
+                channelAttr.Add("_sourceUrl", mUrl);
+                if (mIncludeRssXml) { channelAttr.Add("_source", xml); }
                 channelAttr.Add("_timeBetweenPolls", TimeBetweenPolls.ToString());
                 channelAttr.Add("_timeStart", timeStart.ToString(Utils.DATE_TIME_SIMPLE));
                 channelAttr.Add("_timeEnd", DateTime.Now.ToString(Utils.DATE_TIME_SIMPLE));
