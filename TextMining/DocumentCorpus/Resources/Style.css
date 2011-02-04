@@ -1,0 +1,47 @@
+﻿body {
+	 /*background-color:#CEDDF0;*/
+}
+
+#TextLayer 
+{	
+	position:absolute;
+	left:500px;
+	top:60px;
+	width:600px;
+	height:auto;
+	z-index:1;
+}
+
+#ListLayer
+{		
+	position:absolute;
+	left:50px;
+	top:60px;
+	width:300px;
+	height:auto;
+	z-index:1;
+}
+
+	ul, li, ul li a {
+	
+	list-style: none;
+	
+}
+
+/* tooltip styling */
+.tooltip {
+	background-color:#26517E;
+	border:1px solid #fff;
+	padding:10px 15px;
+	/*width:200px;*/
+	display:none;
+	color:#fff;
+	text-align:left;
+	font-size:15px;
+	font-weight:bolder;
+	z-index: 8000;
+
+	/* outline radius for mozilla/firefox only */
+	-moz-box-shadow:0 0 10px #000;
+	-webkit-box-shadow:0 0 10px #000;
+}

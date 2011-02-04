@@ -1,0 +1,178 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+    <head>
+    
+        <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+        <title>{$document_title}</title>
+        
+        <!-- jQuery Library + ALL jQuery Tools -->
+        <script src="http://cdn.jquerytools.org/1.2.5/full/jquery.tools.min.js" type="text/javascript"></script>
+        
+        <!--  <script language="javascript" type="text/javascript" src="MakeHTML/jQuery/jquery-1.4.1.js"></script>    -->     
+        
+        <script type="text/javascript">
+
+            $(document).ready(function() {
+
+                var html = $("#TextLayer").html();
+
+                $('input[name="{$annotation_type_list_name}"]').click(function() {
+
+                    refreshPage(html);
+
+                });
+                
+
+                function selectChildren(selector, colorArray, featureArray, color) {
+
+                    var originalColor = color;
+
+                    if ($(selector).children("ul").children().length > 0) {
+
+                        $(selector).children("ul").children().each(function() {
+
+                            var elements = $(this).children("table").children("tbody").children("tr").children("td").eq(0).children("input").attr("elements")
+
+                            if ($(this).children("table").children("tbody").children("tr").children("td").eq(0).children("input").is(":checked")) {
+                                color = $(this).children("table").children("tbody").children("tr").children("td").eq(1).attr('bgcolor');
+                            }
+                            else {
+                                color = originalColor;
+                            }
+
+                            //update colorArray and featureArray
+                            for (var i = 0; i < elements.split(';').length; i++) {
+
+                                var annLength = parseInt(elements.split(';')[i].split(',')[1]) - parseInt(elements.split(';')[i].split(',')[0]);
+
+                                for (var j = 0; j < annLength + 1; j++) {
+                                    colorArray[parseInt(elements.split(';')[i].split(',')[0]) + j] = color;
+                                    featureArray[parseInt(elements.split(';')[i].split(',')[0]) + j] = elements.split(';')[i].split(',')[2];
+                                }
+                            }
+
+                            selectChildren(this, colorArray, featureArray, color);
+
+                        });
+
+                    }
+                }
+
+                function refreshPage(html) {
+
+                    $("#TextLayer").html(html);
+
+                    var elements;
+
+                    var colorArray = new Array();
+                    var color;
+
+                    var featureArray = new Array();
+                    var feature;
+
+                    $("input:checked").each(function() {
+
+                        elements = $(this).attr("elements");
+                        color = $(this).parent().next().attr('bgcolor');                        
+                        //update colorArray and featureArray
+                        for (var i = 0; i < elements.split(';').length - 1; i++) {
+
+                            var annLength = parseInt(elements.split(';')[i].split(',')[1]) - parseInt(elements.split(';')[i].split(',')[0]);
+
+                            for (var j = 0; j < annLength + 1; j++) {
+                                colorArray[parseInt(elements.split(';')[i].split(',')[0]) + j] = color;
+                                featureArray[parseInt(elements.split(';')[i].split(',')[0]) + j] = elements.split(';')[i].split(',')[2];
+                            }
+                        }
+
+                        if ($(this).parent().parent().parent().parent().parent().children("ul").children().length > 0) {
+                            selectChildren($(this).parent().parent().parent().parent().parent(), colorArray, featureArray, color);
+                        }
+
+                    });
+
+
+                    var i;
+                    var displacement = 5;
+
+                    var htmlResult = html;
+
+                    if (colorArray.length > 0)
+                        htmlResult = "";
+
+
+                    var firstHighlight = false;
+
+                    for (i = 0; i < colorArray.length + displacement + 3; i++) {
+
+                        var letter = html.substring(i + displacement, i + displacement + 1) == "" ? "&nbsp" : html.substring(i + displacement, i + displacement + 1)
+
+                        var style = colorArray[i - displacement - 3] == undefined ? letter : "<span class='text' title='Features: <br/> " + featureArray[i - displacement - 3] + "' style='background-color:" + colorArray[i - displacement - 3] + ";' >" + letter + "</span>";
+
+                        if (firstHighlight == false && colorArray.length > 1) {
+
+                            htmlResult += html.substring(displacement, i + displacement) + style + html.substring(i + displacement + 1, i + displacement + 1);
+
+                            firstHighlight = true;
+                        }
+                        else if (i < colorArray.length - 1 + displacement + 3) {
+
+                            htmlResult += style + html.substring(i + displacement + 1, i + displacement + 1);
+                        }
+                        else {
+
+                            htmlResult += style + html.substring(i + displacement + 1, html.length);
+                        }
+
+
+                    }
+
+
+                    $("#TextLayer").html(htmlResult);
+
+                    $('span[class="text"]').tooltip({                        
+
+                        // place tooltip on the right edge
+                        position: "center right",
+
+                        // a little tweaking of the position
+                        offset: [0, 20],
+
+                        // use the built-in fadeIn/fadeOut effect
+                        //effect: "fade",
+
+                        // custom opacity setting
+                        opacity: 0.95
+
+                    });
+
+                }
+
+
+
+            });  
+              
+           
+        </script> 
+        
+        <link rel="stylesheet" type="text/css" href="MakeHTML/Resources/style.css"/>        
+    </head>
+
+    <body>
+    
+        <div id="ListLayer">
+            <ul>
+                {$annotation_type_list}
+            </ul>
+        </div>
+        
+        <div id="TextLayer">
+            {$document_text}
+        </div>         
+        
+
+    </body>
+
+</html>
