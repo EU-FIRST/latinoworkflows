@@ -95,14 +95,6 @@ namespace Latino.Workflows.TextMining
             }
         }
 
-        //public override string ToString()
-        //{
-        //    string str = string.Format("Topmost: {0}", mHistory.Second.Peek());
-        //    ArrayList<Guid> al = new ArrayList<Guid>(mHistory.Second.ToArray());
-        //    str += "\r\n" + al.ToString();
-        //    return str;
-        //}
-
         // *** ISerializable interface implementation ***
 
         public void Save(BinarySerializer writer)
