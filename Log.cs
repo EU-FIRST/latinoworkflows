@@ -11,8 +11,10 @@
  ***************************************************************************/
 
 using System;
+using System.IO;
+using System.Text;
 
-// TODO: per-instance level, per-instance type...
+// TODO: allow nulls in logging functions (rationale: must not crash because of logging)
 
 namespace Latino.Workflows
 {
@@ -26,8 +28,8 @@ namespace Latino.Workflows
     {
         public enum Type 
         { 
-            Console = 1,
-            File    = 2
+            Console   = 1,
+            LogWriter = 2
         }
 
         public enum Level
@@ -39,37 +41,74 @@ namespace Latino.Workflows
             Off      = 4
         }
 
-        private string mObjName;
-        private static Level mLevel
-            = Level.Debug; //Level.Info;
-        private static string mFileName
-            = null;
-        private static Type mType
-            = Type.Console;
-
-        private static object mLogLock
+        private static object mConsoleLock
             = new object();
+
+        private static Level mDefaultLogLevel
+            = Level.Info;
+        private static Type mDefaultLogType
+            = Type.Console;
+        private static TextWriter mDefaultLogWriter
+            = null;
+
+        private string mObjName;
+        private Level mLogLevel;
+        private Type mLogType;
+        private TextWriter mLogWriter;
 
         public Log(string objName)
         {
             Utils.ThrowException(objName == null ? new ArgumentNullException("objName") : null);
-            mObjName = objName;
+            mObjName = objName;            
+            mLogLevel = mDefaultLogLevel;
+            mLogType = mDefaultLogType;
+            mLogWriter = mDefaultLogWriter;
+        }
+
+        public static Level DefaultLogLevel
+        {
+            get { return mDefaultLogLevel; }
+            set { mDefaultLogLevel = value; }
+        }
+
+        public Level LogLevel
+        {
+            get { return mLogLevel; }
+            set { mLogLevel = value; }
+        }
+
+        public static Type DefaultLogType
+        {
+            get { return mDefaultLogType; }
+            set { mDefaultLogType = value; }
+        }
+
+        public Type LogType
+        {
+            get { return mLogType; }
+            set { mLogType = value; }
+        }
+
+        public static TextWriter DefaultLogWriter
+        {
+            get { return mDefaultLogWriter; }
+            set { mDefaultLogWriter = value; }
+        }
+
+        public TextWriter LogWriter
+        {
+            get { return mLogWriter; }
+            set { mLogWriter = value; }
         }
 
         public string ObjectName
         {
             get { return mObjName; }
-            set 
+            set
             {
                 Utils.ThrowException(value == null ? new ArgumentNullException("ObjectName") : null);
-                mObjName = value; 
+                mObjName = value;
             }
-        }
-
-        public static Level LogLevel
-        {
-            get { return mLevel; }
-            set { mLevel = value; }
         }
 
         // *** public interface ***
@@ -78,13 +117,20 @@ namespace Latino.Workflows
         {
             Utils.ThrowException(funcName == null ? new ArgumentNullException("funcName") : null); 
             Utils.ThrowException(message == null ? new ArgumentNullException("message") : null); 
-            if (mLevel == Level.Debug)
+            if (mLogLevel == Level.Debug)
             {
-                lock (mLogLock)
+                if ((mLogType & Type.Console) != 0)
                 {
-                    if ((mType & Type.Console) != 0)
+                    lock (mConsoleLock)
+                    {                     
+                        Debug(Console.Out, funcName, string.Format(message, args));
+                    }
+                }
+                if ((mLogType & Type.LogWriter) != 0 && mLogWriter != null)
+                {
+                    lock (mLogWriter)
                     {
-                        DebugConsole(funcName, string.Format(message, args));
+                        Debug(mLogWriter, funcName, string.Format(message, args));
                     }
                 }
             }
@@ -94,13 +140,20 @@ namespace Latino.Workflows
         {
             Utils.ThrowException(funcName == null ? new ArgumentNullException("funcName") : null);
             Utils.ThrowException(message == null ? new ArgumentNullException("message") : null); 
-            if (mLevel <= Level.Info)
+            if (mLogLevel <= Level.Info)
             {
-                lock (mLogLock)
+                if ((mLogType & Type.Console) != 0)
                 {
-                    if ((mType & Type.Console) != 0)
+                    lock (mConsoleLock)
                     {
-                        InfoConsole(funcName, string.Format(message, args));
+                        Info(Console.Out, funcName, string.Format(message, args));
+                    }
+                }
+                if ((mLogType & Type.LogWriter) != 0 && mLogWriter != null)
+                {
+                    lock (mLogWriter)
+                    {
+                        Info(mLogWriter, funcName, string.Format(message, args));
                     }
                 }
             }
@@ -110,13 +163,20 @@ namespace Latino.Workflows
         {
             Utils.ThrowException(funcName == null ? new ArgumentNullException("funcName") : null);
             Utils.ThrowException(message == null ? new ArgumentNullException("message") : null); 
-            if (mLevel <= Level.Warn)
+            if (mLogLevel <= Level.Warn)
             {
-                lock (mLogLock)
+                if ((mLogType & Type.Console) != 0)
                 {
-                    if ((mType & Type.Console) != 0)
+                    lock (mConsoleLock)
                     {
-                        WarningConsole(funcName, string.Format(message, args));
+                        Warning(Console.Out, funcName, string.Format(message, args));
+                    }
+                }
+                if ((mLogType & Type.LogWriter) != 0 && mLogWriter != null)
+                {
+                    lock (mLogWriter)
+                    {
+                        Warning(mLogWriter, funcName, string.Format(message, args));
                     }
                 }
             }
@@ -127,13 +187,20 @@ namespace Latino.Workflows
             Utils.ThrowException(funcName == null ? new ArgumentNullException("funcName") : null);
             Utils.ThrowException(e == null ? new ArgumentNullException("e") : null);
             Utils.ThrowException(e.Message == null ? new ArgumentNullException("e.Message") : null);
-            if (mLevel <= Level.Warn)
+            if (mLogLevel <= Level.Warn)
             {
-                lock (mLogLock)
+                if ((mLogType & Type.Console) != 0)
                 {
-                    if ((mType & Type.Console) != 0)
+                    lock (mConsoleLock)
                     {
-                        WarningConsole(funcName, /*message=*/null, e);
+                        Warning(Console.Out, funcName, /*message=*/null, e);
+                    }
+                }
+                if ((mLogType & Type.LogWriter) != 0 && mLogWriter != null)
+                {
+                    lock (mLogWriter)
+                    {
+                        Warning(mLogWriter, funcName, /*message=*/null, e);
                     }
                 }
             }
@@ -143,13 +210,20 @@ namespace Latino.Workflows
         {
             Utils.ThrowException(funcName == null ? new ArgumentNullException("funcName") : null);
             Utils.ThrowException(message == null ? new ArgumentNullException("message") : null); 
-            if (mLevel <= Level.Critical)
+            if (mLogLevel <= Level.Critical)
             {
-                lock (mLogLock)
+                if ((mLogType & Type.Console) != 0)
                 {
-                    if ((mType & Type.Console) != 0)
+                    lock (mConsoleLock)
                     {
-                        CriticalConsole(funcName, string.Format(message, args));
+                        Critical(Console.Out, funcName, string.Format(message, args));
+                    }
+                }
+                if ((mLogType & Type.LogWriter) != 0 && mLogWriter != null)
+                {
+                    lock (mLogWriter)
+                    {
+                        Critical(mLogWriter, funcName, string.Format(message, args));
                     }
                 }
             }
@@ -160,56 +234,69 @@ namespace Latino.Workflows
             Utils.ThrowException(funcName == null ? new ArgumentNullException("funcName") : null);
             Utils.ThrowException(e == null ? new ArgumentNullException("e") : null);
             Utils.ThrowException(e.Message == null ? new ArgumentNullException("e.Message") : null);
-            if (mLevel <= Level.Critical)
+            if (mLogLevel <= Level.Critical)
             {
-                lock (mLogLock)
+                if ((mLogType & Type.Console) != 0)
                 {
-                    if ((mType & Type.Console) != 0)
+                    lock (mConsoleLock)
                     {
-                        CriticalConsole(funcName, /*message=*/null, e);
+                        Critical(Console.Out, funcName, /*message=*/null, e);
+                    }
+                }
+                if ((mLogType & Type.LogWriter) != 0 && mLogWriter != null)
+                {
+                    lock (mLogWriter)
+                    {
+                        Critical(mLogWriter, funcName, /*message=*/null, e);
                     }
                 }
             }
         }
 
-        // *** console and file output ***
+        // *** logging functions ***
 
-        private void DebugConsole(string funcName, string message)
+        private void Debug(TextWriter writer, string funcName, string message)
         {
-            Console.WriteLine("{0:yyyy-MM-dd HH:mm:ss} {1} {2}", DateTime.Now, mObjName, funcName);
-            Console.WriteLine("DEBUG: {0}", message);
+            writer.WriteLine("{0:yyyy-MM-dd HH:mm:ss} {1} {2}", DateTime.Now, mObjName, funcName);
+            writer.WriteLine("DEBUG: {0}", message);
+            writer.Flush();
         }
 
-        private void InfoConsole(string funcName, string message)
+        private void Info(TextWriter writer, string funcName, string message)
         {
-            Console.WriteLine("{0:yyyy-MM-dd HH:mm:ss} {1} {2}", DateTime.Now, mObjName, funcName);
-            Console.WriteLine("INFO: {0}", message);
+            writer.WriteLine("{0:yyyy-MM-dd HH:mm:ss} {1} {2}", DateTime.Now, mObjName, funcName);
+            writer.WriteLine("INFO: {0}", message);
+            writer.Flush();
         }
 
-        private void WarningConsole(string funcName, string message)
+        private void Warning(TextWriter writer, string funcName, string message)
         {
-            Console.WriteLine("{0:yyyy-MM-dd HH:mm:ss} {1} {2}", DateTime.Now, mObjName, funcName);
-            Console.WriteLine("WARN: {0}", message);
+            writer.WriteLine("{0:yyyy-MM-dd HH:mm:ss} {1} {2}", DateTime.Now, mObjName, funcName);
+            writer.WriteLine("WARN: {0}", message);
+            writer.Flush();
         }
 
-        private void WarningConsole(string funcName, string message, Exception e)
+        private void Warning(TextWriter writer, string funcName, string message, Exception e)
         {
-            Console.WriteLine("{0:yyyy-MM-dd HH:mm:ss} {1} {2}", DateTime.Now, mObjName, funcName);
-            Console.WriteLine("WARN: {0}", message == null ? e.Message : message);
-            if (e.StackTrace != null) { Console.WriteLine(e.StackTrace); }
+            writer.WriteLine("{0:yyyy-MM-dd HH:mm:ss} {1} {2}", DateTime.Now, mObjName, funcName);
+            writer.WriteLine("WARN: {0}", message == null ? e.Message : message);
+            if (e.StackTrace != null) { writer.WriteLine(e.StackTrace); }
+            writer.Flush();
         }
 
-        private void CriticalConsole(string funcName, string message)
+        private void Critical(TextWriter writer, string funcName, string message)
         {
-            Console.WriteLine("{0:yyyy-MM-dd HH:mm:ss} {1} {2}", DateTime.Now, mObjName, funcName);
-            Console.WriteLine("CRITICAL: {0}", message);
+            writer.WriteLine("{0:yyyy-MM-dd HH:mm:ss} {1} {2}", DateTime.Now, mObjName, funcName);
+            writer.WriteLine("CRITICAL: {0}", message);
+            writer.Flush();
         }
 
-        private void CriticalConsole(string funcName, string message, Exception e)
+        private void Critical(TextWriter writer, string funcName, string message, Exception e)
         {
-            Console.WriteLine("{0:yyyy-MM-dd HH:mm:ss} {1} {2}", DateTime.Now, mObjName, funcName);
-            Console.WriteLine("CRITICAL: {0}", message == null ? e.Message : message);
-            if (e.StackTrace != null) { Console.WriteLine(e.StackTrace); }
+            writer.WriteLine("{0:yyyy-MM-dd HH:mm:ss} {1} {2}", DateTime.Now, mObjName, funcName);
+            writer.WriteLine("CRITICAL: {0}", message == null ? e.Message : message);
+            if (e.StackTrace != null) { writer.WriteLine(e.StackTrace); }
+            writer.Flush();
         }
     }
 }

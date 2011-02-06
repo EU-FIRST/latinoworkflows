@@ -29,10 +29,18 @@
 [x] remove useless using from RSS comp and dacq
 [x] test enums and serialization in latino
 [x] commit
+[x] DispatchData for data producers
+[ ] logging file output
+[x] Group RSS feeds
+[ ] commit
+[ ] Logging as stream component
+[ ] GetWebPage number of retries
+[ ] RSS component graceful sleep
+[ ] commit
 [ ] move log to latino, enable overriding static settings
 [ ] fixed-size queue 
 [ ] powerful query language for retrieving text blocks
 [ ] handle RSS comments
-
+[ ] timeouts (DB & WebUtils)
 
 

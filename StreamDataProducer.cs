@@ -27,7 +27,7 @@ namespace Latino.Workflows
             = new Set<IDataConsumer>();
         private int mTimeBetweenPolls
             = 1;
-        private bool mStopped
+        protected bool mStopped
             = false;
         private Thread mThread
             = null;
@@ -88,32 +88,38 @@ namespace Latino.Workflows
             }
         }
 
+        protected void DispatchData(object data)
+        {
+            Utils.ThrowException(data == null ? new ArgumentNullException("data") : null);
+            mLog.Debug("DispatchData", "Dispatching data of type {0} ...", data.GetType());
+            if (mDataConsumers.Count > 1 && mCloneDataOnFork)
+            {
+                foreach (IDataConsumer dataConsumer in mDataConsumers)
+                {
+                    dataConsumer.ReceiveData(this, Utils.Clone(data, /*deepClone=*/true));
+                }
+            }
+            else
+            {
+                foreach (IDataConsumer dataConsumer in mDataConsumers)
+                {
+                    dataConsumer.ReceiveData(this, data);
+                }
+            }
+            mLog.Debug("DispatchData", "Data dispatched.");
+        }
+
         private void ProduceDataLoop()
         {
             while (!mStopped)
             {
                 try
                 {
-                    // produce data
+                    // produce and dispatch data
                     object data = ProduceData();                    
                     if (data != null)
                     {
-                        mLog.Debug("ProduceDataLoop", "Produced data of type {0}.", data.GetType());
-                        // dispatch data
-                        if (mDataConsumers.Count > 1 && mCloneDataOnFork)
-                        {
-                            foreach (IDataConsumer dataConsumer in mDataConsumers)
-                            {
-                                dataConsumer.ReceiveData(this, Utils.Clone(data, /*deepClone=*/true));
-                            }
-                        }
-                        else
-                        {
-                            foreach (IDataConsumer dataConsumer in mDataConsumers)
-                            {
-                                dataConsumer.ReceiveData(this, data);
-                            }
-                        }
+                        DispatchData(data);
                     }
                 }
                 catch (Exception exc)

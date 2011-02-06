@@ -7,8 +7,8 @@
     <ProjectGuid>{EDE88AFF-1053-4175-B91C-4E683426706A}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>LatinoServices</RootNamespace>
-    <AssemblyName>LatinoServices</AssemblyName>
+    <RootNamespace>LatinoWorkflows</RootNamespace>
+    <AssemblyName>LatinoWorkflows</AssemblyName>
     <StartupObject>
     </StartupObject>
   </PropertyGroup>
@@ -76,9 +76,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="TextMining\DocumentCorpus\DocumentCorpusSchema.xsd">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
+    <None Include="TextMining\create_tables.sql" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
