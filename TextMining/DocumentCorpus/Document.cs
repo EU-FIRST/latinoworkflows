@@ -374,7 +374,7 @@ namespace Latino.Workflows.TextMining
 
         // *** output HTML ***
 
-        public void MakeHtmlPage(TextWriter document)
+        public void MakeHtmlPage(TextWriter document, bool inlineCss)
         {
             string templateString = Utils.GetManifestResourceString(GetType(), "Resources.DocumentTemplate.htm");
 
@@ -403,11 +403,12 @@ namespace Latino.Workflows.TextMining
 
             annotationTypeList += "</ul>";
 
-            templateString = templateString.Replace("{$document_title}", Utils.Trunc(mText, 20) + "...");
+            templateString = templateString.Replace("{$document_title}", Name);
             templateString = templateString.Replace("{$document_text}", mText);
             templateString = templateString.Replace("{$annotation_type_list}", annotationTypeList);
             templateString = templateString.Replace("{$annotation_type_list_name}", "annotationTypeList");
             templateString = templateString.Replace("{$annotation_name}", "annotation");
+            templateString = templateString.Replace("{$inline_css}", inlineCss.ToString());
 
             document.Write(templateString);
             document.Close();

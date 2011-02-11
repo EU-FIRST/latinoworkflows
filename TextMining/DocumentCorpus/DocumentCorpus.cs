@@ -215,7 +215,7 @@ namespace Latino.Workflows.TextMining
 
         // *** output HTML ***
 
-        public void MakeHtmlPage(string path)
+        public void MakeHtmlPage(string path, bool inlineCss)
         {
             string indexString = Utils.GetManifestResourceString(GetType(), "Resources.IndexTemplate.htm");
 
@@ -229,8 +229,8 @@ namespace Latino.Workflows.TextMining
             foreach (Document d in Documents)
             {
                 document = new StreamWriter(string.Format("{0}\\Document{1}.html", path, i));
-                documentList += "<p><a href=Document" + i + ".html>" + Utils.Trunc(d.Text, 20) + "...</a></p>";
-                d.MakeHtmlPage(document);                              
+                documentList += "<p><a href=Document" + i + ".html>" + d.Name + "</a></p>";
+                d.MakeHtmlPage(document, inlineCss);                              
                 i++;               
             }
 

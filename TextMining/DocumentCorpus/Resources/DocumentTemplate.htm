@@ -5,7 +5,7 @@
     <head>
     
         <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-        <title>{$document_title}</title>
+        <title>{$document_title}</title> 
         
         <!-- jQuery Library + ALL jQuery Tools -->
         <script src="http://cdn.jquerytools.org/1.2.5/full/jquery.tools.min.js" type="text/javascript"></script>
@@ -13,6 +13,21 @@
         <!--  <script language="javascript" type="text/javascript" src="MakeHTML/jQuery/jquery-1.4.1.js"></script>    -->     
         
         <script type="text/javascript">
+            var inlineCss = "{$inline_css}";
+
+        if (inlineCss)
+        {
+            document.write('<style type="text/css">');
+            document.write('#TextLayer {position:absolute;left:500px;top:60px;width:600px;height:auto;z-index:1;}');
+            document.write('#ListLayer {position:absolute;left:50px;top:60px;width:300px;height:auto;z-index:1;}');
+            document.write('ul, li, ul li a {list-style: none;}');
+            document.write('.tooltip {background-color:#26517E;border:1px solid #fff;padding:10px 15px;display:none;color:#fff;text-align:left;font-size:15px;font-weight:bolder;z-index: 8000;-moz-box-shadow:0 0 10px #000;-webkit-box-shadow:0 0 10px #000;}');
+            document.write('</style>');           
+        }
+        else
+        {
+        /* <link rel="stylesheet" type="text/css" href="/Resources/style.css"/>  */
+        }
 
             $(document).ready(function() {
 
@@ -97,7 +112,7 @@
                     var i;
                     var displacement = 5;
 
-                    var htmlResult = html;
+                    var htmlResult = "";
 
                     if (colorArray.length > 0)
                         htmlResult = "";
@@ -155,9 +170,8 @@
             });  
               
            
-        </script> 
-        
-        <link rel="stylesheet" type="text/css" href="MakeHTML/Resources/style.css"/>        
+        </script>         
+       
     </head>
 
     <body>
