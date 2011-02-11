@@ -392,7 +392,7 @@ namespace Latino.Workflows.TextMining
 
                 string colorHtml = GetNewColor(colors);
 
-                annotationTypeList += "<li> <TABLE ><TR><TD width='100px' name='{$annotation_name}'><input type='checkbox' name='{$annotation_type_list_name}' class='" + tree.Root.Value + "'elements='" + tree.Root.Elements + "' >" + tree.Root.Value + " <TD bgcolor='" + colorHtml + "' style='border:solid black 1px'>&nbsp &nbsp &nbsp</TD></TR></TABLE>";
+                annotationTypeList += "<li> <TABLE ><TR><TD name='{$annotation_name}' style='padding-right:10px' ><input type='checkbox' name='{$annotation_type_list_name}' class='" + tree.Root.Value + "'elements='" + tree.Root.Elements + "' >" + tree.Root.Value + " <TD bgcolor='" + colorHtml + "' style='border:solid black 1px'>&nbsp &nbsp &nbsp</TD></TR></TABLE>";
 
                 annotationTypeList += "<ul>";
                 annotationTypeList = WriteHtmlList(tree, annotationTypeList, colors);
@@ -429,7 +429,7 @@ namespace Latino.Workflows.TextMining
                     
                     bool newNode = true;
 
-                    for (int s = 1; s < result.Count; s++)
+                    for (int s = 0; s < result.Count; s++)
                     {
                         if (((Tree<string>)result[s]).Value == annSplit[0])
                         {
@@ -556,7 +556,7 @@ namespace Latino.Workflows.TextMining
             {
                 string colorHtml = GetNewColor(colors);
 
-                html += "<li> <TABLE ><TR><TD width='100px' name='{$annotation_name}'><input type='checkbox' name='{$annotation_type_list_name}' class='" + tree.Children[k].Value + "'elements='" + tree.Children[k].Elements + "' >" + tree.Children[k].Value + " <TD bgcolor='" + colorHtml + " ' style='border:solid black 1px'>&nbsp &nbsp &nbsp</TD></TR></TABLE>";
+                html += "<li> <TABLE ><TR><TD name='{$annotation_name}' style='padding-right:10px' ><input type='checkbox' name='{$annotation_type_list_name}' class='" + tree.Children[k].Value + "'elements='" + tree.Children[k].Elements + "' >" + tree.Children[k].Value + " <TD bgcolor='" + colorHtml + " ' style='border:solid black 1px'>&nbsp &nbsp &nbsp</TD></TR></TABLE>";
 
                 html += "<ul>";
                 html = WriteHtmlList(tree.Children[k], html, colors);
