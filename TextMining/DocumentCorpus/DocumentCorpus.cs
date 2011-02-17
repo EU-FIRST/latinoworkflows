@@ -229,12 +229,14 @@ namespace Latino.Workflows.TextMining
             foreach (Document d in Documents)
             {
                 document = new StreamWriter(string.Format("{0}\\Document{1}.html", path, i));
-                documentList += "<p><a href=Document" + i + ".html>" + d.Name + "</a></p>";
+                documentList += "<p class='documentTitle'><a href=Document" + i + ".html>" + d.Name + "</a></br>";
+                documentList += "<p class='documentText'>" + Utils.Trunc(d.Text, 400) + "...</p>";
                 d.MakeHtmlPage(document, inlineCss);                              
                 i++;               
             }
 
             indexString = indexString.Replace("{$document_list}", documentList);
+            indexString = indexString.Replace("{$inline_css}", inlineCss.ToString());
 
             index.Write(indexString);
             index.Close();

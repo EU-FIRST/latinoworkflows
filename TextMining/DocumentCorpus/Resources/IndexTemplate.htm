@@ -3,10 +3,41 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-        <title>Document Corpus</title>            
+        <title>Document Corpus</title>  
+           
+        <!-- jQuery Library + ALL jQuery Tools -->
+        <script src="http://cdn.jquerytools.org/1.2.5/full/jquery.tools.min.js" type="text/javascript"></script>  
+        
+        <script type="text/javascript">
+           
+            var inlineCss = "{$inline_css}";
+
+            if (inlineCss) {
+                document.write('<style type="text/css">');
+                document.write('body {margin-left: 15%; margin-right: 10%; margin-top: 5%; }');         
+                document.write('.documentTitle {font-weight:bold; font-size:1.3em; margin-top: 1.5em; margin-bottom: 0.5em; }');
+                document.write('.documentText {margin-top: 0em; margin-bottom: 0em; width: 50em; }}');
+                document.write('</style>');
+                       
+            }
+            else
+            {
+            /* <link rel="stylesheet" type="text/css" href="/Resources/style.css"/>  */
+            }
+
+        </script>
+             
     </head>
 
     <body>   
+    <div id="container" style="position:relative">
+        <div id="featureList" ">
+        </div>
+        <div id="documentList">
+            {$document_list}
+        </div>
+        </div>
+
 {$document_list}    
     </body>
 
