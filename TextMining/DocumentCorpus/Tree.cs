@@ -58,12 +58,7 @@ namespace Latino.Workflows.TextMining
         {
             return Add(new TreeNode<T>(value));
         }
-
-
-        public override string ToString()
-        {
-            return "Count=" + Count.ToString();
-        }
+        
     }
 
     /* .-----------------------------------------------------------------------

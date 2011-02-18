@@ -18,9 +18,11 @@
         if (inlineCss)
         {
             document.write('<style type="text/css">');
-            document.write('#TextLayer {position:absolute;left:500px;top:60px;width:600px;height:auto;z-index:1;}');
-            document.write('#ListLayer {position:absolute;left:50px;top:60px;width:400px;height:auto;z-index:1;}');
+            document.write('#TextLayer {position:absolute;left:450px;top:60px;width:600px;height:auto;padding-left:3em;border-left:1px #999999 solid;z-index:1;}');
+            document.write('#ListLayer {position:relative;left:50px;top:60px;width:auto;height:auto;z-index:1;}');
+            document.write('#DocumentFeaturesLayer {position:absolute;left:50px;width:auto;height:auto;padding-left:2.1em;padding-top:1.5em;z-index:1;}');
             document.write('ul, li, ul li a {list-style: none;}');
+            document.write('h3 {color: #004D99; font-weight:bold}');
             document.write('.tooltip {background-color:#26517E;border:1px solid #fff;padding:10px 15px;display:none;color:#fff;text-align:left;font-size:15px;font-weight:bolder;z-index: 8000;-moz-box-shadow:0 0 10px #000;-webkit-box-shadow:0 0 10px #000;}');
             document.write('</style>');           
         }
@@ -182,9 +184,15 @@
     <body>
     
         <div id="ListLayer">
+            <h3 style="padding-left:4.5em">Annotation tree</h3>
             <ul>
                 {$annotation_type_list}
             </ul>
+        
+            <div id="DocumentFeaturesLayer">
+                <h3>Features</h3>
+                {$document_features}                
+            </div>
         </div>
         
         <div id="TextLayer">

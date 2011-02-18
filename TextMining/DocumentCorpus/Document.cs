@@ -403,8 +403,16 @@ namespace Latino.Workflows.TextMining
 
             annotationTypeList += "</ul>";
 
-            templateString = templateString.Replace("{$document_title}", Name);
+            string documentFeatures = String.Empty;
+
+            foreach (KeyValuePair<string, string> f in this.Features)
+            {
+                documentFeatures += f.Key + " = " + f.Value + " <br/>";
+            }
+
+            templateString = templateString.Replace("{$document_title}", mName);
             templateString = templateString.Replace("{$document_text}", mText);
+            templateString = templateString.Replace("{$document_features}", documentFeatures);
             templateString = templateString.Replace("{$annotation_type_list}", annotationTypeList);
             templateString = templateString.Replace("{$annotation_type_list_name}", "annotationTypeList");
             templateString = templateString.Replace("{$annotation_name}", "annotation");
