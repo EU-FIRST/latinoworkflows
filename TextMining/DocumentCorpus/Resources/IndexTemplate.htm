@@ -14,9 +14,15 @@
 
             if (inlineCss) {
                 document.write('<style type="text/css">');
-                document.write('body {margin-left: 15%; margin-right: 10%; margin-top: 5%; }');         
+                document.write('body {margin-left: 15%; margin-right: 10%; margin-top: 5%; }');
+
+                document.write('#documentList {position:absolute;top:60px;width:600px;left:300px;height:auto;border-left:1px #999999 solid;padding-left:2em;z-index:2;}');
+                document.write('#corpusFeatures {position:absolute;left:50px;top:60px;padding-top:1em;width:auto;height:auto;z-index:1;}');
+                document.write('h3 {color: #004D99; font-weight:bold}');
+               
                 document.write('.documentTitle {font-weight:bold; font-size:1.3em; margin-top: 1.5em; margin-bottom: 0.5em; }');
-                document.write('.documentText {margin-top: 0em; margin-bottom: 0em; width: 50em; }}');
+                document.write('.documentText {margin-top: 0em; margin-bottom: 0em; width: 50em; }}'); 
+                
                 document.write('</style>');
                        
             }
@@ -29,16 +35,17 @@
              
     </head>
 
-    <body>   
-    <div id="container" style="position:relative">
-        <div id="featureList" ">
-        </div>
-        <div id="documentList">
-            {$document_list}
-        </div>
-        </div>
+    <body>
 
-{$document_list}    
+            <div id="corpusFeatures">
+                <h3>Features</h3>
+                {$corpus_features}    
+            </div>
+
+            <div id="documentList">
+                {$document_list}
+            </div>    
+                
     </body>
 
 </html>

@@ -235,7 +235,15 @@ namespace Latino.Workflows.TextMining
                 i++;               
             }
 
+            string corpusFeatures = String.Empty;
+
+            foreach (KeyValuePair<string, string> f in this.Features)
+            {
+                corpusFeatures += f.Key + " = " + f.Value + " <br/>";
+            }
+
             indexString = indexString.Replace("{$document_list}", documentList);
+            indexString = indexString.Replace("{$corpus_features}", corpusFeatures);
             indexString = indexString.Replace("{$inline_css}", inlineCss.ToString());
 
             index.Write(indexString);
