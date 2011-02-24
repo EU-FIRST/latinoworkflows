@@ -334,7 +334,9 @@ namespace Latino.Workflows.TextMining
             string ns = "http://freekoders.org/latino";
             if (writeTopElement) { writer.WriteStartElement("Document", ns); }
             writer.WriteElementString("Name", ns, mName);
-            writer.WriteElementString("Text", ns, mText);            
+            writer.WriteStartElement("Text", ns);
+            writer.WriteCData(mText);
+            writer.WriteEndElement();
             writer.WriteStartElement("Annotations", ns);
             foreach (Annotation annot in mAnnotations)
             {
