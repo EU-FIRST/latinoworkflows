@@ -61,7 +61,7 @@ namespace Latino.Workflows.Persistance
             foreach (Document document in corpus.Documents)
             {
                 string documentId = Guid.NewGuid().ToString("N");
-                success = mConnection.ExecuteNonQuery("insert into Documents (id, corpusId, name, description, text, category, link, time, pubDate, raw) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                success = mConnection.ExecuteNonQuery("insert into Documents (id, corpusId, name, description, text, category, link, time, pubDate) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     documentId, 
                     corpusId, 
                     Utils.Trunc(document.Name, 4000),
@@ -70,8 +70,7 @@ namespace Latino.Workflows.Persistance
                     Utils.Trunc(document.Features.GetFeatureValue("category"), 4000),
                     Utils.Trunc(document.Features.GetFeatureValue("link"), 4000),
                     Utils.Trunc(document.Features.GetFeatureValue("_time"), 30),
-                    Utils.Trunc(document.Features.GetFeatureValue("pubDate"), 30),
-                    document.Features.GetFeatureValue("raw"));
+                    Utils.Trunc(document.Features.GetFeatureValue("pubDate"), 30));
                 if (!success) { mLog.Warning("ConsumeData", "Unable to write to database."); }
             }
         }

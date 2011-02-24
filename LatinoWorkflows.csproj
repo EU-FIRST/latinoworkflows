@@ -76,7 +76,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="TextMining\create_tables.sql" />
+    <None Include="Persistance\CreateTables.sql" />
+    <EmbeddedResource Include="TextMining\DocumentCorpus\DocumentCorpusSchema.xsd">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />

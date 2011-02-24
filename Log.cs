@@ -12,7 +12,6 @@
 
 using System;
 using System.IO;
-using System.Text;
 
 // TODO: allow nulls in logging functions (rationale: must not crash because of logging)
 

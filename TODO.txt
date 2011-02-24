@@ -30,17 +30,18 @@
 [x] test enums and serialization in latino
 [x] commit
 [x] DispatchData for data producers
-[ ] logging file output
+[x] logging file output
 [x] Group RSS feeds
-[ ] commit
-[ ] Logging as stream component
+[x] RSS component politeness sleep
+[x] Timeouts in WebUtils
+[x] commit
 [ ] GetWebPage number of retries
-[ ] RSS component graceful sleep
+[ ] Logging as stream component
 [ ] commit
 [ ] move log to latino, enable overriding static settings
 [ ] fixed-size queue 
 [ ] powerful query language for retrieving text blocks
 [ ] handle RSS comments
-[ ] timeouts (DB & WebUtils)
-
+[ ] DB query timeouts (?)
+[ ] document corpus Resources -> Templates
 

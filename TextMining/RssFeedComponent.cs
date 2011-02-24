@@ -57,10 +57,10 @@ namespace Latino.Workflows.TextMining
         public RssFeedComponent(IEnumerable<string> rssList)
         {
             Utils.ThrowException(rssList == null ? new ArgumentNullException("rssList") : null);
-            Utils.ThrowException(!rssList.GetEnumerator().MoveNext() ? new ArgumentValueException("rssList") : null);
             mSources = new ArrayList<string>();
+            AddSources(rssList); // throws ArgumentNullException, ArgumentValueException
+            Utils.ThrowException(mSources.Count == 0 ? new ArgumentValueException("rssList") : null);
             TimeBetweenPolls = 300000; // poll every 5 minutes by default
-            AddSources(rssList); // throws ArgumentValueException
         }
 
         public ArrayList<string>.ReadOnly Sources
@@ -102,7 +102,7 @@ namespace Latino.Workflows.TextMining
             get { return mPolitenessSleep; }
             set
             {
-                Utils.ThrowException(value <= 0 ? new ArgumentOutOfRangeException("PoliteSleep") : null);
+                Utils.ThrowException(value <= 0 ? new ArgumentOutOfRangeException("PolitenessSleep") : null);
                 mPolitenessSleep = value;
             }
         }
@@ -145,9 +145,11 @@ namespace Latino.Workflows.TextMining
                         content = WebUtils.GetWebPageJsint(itemAttr["link"]);
                         if (mIncludeRawData)
                         {
-                            CookieContainer cookies = null;
-                            string ascii = WebUtils.GetWebPage(itemAttr["link"], /*refUrl=*/null, ref cookies, Encoding.GetEncoding("ISO-8859-1"), WebUtils.Timeout);
-                            itemAttr.Add("raw", ascii);
+                            CookieContainer cookies = null;                            
+                            Encoding extAsciiEnc = Encoding.GetEncoding("ISO-8859-1");
+                            string ascii = WebUtils.GetWebPage(itemAttr["link"], /*refUrl=*/null, ref cookies, extAsciiEnc, WebUtils.DefaultTimeout);
+                            ascii = Convert.ToBase64String(extAsciiEnc.GetBytes(ascii));
+                            itemAttr.Add("raw", ascii);                            
                         }
                     }
                     catch (Exception e)

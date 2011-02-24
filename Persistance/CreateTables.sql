@@ -1,5 +1,5 @@
-USE [FirstDataset]
-GO
+/*USE [DacqPipeDB]
+GO*/
 
 /****** Object:  Table [dbo].[Corpora]    Script Date: 02/06/2011 11:08:48 ******/
 IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Corpora]') AND type in (N'U'))
@@ -57,8 +57,7 @@ CREATE TABLE [dbo].[Documents](
 	[category] [nvarchar](4000) NULL,
 	[link] [nvarchar](4000) NULL,
 	[time] [char](30) NULL,
-	[pubDate] [char](30) NULL,
-	[raw] [text] NULL
+	[pubDate] [char](30) NULL
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 
 GO
