@@ -18,11 +18,14 @@
         if (inlineCss)
         {
             document.write('<style type="text/css">');
-            document.write('#TextLayer {position:absolute;left:450px;top:60px;width:60%;height:auto;padding-left:3em;border-left:1px #999999 solid;z-index:1;white-space:pre-wrap;}');
-            document.write('#ListLayer {position:relative;left:50px;top:60px;width:70%;height:auto;z-index:1;}');
+            document.write('#TextLayer {position:absolute;left:450px;top:60px;width:60%;height:auto;padding-left:3em;border-left:1px #3C64B6 solid;z-index:1;}');
+            document.write('#DocumentText {white-space:pre-wrap;}');
+            document.write('#DocumentTitle {color:#3C64B6;background-color: #EEEEEE;font-weight:bold;font-size:1.5em;padding-bottom:1em;padding-top:1em;padding-left:0.3em}');
+            document.write('#ListLayer {position:relative;left:50px;top:60px;width:30%;height:auto;z-index:1;}');
             document.write('#DocumentFeaturesLayer {position:absolute;left:50px;width:auto;height:auto;padding-left:2.1em;padding-top:1.5em;z-index:1;}');
-            document.write('ul, li, ul li a {list-style: none;width:70%;}');
+            document.write('ul, li, ul li a {list-style: none;width:100%;}');
             document.write('h3 {color: #004D99; font-weight:bold}');
+
             document.write('.tooltip {background-color:#26517E;border:1px solid #fff;padding:10px 15px;display:none;color:#fff;text-align:left;font-size:15px;font-weight:bolder;z-index: 8000;-moz-box-shadow:0 0 10px #000;-webkit-box-shadow:0 0 10px #000;}');
             document.write('</style>');           
         }
@@ -33,7 +36,7 @@
 
         $(document).ready(function () {
 
-            var html = $("#TextLayer").html();
+            var html = $("#DocumentText").html();
 
             $('input[name="{$annotation_type_list_name}"]').click(function () {
 
@@ -79,7 +82,7 @@
 
             function refreshPage(html) {
 
-                $("#TextLayer").html(html);
+                $("#DocumentText").html(html);
 
                 var elements;
 
@@ -152,7 +155,7 @@
                 }
 
 
-                $("#TextLayer").html(htmlResult);
+                $("#DocumentText").html(htmlResult);
 
                 $('span[class="text"]').tooltip({
 
@@ -196,7 +199,12 @@
         </div>
         
         <div id="TextLayer">
-            {$document_text}
+            <div id="DocumentTitle">
+                {$document_title}
+            </div>
+            <div id="DocumentText">
+                {$document_text}
+            </div>
         </div>         
         
 
