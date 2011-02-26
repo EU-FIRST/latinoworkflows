@@ -45,7 +45,7 @@ namespace Latino.Workflows.TextMining
         private static Set<string> mItemElements
             = new Set<string>(new string[] { "title", "link", "description", "author", "category", "comments", "pubDate", "source" });
 
-        public RssFeedComponent(string rssUrl)
+        public RssFeedComponent(string rssUrl) : base("Latino.Workflows.TextMining.RssFeedComponent")
         {
             Utils.ThrowException(rssUrl == null ? new ArgumentNullException("rssUrl") : null);
             Utils.ThrowException(!Uri.IsWellFormedUriString(rssUrl, UriKind.Absolute) ? new ArgumentValueException("rssUrl") : null);
@@ -54,7 +54,7 @@ namespace Latino.Workflows.TextMining
             TimeBetweenPolls = 300000; // poll every 5 minutes by default
         }
 
-        public RssFeedComponent(IEnumerable<string> rssList)
+        public RssFeedComponent(IEnumerable<string> rssList) : base("Latino.Workflows.TextMining.RssFeedComponent")
         {
             Utils.ThrowException(rssList == null ? new ArgumentNullException("rssList") : null);
             mSources = new ArrayList<string>();
@@ -130,7 +130,7 @@ namespace Latino.Workflows.TextMining
             string desc = "";
             itemAttr.TryGetValue("description", out desc);
             Guid guid = MakeGuid(name, desc);
-            mLog.Info("ProcessItem", "Found item \"{0}\" [{1}].", Utils.MakeOneLine(name, /*compact=*/true), guid.ToString("N"));
+            mLogger.Info("ProcessItem", "Found item \"{0}\" [{1}].", Utils.ToOneLine(name, /*compact=*/true), guid.ToString("N"));
             if (!mHistory.Contains(guid))
             {
                 mHistory.AddToHistory(guid);              
@@ -141,7 +141,7 @@ namespace Latino.Workflows.TextMining
                     // get referenced Web page
                     try
                     {
-                        mLog.Info("ProcessItem", "Getting HTML from {0} ...", itemAttr["link"]);
+                        mLogger.Info("ProcessItem", "Getting HTML from {0} ...", itemAttr["link"]);
                         content = WebUtils.GetWebPageJsint(itemAttr["link"]);
                         if (mIncludeRawData)
                         {
@@ -154,7 +154,7 @@ namespace Latino.Workflows.TextMining
                     }
                     catch (Exception e)
                     {
-                        mLog.Warning("ProcessItem", e);
+                        mLogger.Warn("ProcessItem", e);
                     }
                     Thread.Sleep(mPolitenessSleep); 
                 }
@@ -198,19 +198,19 @@ namespace Latino.Workflows.TextMining
                 string xml;
                 try
                 {
-                    mLog.Info("ProduceData", "Getting RSS XML from {0} ...", url);
+                    mLogger.Info("ProduceData", "Getting RSS XML from {0} ...", url);
                     xml = WebUtils.GetWebPageDetectEncoding(url);
                 }
                 catch (Exception e)
                 {
-                    mLog.Warning("ProduceData", e);
+                    mLogger.Warn("ProduceData", e);
                     return null;
                 }
                 Dictionary<string, string> channelAttr = new Dictionary<string, string>();
                 DocumentCorpus corpus = new DocumentCorpus();
                 XmlTextReader reader = new XmlTextReader(new StringReader(xml));
                 // first pass: items
-                mLog.Info("ProduceData", "Reading items ...");
+                mLogger.Info("ProduceData", "Reading items ...");
                 while (reader.Read())
                 {
                     if (reader.NodeType == XmlNodeType.Element && reader.Name == "item" && !reader.IsEmptyElement)
@@ -256,7 +256,7 @@ namespace Latino.Workflows.TextMining
                 if (corpus.Documents.Count > 0)
                 {
                     // second pass: channel attributes
-                    mLog.Info("ProduceData", "Reading channel attributes ...");
+                    mLogger.Info("ProduceData", "Reading channel attributes ...");
                     while (reader.Read())
                     {
                         if (reader.NodeType == XmlNodeType.Element && reader.Name == "channel" && !reader.IsEmptyElement)
@@ -303,13 +303,13 @@ namespace Latino.Workflows.TextMining
                         //Console.WriteLine("{0} = \"{1}\"", attr.Key, attr.Value);
                         corpus.Features.SetFeatureValue(attr.Key, attr.Value);
                     }
-                    mLog.Info("ProduceData", "{0} new items.", corpus.Documents.Count);
+                    mLogger.Info("ProduceData", "{0} new items.", corpus.Documents.Count);
                     // dispatch data 
                     DispatchData(corpus); 
                 }
                 else
                 {
-                    mLog.Info("ProduceData", "No new items.");
+                    mLogger.Info("ProduceData", "No new items.");
                 }   
                 // stopped?
                 if (mStopped) { return null; }

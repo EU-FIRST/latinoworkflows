@@ -22,6 +22,10 @@ namespace Latino.Workflows.TextMining
     */
     public abstract class DocumentConsumer : StreamDataConsumer
     {
+        public DocumentConsumer(string loggerName) : base(loggerName)
+        { 
+        }
+
         protected override void ConsumeData(IDataProducer sender, object data)
         {
             Utils.ThrowException(!(data is DocumentCorpus) ? new ArgumentTypeException("data") : null);

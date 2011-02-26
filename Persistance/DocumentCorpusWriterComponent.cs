@@ -29,10 +29,10 @@ namespace Latino.Workflows.Persistance
         private DatabaseConnection mConnection
             = new DatabaseConnection();
 
-        public DocumentCorpusWriterComponent(string dbConnectionString)
+        public DocumentCorpusWriterComponent(string dbConnectionString) : base("Latino.Workflows.Persistance.DocumentCorpusWriterComponent")
         {
             mConnection.ConnectionString = dbConnectionString; // throws ArgumentNullException
-            mConnection.Connect(); // throws OleDbException
+            mConnection.Connect(); // throws OleDbException            
         }
 
         protected override void ConsumeData(IDataProducer sender, object data)
@@ -57,7 +57,7 @@ namespace Latino.Workflows.Persistance
                 corpus.Features.GetFeatureValue("_source"),
                 Utils.Trunc(corpus.Features.GetFeatureValue("_timeStart"), 30),
                 Utils.Trunc(corpus.Features.GetFeatureValue("_timeEnd"), 30));
-            if (!success) { mLog.Warning("ConsumeData", "Unable to write to database."); }
+            if (!success) { mLogger.Warn("ConsumeData", "Unable to write to database."); }
             foreach (Document document in corpus.Documents)
             {
                 string documentId = Guid.NewGuid().ToString("N");
@@ -71,7 +71,7 @@ namespace Latino.Workflows.Persistance
                     Utils.Trunc(document.Features.GetFeatureValue("link"), 4000),
                     Utils.Trunc(document.Features.GetFeatureValue("_time"), 30),
                     Utils.Trunc(document.Features.GetFeatureValue("pubDate"), 30));
-                if (!success) { mLog.Warning("ConsumeData", "Unable to write to database."); }
+                if (!success) { mLogger.Warn("ConsumeData", "Unable to write to database."); }
             }
         }
 

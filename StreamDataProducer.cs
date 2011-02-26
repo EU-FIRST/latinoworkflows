@@ -33,16 +33,11 @@ namespace Latino.Workflows
             = null;
         private bool mCloneDataOnFork
             = true;
-        protected Log mLog;
+        protected Logger mLogger;
 
-        public StreamDataProducer()
+        public StreamDataProducer(string loggerName)
         {
-            mLog = new Log(GetType().ToString());
-        }
-
-        public Log Logging
-        {
-            get { return mLog; }
+            mLogger = Logger.GetLogger(loggerName);
         }
 
         public bool CloneDataOnFork
@@ -54,17 +49,17 @@ namespace Latino.Workflows
         public void Start()
         {
             Utils.ThrowException(IsRunning ? new InvalidOperationException() : null);
-            mLog.Debug("Start", "Starting ...");
+            mLogger.Debug("Start", "Starting ...");
             mThread = new Thread(new ThreadStart(ProduceDataLoop));
             mStopped = false;
             mThread.Start();
-            mLog.Debug("Start", "Started.");
+            mLogger.Debug("Start", "Started.");
         }
 
         public void Stop()
         {            
             Utils.ThrowException(!IsRunning ? new InvalidOperationException() : null);
-            mLog.Debug("Stop", "Stopping ...");
+            mLogger.Debug("Stop", "Stopping ...");
             mStopped = true;
         }
 
@@ -91,7 +86,7 @@ namespace Latino.Workflows
         protected void DispatchData(object data)
         {
             Utils.ThrowException(data == null ? new ArgumentNullException("data") : null);
-            mLog.Debug("DispatchData", "Dispatching data of type {0} ...", data.GetType());
+            mLogger.Debug("DispatchData", "Dispatching data of type {0} ...", data.GetType());
             if (mDataConsumers.Count > 1 && mCloneDataOnFork)
             {
                 foreach (IDataConsumer dataConsumer in mDataConsumers)
@@ -106,7 +101,7 @@ namespace Latino.Workflows
                     dataConsumer.ReceiveData(this, data);
                 }
             }
-            mLog.Debug("DispatchData", "Data dispatched.");
+            mLogger.Debug("DispatchData", "Data dispatched.");
         }
 
         private void ProduceDataLoop()
@@ -124,17 +119,17 @@ namespace Latino.Workflows
                 }
                 catch (Exception exc)
                 {
-                    mLog.Critical("ProduceDataLoop", exc);
+                    mLogger.Error("ProduceDataLoop", exc);
                 }
                 int sleepTime = Math.Min(500, mTimeBetweenPolls);
                 DateTime start = DateTime.Now;
                 while ((DateTime.Now - start).TotalMilliseconds < mTimeBetweenPolls)
                 {
-                    if (mStopped) { mLog.Info("ProduceDataLoop", "Stopped."); return; }    
+                    if (mStopped) { mLogger.Info("ProduceDataLoop", "Stopped."); return; }    
                     Thread.Sleep(sleepTime);
                 }
             }
-            mLog.Info("ProduceDataLoop", "Stopped.");
+            mLogger.Info("ProduceDataLoop", "Stopped.");
         }
 
         protected abstract object ProduceData();
@@ -160,13 +155,13 @@ namespace Latino.Workflows
 
         public void Dispose()
         {
-            mLog.Debug("Dispose", "Disposing ...");
+            mLogger.Debug("Dispose", "Disposing ...");
             if (IsRunning)
             {
                 Stop();
                 while (IsRunning) { Thread.Sleep(100); }
             }
-            mLog.Debug("Dispose", "Disposed.");
+            mLogger.Debug("Dispose", "Disposed.");
         }
     }
 }

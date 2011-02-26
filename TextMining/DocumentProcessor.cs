@@ -22,6 +22,10 @@ namespace Latino.Workflows.TextMining
     */
     public abstract class DocumentProcessor : StreamDataProcessor
     {
+        public DocumentProcessor(string loggerName) : base(loggerName)
+        { 
+        }
+
         protected override object ProcessData(IDataProducer sender, object data)
         {
             Utils.ThrowException(!(data is DocumentCorpus) ? new ArgumentTypeException("data") : null);

@@ -31,23 +31,18 @@ namespace Latino.Workflows
         private bool mStopped
             = false;
         private Thread mThread;
-        protected Log mLog;
+        protected Logger mLogger;          
 
-        public StreamDataConsumer()
+        public StreamDataConsumer(string loggerName)
         { 
             mThread = new Thread(new ThreadStart(ProcessQueue));
-            mLog = new Log(GetType().ToString());
-        }
-
-        public Log Logging
-        {
-            get { return mLog; }
+            mLogger = Logger.GetLogger(loggerName);
         }
 
         public void Stop()
         {            
             Utils.ThrowException(!IsRunning ? new InvalidOperationException() : null);
-            mLog.Debug("Stop", "Stopping ...");
+            mLogger.Debug("Stop", "Stopping ...");
             lock (mQueue)
             {
                 mStopped = true;
@@ -62,7 +57,7 @@ namespace Latino.Workflows
         public void Resume()
         {
             Utils.ThrowException(IsRunning ? new InvalidOperationException() : null);
-            mLog.Debug("Resume", "Resuming ...");
+            mLogger.Debug("Resume", "Resuming ...");
             lock (mQueue)
             {
                 mStopped = false;
@@ -70,7 +65,7 @@ namespace Latino.Workflows
                 mThreadAlive = mQueue.Count > 0;
                 if (mThreadAlive) { mThread.Start(); }
             }
-            mLog.Debug("Resume", "Resumed.");
+            mLogger.Debug("Resume", "Resumed.");
         }
 
         public bool IsRunning
@@ -88,7 +83,7 @@ namespace Latino.Workflows
                     Pair<IDataProducer, object> data;
                     lock (mQueue)
                     {
-                        if (mStopped) { mLog.Debug("Stop", "Stopped."); return; }
+                        if (mStopped) { mLogger.Debug("Stop", "Stopped."); return; }
                         data = mQueue.Dequeue();
                     }
                     // consume data
@@ -98,19 +93,19 @@ namespace Latino.Workflows
                     }
                     catch (Exception exc)
                     {
-                        mLog.Critical("ProcessQueue", exc);
+                        mLogger.Error("ProcessQueue", exc);
                     }
                     // check if more data available
                     lock (mQueue)
                     {
-                        if (mStopped) { mLog.Debug("Stop", "Stopped."); return; }
+                        if (mStopped) { mLogger.Debug("Stop", "Stopped."); return; }
                         mThreadAlive = mQueue.Count > 0;
                         if (!mThreadAlive) { break; }
                     }
                 }
                 Thread.CurrentThread.Suspend();
             }
-            mLog.Debug("Stop", "Stopped.");
+            mLogger.Debug("Stop", "Stopped.");
         }
 
         protected abstract void ConsumeData(IDataProducer sender, object data);
@@ -121,7 +116,7 @@ namespace Latino.Workflows
         {
             Utils.ThrowException(data == null ? new ArgumentNullException("data") : null);
             // *** note that setting sender to null is allowed
-            mLog.Debug("ReceiveData", "Received data of type {0}.", data.GetType());
+            mLogger.Debug("ReceiveData", "Received data of type {0}.", data.GetType());
             lock (mQueue)
             {
                 mQueue.Enqueue(new Pair<IDataProducer, object>(sender, data));
@@ -150,10 +145,10 @@ namespace Latino.Workflows
 
         public void Dispose()
         {
-            mLog.Debug("Dispose", "Disposing ...");
+            mLogger.Debug("Dispose", "Disposing ...");
             Stop();
             while (IsRunning) { Thread.Sleep(100); }
-            mLog.Debug("Dispose", "Disposed.");
+            mLogger.Debug("Dispose", "Disposed.");
         }
     }
 }

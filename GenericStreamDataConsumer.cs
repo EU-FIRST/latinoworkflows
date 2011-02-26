@@ -25,6 +25,10 @@ namespace Latino.Workflows
         public event ConsumeDataHandler OnConsumeData
             = null;
 
+        public GenericStreamDataConsumer() : base("Latino.Workflows.GenericStreamDataConsumer")
+        {
+        }
+
         protected override void ConsumeData(IDataProducer sender, object data)
         {
             if (OnConsumeData != null)

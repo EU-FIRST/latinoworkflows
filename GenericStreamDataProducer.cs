@@ -27,6 +27,10 @@ namespace Latino.Workflows
         public event ProduceDataHandler OnProduceData
             = null;
 
+        public GenericStreamDataProducer() : base("Latino.Workflows.GenericStreamDataProducer")
+        {
+        }
+
         protected override object ProduceData()
         {
             Utils.ThrowException(OnProduceData == null ? new ArgumentValueException("OnProduceData") : null);

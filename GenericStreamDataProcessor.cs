@@ -25,6 +25,10 @@ namespace Latino.Workflows
         public event ProcessDataHandler OnProcessData
             = null;
 
+        public GenericStreamDataProcessor() : base("Latino.Workflows.GenericStreamDataProcessor")
+        {
+        }
+
         protected override object ProcessData(IDataProducer sender, object data)
         {
             if (OnProcessData != null)

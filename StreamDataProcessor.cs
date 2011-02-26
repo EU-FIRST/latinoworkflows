@@ -27,6 +27,10 @@ namespace Latino.Workflows
         private bool mCloneDataOnFork
             = true;
 
+        public StreamDataProcessor(string loggerName) : base(loggerName)
+        { 
+        }
+
         public bool CloneDataOnFork
         {
             get { return mCloneDataOnFork; }

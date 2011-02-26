@@ -43,14 +43,13 @@
   <ItemGroup>
     <Compile Include="Persistance\DocumentCorpusWriterComponent.cs" />
     <Compile Include="TextMining\DocumentCorpus\Tree.cs" />
-    <Compile Include="TextMining\LnDocComponent.cs" />
+    <None Include="TextMining\LnDocComponent.cs" />
     <Compile Include="TextMining\RssFeedComponent.cs" />
     <Compile Include="GenericStreamDataProducer.cs" />
     <Compile Include="TextMining\DocumentCorpus\Annotation.cs" />
     <Compile Include="TextMining\DocumentConsumer.cs" />
     <Compile Include="TextMining\DocumentCorpus\Document.cs" />
     <Compile Include="TextMining\DocumentCorpus\DocumentCorpus.cs" />
-    <Compile Include="Log.cs" />
     <Compile Include="StreamDataConsumer.cs" />
     <Compile Include="StreamDataProducer.cs" />
     <Compile Include="IDataConsumer.cs" />
