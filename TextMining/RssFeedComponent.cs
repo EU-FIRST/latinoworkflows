@@ -45,7 +45,7 @@ namespace Latino.Workflows.TextMining
         private static Set<string> mItemElements
             = new Set<string>(new string[] { "title", "link", "description", "author", "category", "comments", "pubDate", "source" });
 
-        public RssFeedComponent(string rssUrl) : base("Latino.Workflows.TextMining.RssFeedComponent")
+        public RssFeedComponent(string rssUrl) : base(typeof(RssFeedComponent).ToString())
         {
             Utils.ThrowException(rssUrl == null ? new ArgumentNullException("rssUrl") : null);
             Utils.ThrowException(!Uri.IsWellFormedUriString(rssUrl, UriKind.Absolute) ? new ArgumentValueException("rssUrl") : null);
@@ -54,7 +54,7 @@ namespace Latino.Workflows.TextMining
             TimeBetweenPolls = 300000; // poll every 5 minutes by default
         }
 
-        public RssFeedComponent(IEnumerable<string> rssList) : base("Latino.Workflows.TextMining.RssFeedComponent")
+        public RssFeedComponent(IEnumerable<string> rssList) : base(typeof(RssFeedComponent).ToString())
         {
             Utils.ThrowException(rssList == null ? new ArgumentNullException("rssList") : null);
             mSources = new ArrayList<string>();

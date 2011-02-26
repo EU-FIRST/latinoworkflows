@@ -25,7 +25,7 @@ namespace Latino.Workflows
         public event ConsumeDataHandler OnConsumeData
             = null;
 
-        public GenericStreamDataConsumer() : base("Latino.Workflows.GenericStreamDataConsumer")
+        public GenericStreamDataConsumer() : base(typeof(GenericStreamDataConsumer).ToString())
         {
         }
 

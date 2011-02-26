@@ -27,7 +27,7 @@ namespace Latino.Workflows
         public event ProduceDataHandler OnProduceData
             = null;
 
-        public GenericStreamDataProducer() : base("Latino.Workflows.GenericStreamDataProducer")
+        public GenericStreamDataProducer() : base(typeof(GenericStreamDataProducer).ToString())
         {
         }
 

@@ -29,7 +29,7 @@ namespace Latino.Workflows.Persistance
         private DatabaseConnection mConnection
             = new DatabaseConnection();
 
-        public DocumentCorpusWriterComponent(string dbConnectionString) : base("Latino.Workflows.Persistance.DocumentCorpusWriterComponent")
+        public DocumentCorpusWriterComponent(string dbConnectionString) : base(typeof(DocumentCorpusWriterComponent).ToString())
         {
             mConnection.ConnectionString = dbConnectionString; // throws ArgumentNullException
             mConnection.Connect(); // throws OleDbException            

@@ -32,7 +32,7 @@ namespace Latino.Workflows.TextMining
         private const string SRC_ANNOT_TYPE
             = "content_block,*";
 
-        public RegexTokenizerComponent() : base("Latino.Workflows.TextMining.RegexTokenizerComponent")
+        public RegexTokenizerComponent() : base(typeof(RegexTokenizerComponent).ToString())
         { 
         }
 
