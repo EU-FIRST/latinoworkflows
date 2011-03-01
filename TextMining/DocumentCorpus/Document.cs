@@ -376,14 +376,12 @@ namespace Latino.Workflows.TextMining
 
         // *** output HTML ***
 
-        public void MakeHtmlPage(TextWriter document, bool inlineCss)
+        public void MakeHtmlPage(TextWriter document, bool inlineCss, ArrayList<TreeNode<string>> annotationTreeList)
         {
             string templateString = Utils.GetManifestResourceString(GetType(), "Resources.DocumentTemplate.htm");
 
-            string annotationTypeList = "<ul>";
-
-            ArrayList<TreeNode<string>> annotationTreeList;
-            annotationTreeList = MakeAnnotationTree();
+            string annotationTypeList = "<ul>";          
+            
 
             List<Color> colors = new List<Color>();
             colors.Add(Color.White);
@@ -425,7 +423,7 @@ namespace Latino.Workflows.TextMining
 
         }
 
-        private ArrayList<TreeNode<string>> MakeAnnotationTree()
+        public ArrayList<TreeNode<string>> MakeAnnotationTree()
         {
             ArrayList<TreeNode<string>> result = new ArrayList<TreeNode<string>>();
 

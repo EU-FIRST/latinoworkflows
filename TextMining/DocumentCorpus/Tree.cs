@@ -137,6 +137,29 @@ namespace Latino.Workflows.TextMining
             return null;
         }
 
+        public int CountTreeLeaves()
+        {
+            return CountLeavesInSubTree(this);            
+        }
+
+        private int CountLeavesInSubTree(TreeNode<T> node)
+        {
+            int count = 0;
+
+            for (int i = 0; i < this.Children.Count; i++)
+            {
+                if (this.Children[i].Children.Count == 0)
+                    count++;
+                else
+                    count += CountLeavesInSubTree(this.Children[i]);
+            }
+
+            return count;
+        }
+
+
+
+
         public TreeNode<T> Root
         {
             get

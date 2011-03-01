@@ -228,10 +228,21 @@ namespace Latino.Workflows.TextMining
 
             foreach (Document d in Documents)
             {
+                ArrayList<TreeNode<string>> annotationTreeList;
+                annotationTreeList = d.MakeAnnotationTree();
+
                 document = new StreamWriter(string.Format("{0}\\Document{1}.html", path, i));
                 documentList += "<p class='documentTitle'><a href=Document" + i + ".html>" + d.Name + "</a></br>";
                 documentList += "<p class='documentText'>" + Utils.Trunc(d.Text, 400) + "...</p>";
-                d.MakeHtmlPage(document, inlineCss);                              
+
+                string annotationsString = d.Annotations.Count == 1 ? " annotation" : " annotations";
+                string featuresString = d.Features.Names.Count == 1 ? " feature" : " features";
+                int countBasicTypes = CountBasicTypes(annotationTreeList);
+                string basicTypesString = countBasicTypes == 1 ? " basic type" : " basic types";
+
+                documentList += "<p class='statistics'>Contains " + d.Annotations.Count + annotationsString + " of " + countBasicTypes + basicTypesString + ". Described with " + d.Features.Names.Count + featuresString + ".</p>";
+
+                d.MakeHtmlPage(document, inlineCss, annotationTreeList);                              
                 i++;               
             }
 
@@ -249,5 +260,21 @@ namespace Latino.Workflows.TextMining
             index.Write(indexString);
             index.Close();
         }
+
+        private int CountBasicTypes(ArrayList<TreeNode<string>> annotationTreeList)
+        {
+            int count = 0;
+
+            foreach (TreeNode<string> tree in annotationTreeList)
+            {
+                count += tree.CountTreeLeaves();
+            }
+
+            return count;
+
+        }
+
+
+        
     }
 }
