@@ -61,7 +61,6 @@
     <Compile Include="TextMining\DocumentCorpus\Features.cs" />
     <Compile Include="TextMining\RegexTokenizerComponent.cs" />
     <Compile Include="TextMining\DocumentCorpus\TextBlock.cs" />
-    <Compile Include="TextMining\RssHistory.cs" />
     <Compile Include="WorkflowUtils.cs" />
     <EmbeddedResource Include="TextMining\DocumentCorpus\Resources\DocumentTemplate.htm" />
     <EmbeddedResource Include="TextMining\DocumentCorpus\Resources\IndexTemplate.htm" />

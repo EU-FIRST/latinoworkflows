@@ -64,3 +64,31 @@ GO
 
 SET ANSI_PADDING OFF
 GO
+
+/****** Object:  Table [dbo].[History]    Script Date: 04/05/2011 13:40:11 ******/
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[History]') AND type in (N'U'))
+DROP TABLE [dbo].[History]
+GO
+
+/****** Object:  Table [dbo].[History]    Script Date: 04/05/2011 13:40:11 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+SET ANSI_PADDING ON
+GO
+
+CREATE TABLE [dbo].[History](
+	[SiteId] [nvarchar](4000) NULL,
+	[ItemId] [char](32) NOT NULL,
+	[Source] [nvarchar](4000) NOT NULL
+) ON [PRIMARY]
+
+GO
+
+SET ANSI_PADDING OFF
+GO
+
+/* TODO: add indices */

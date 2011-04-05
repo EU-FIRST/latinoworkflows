@@ -35,13 +35,23 @@
 [x] RSS component politeness sleep
 [x] Timeouts in WebUtils
 [x] commit
-[ ] GetWebPage number of retries
-[ ] Logging as stream component
+[x] GetWebPage number of retries
+[x] move log to latino, enable overriding static settings
+[ ] logging of progress
+[ ] remove jsint from Latino.Web.WebUtils (put it into LatinoWorkflows)
+[x] add pubDate into history hash-key
 [ ] commit
-[ ] move log to latino, enable overriding static settings
+[ ] document corpus Resources -> Templates
+[ ] fix URIs like http://www.bseindia.com/cirbrief/new_notice_detail.asp?Noticeid={AED515A2-ECF9-4539-988E-8D51634B5E8B}&noticeno=20110311-3&dt=03/11/2011&icount=3&totcount=9&flag=0
+    (should be http://www.bseindia.com/cirbrief/new_notice_detail.asp?Noticeid=%7bAED515A2-ECF9-4539-988E-8D51634B5E8B%7d&noticeno=20110311-3&dt=03/11/2011&icount=3&totcount=9&flag=0)
+    See http://www.ietf.org/rfc/rfc2396.txt, Section 2.2
+[/] remove illegal characters from RSS XMLs (see Dacq logs)
+	(allowed chars are #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF])
+	<< turned out that they weren't XMLs at all >>
+[ ] commit
+[ ] make Dacq store history for each component separately
+[/] Logging as stream component
 [ ] fixed-size queue 
 [ ] powerful query language for retrieving text blocks
 [ ] handle RSS comments
 [ ] DB query timeouts (?)
-[ ] document corpus Resources -> Templates
-
