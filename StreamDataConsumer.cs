@@ -40,32 +40,36 @@ namespace Latino.Workflows
         }
 
         public void Stop()
-        {            
-            Utils.ThrowException(!IsRunning ? new InvalidOperationException() : null);
-            mLogger.Debug("Stop", "Stopping ...");
-            lock (mQueue)
+        {
+            if (IsRunning)
             {
-                mStopped = true;
-                if (!mThreadAlive)
+                mLogger.Debug("Stop", "Stopping ...");
+                lock (mQueue)
                 {
-                    while ((mThread.ThreadState & ThreadState.Suspended) == 0) { Thread.Sleep(1); }
-                    mThread.Resume();
+                    mStopped = true;
+                    if (!mThreadAlive)
+                    {
+                        while ((mThread.ThreadState & ThreadState.Suspended) == 0) { Thread.Sleep(1); }
+                        mThread.Resume();
+                    }
                 }
-            }            
+            }
         }
 
         public void Resume()
         {
-            Utils.ThrowException(IsRunning ? new InvalidOperationException() : null);
-            mLogger.Debug("Resume", "Resuming ...");
-            lock (mQueue)
+            if (!IsRunning)
             {
-                mStopped = false;
-                mThread = new Thread(new ThreadStart(ProcessQueue));
-                mThreadAlive = mQueue.Count > 0;
-                if (mThreadAlive) { mThread.Start(); }
+                mLogger.Debug("Resume", "Resuming ...");
+                lock (mQueue)
+                {
+                    mStopped = false;
+                    mThread = new Thread(new ThreadStart(ProcessQueue));
+                    mThreadAlive = mQueue.Count > 0;
+                    if (mThreadAlive) { mThread.Start(); }
+                }
+                mLogger.Debug("Resume", "Resumed.");
             }
-            mLogger.Debug("Resume", "Resumed.");
         }
 
         public bool IsRunning

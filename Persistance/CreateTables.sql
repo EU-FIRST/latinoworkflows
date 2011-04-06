@@ -65,12 +65,12 @@ GO
 SET ANSI_PADDING OFF
 GO
 
-/****** Object:  Table [dbo].[History]    Script Date: 04/05/2011 13:40:11 ******/
+/****** Object:  Table [dbo].[History]    Script Date: 04/06/2011 17:18:12 ******/
 IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[History]') AND type in (N'U'))
 DROP TABLE [dbo].[History]
 GO
 
-/****** Object:  Table [dbo].[History]    Script Date: 04/05/2011 13:40:11 ******/
+/****** Object:  Table [dbo].[History]    Script Date: 04/06/2011 17:18:12 ******/
 SET ANSI_NULLS ON
 GO
 
@@ -81,9 +81,10 @@ SET ANSI_PADDING ON
 GO
 
 CREATE TABLE [dbo].[History](
-	[SiteId] [nvarchar](4000) NULL,
+	[SiteId] [nvarchar](400) NULL,
 	[ItemId] [char](32) NOT NULL,
-	[Source] [nvarchar](4000) NOT NULL
+	[Source] [varchar](900) NOT NULL,
+	[Time] [char](23) NOT NULL
 ) ON [PRIMARY]
 
 GO

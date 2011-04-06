@@ -48,19 +48,23 @@ namespace Latino.Workflows
 
         public void Start()
         {
-            Utils.ThrowException(IsRunning ? new InvalidOperationException() : null);
-            mLogger.Debug("Start", "Starting ...");
-            mThread = new Thread(new ThreadStart(ProduceDataLoop));
-            mStopped = false;
-            mThread.Start();
-            mLogger.Debug("Start", "Started.");
+            if (!IsRunning)
+            {
+                mLogger.Debug("Start", "Starting ...");
+                mThread = new Thread(new ThreadStart(ProduceDataLoop));
+                mStopped = false;
+                mThread.Start();
+                mLogger.Debug("Start", "Started.");
+            }
         }
 
         public void Stop()
-        {            
-            Utils.ThrowException(!IsRunning ? new InvalidOperationException() : null);
-            mLogger.Debug("Stop", "Stopping ...");
-            mStopped = true;
+        {
+            if (IsRunning)
+            {
+                mLogger.Debug("Stop", "Stopping ...");
+                mStopped = true;
+            }
         }
 
         public void Resume()

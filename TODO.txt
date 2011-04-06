@@ -37,10 +37,12 @@
 [x] commit
 [x] GetWebPage number of retries
 [x] move log to latino, enable overriding static settings
-[ ] logging of progress
-[ ] remove jsint from Latino.Web.WebUtils (put it into LatinoWorkflows)
+[x] remove jsint from Latino.Web.WebUtils 
 [x] add pubDate into history hash-key
-[ ] commit
+[x] make Dacq store history for each component separately (this is now handled by RDBMS)
+[x] commit
+[ ] put jsint support into LatinoWorkflows
+[ ] logging of progress
 [ ] document corpus Resources -> Templates
 [ ] fix URIs like http://www.bseindia.com/cirbrief/new_notice_detail.asp?Noticeid={AED515A2-ECF9-4539-988E-8D51634B5E8B}&noticeno=20110311-3&dt=03/11/2011&icount=3&totcount=9&flag=0
     (should be http://www.bseindia.com/cirbrief/new_notice_detail.asp?Noticeid=%7bAED515A2-ECF9-4539-988E-8D51634B5E8B%7d&noticeno=20110311-3&dt=03/11/2011&icount=3&totcount=9&flag=0)
@@ -49,7 +51,6 @@
 	(allowed chars are #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF])
 	<< turned out that they weren't XMLs at all >>
 [ ] commit
-[ ] make Dacq store history for each component separately
 [/] Logging as stream component
 [ ] fixed-size queue 
 [ ] powerful query language for retrieving text blocks
