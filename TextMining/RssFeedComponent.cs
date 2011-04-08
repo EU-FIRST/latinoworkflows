@@ -20,9 +20,9 @@ using System.Web;
 using System.Net;
 using System.Threading;
 using System.Data.OleDb;
+using System.Data;
 using Latino.Web;
 using Latino.Persistance;
-using System.Data;
 
 namespace Latino.Workflows.TextMining
 {
@@ -161,7 +161,7 @@ namespace Latino.Workflows.TextMining
             {            
                 DateTime time = DateTime.Now;
                 string content = "";
-                if (itemAttr.ContainsKey("link"))
+                if (itemAttr.ContainsKey("link") && itemAttr["link"].Trim() != "")
                 {
                     // get referenced Web page
                     try

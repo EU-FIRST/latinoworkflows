@@ -51,13 +51,13 @@ namespace Latino.Workflows.Persistance
             bool success = mConnection.ExecuteNonQuery("insert into Corpora (id, xml, title, provider, language, sourceUrl, source, timeStart, timeEnd) values (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
                 corpusId, 
                 stringWriter.ToString(),
-                Utils.Trunc(corpus.Features.GetFeatureValue("title"), 4000),
-                Utils.Trunc(corpus.Features.GetFeatureValue("_provider"), 4000),
-                Utils.Trunc(corpus.Features.GetFeatureValue("language"), 4000),
-                Utils.Trunc(corpus.Features.GetFeatureValue("_sourceUrl"), 4000),
+                Utils.Trunc(corpus.Features.GetFeatureValue("title"), 400),
+                Utils.Trunc(corpus.Features.GetFeatureValue("_provider"), 400),
+                Utils.Trunc(corpus.Features.GetFeatureValue("language"), 400),
+                Utils.Trunc(corpus.Features.GetFeatureValue("_sourceUrl"), 400),
                 corpus.Features.GetFeatureValue("_source"),
-                Utils.Trunc(corpus.Features.GetFeatureValue("_timeStart"), 30),
-                Utils.Trunc(corpus.Features.GetFeatureValue("_timeEnd"), 30));
+                Utils.Trunc(corpus.Features.GetFeatureValue("_timeStart"), 26),
+                Utils.Trunc(corpus.Features.GetFeatureValue("_timeEnd"), 26));
             if (!success) { mLogger.Warn("ConsumeData", "Unable to write to database."); }
             foreach (Document document in corpus.Documents)
             {
@@ -65,13 +65,13 @@ namespace Latino.Workflows.Persistance
                 success = mConnection.ExecuteNonQuery("insert into Documents (id, corpusId, name, description, text, category, link, time, pubDate) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     documentId, 
                     corpusId, 
-                    Utils.Trunc(document.Name, 4000),
-                    Utils.Trunc(document.Features.GetFeatureValue("description"), 4000),
+                    Utils.Trunc(document.Name, 400),
+                    Utils.Trunc(document.Features.GetFeatureValue("description"), 400),
                     document.Text,
-                    Utils.Trunc(document.Features.GetFeatureValue("category"), 4000),
-                    Utils.Trunc(document.Features.GetFeatureValue("link"), 4000),
-                    Utils.Trunc(document.Features.GetFeatureValue("_time"), 30),
-                    Utils.Trunc(document.Features.GetFeatureValue("pubDate"), 30));
+                    Utils.Trunc(document.Features.GetFeatureValue("category"), 400),
+                    Utils.Trunc(document.Features.GetFeatureValue("link"), 400),
+                    Utils.Trunc(document.Features.GetFeatureValue("_time"), 26),
+                    Utils.Trunc(document.Features.GetFeatureValue("pubDate"), 26));
                 if (!success) { mLogger.Warn("ConsumeData", "Unable to write to database."); }
             }
         }
