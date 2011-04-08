@@ -334,9 +334,7 @@ namespace Latino.Workflows.TextMining
             string ns = "http://freekoders.org/latino";
             if (writeTopElement) { writer.WriteStartElement("Document", ns); }
             writer.WriteElementString("Name", ns, mName);
-            writer.WriteStartElement("Text", ns);
-            writer.WriteCData(mText);
-            writer.WriteEndElement();
+            writer.WriteElementString("Text", ns, mText);            
             writer.WriteStartElement("Annotations", ns);
             foreach (Annotation annot in mAnnotations)
             {
@@ -374,7 +372,7 @@ namespace Latino.Workflows.TextMining
             WriteXml(writer, /*writeTopElement=*/false); // throws ArgumentNullException
         }
 
-        // *** output HTML ***
+        // *** Output HTML ***
 
         public void MakeHtmlPage(TextWriter document, bool inlineCss, ArrayList<TreeNode<string>> annotationTreeList)
         {

@@ -44,6 +44,7 @@ namespace Latino.Workflows.Persistance
             XmlWriterSettings xmlSettings = new XmlWriterSettings();
             xmlSettings.Indent = true;
             xmlSettings.NewLineOnAttributes = true;
+            xmlSettings.CheckCharacters = false;
             XmlWriter writer = XmlWriter.Create(stringWriter = new StringWriter(), xmlSettings); 
             corpus.WriteXml(writer, /*writeTopElement=*/true);
             writer.Close();

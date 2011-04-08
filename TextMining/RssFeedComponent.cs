@@ -147,9 +147,6 @@ namespace Latino.Workflows.TextMining
             return new Guid(md5.ComputeHash(Encoding.UTF8.GetBytes(string.Format("{0} {1} {2}", title, desc, pubDate))));
         }
 
-        public static Ref<double> mTimeMax
-            = 0;
-
         private void ProcessItem(Dictionary<string, string> itemAttr, DocumentCorpus corpus, string rssXmlUrl)
         {
             string name = "";
@@ -160,10 +157,6 @@ namespace Latino.Workflows.TextMining
             itemAttr.TryGetValue("pubDate", out pubDate);
             Guid guid = MakeGuid(name, desc, pubDate);
             mLogger.Info("ProcessItem", "Found item \"{0}\" [{1}].", Utils.ToOneLine(name, /*compact=*/true), guid.ToString("N"));
-            lock (mTimeMax)
-            {
-                mLogger.Info("ProcessItem", "******************************************* {0}", mTimeMax.Val);
-            }
             if (!mHistory.CheckHistory(guid, rssXmlUrl, mSiteId, mHistoryDatabase))
             {            
                 DateTime time = DateTime.Now;
@@ -208,7 +201,7 @@ namespace Latino.Workflows.TextMining
                     // TODO: handle comments 
                 }
                 itemAttr.Add("_guid", guid.ToString());
-                itemAttr.Add("_time", time.ToString(Utils.DATE_TIME_SIMPLE)); 
+                itemAttr.Add("_time", time.ToString(Utils.DATE_TIME_SIMPLE));
                 Document document = new Document(name, content);
                 //Console.WriteLine("Item attributes:");
                 foreach (KeyValuePair<string, string> attr in itemAttr)
@@ -398,24 +391,20 @@ namespace Latino.Workflows.TextMining
             public bool CheckHistory(Guid id, string source, string siteId, DatabaseConnection historyDatabase)
             {
                 bool retVal = mHistory.First.ContainsKey(id);
-                DateTime now = DateTime.Now;
-                bool historyChanged = AddToHistory(id, source);
-                string timeStr = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                bool historyChanged = AddToHistory(id, source);                
                 if (historyChanged && historyDatabase != null) // write through
                 {
+                    string timeStr = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
                     if (siteId != null)
                     {
-                        historyDatabase.ExecuteNonQuery("insert into History (SiteId, ItemId, Source, Time) values (?, ?, ?, ?)", siteId, id.ToString("N"), source, timeStr);
+                        historyDatabase.ExecuteNonQuery("insert into History (SiteId, ItemId, Source, Time) values (?, ?, ?, ?)", 
+                            Utils.Trunc(siteId, 400), id.ToString("N"), Utils.Trunc(source, 900), timeStr);
                     }
                     else
                     {
-                        historyDatabase.ExecuteNonQuery("insert into History (ItemId, Source, Time) values (?, ?, ?)", id.ToString("N"), source, timeStr);
+                        historyDatabase.ExecuteNonQuery("insert into History (ItemId, Source, Time) values (?, ?, ?)", 
+                            id.ToString("N"), Utils.Trunc(source, 900), timeStr);
                     }
-                }
-                double time = (DateTime.Now - now).TotalMilliseconds;
-                lock (mTimeMax)
-                {
-                    if (mTimeMax.Val < time) { mTimeMax = time; }
                 }
                 return retVal;
             }
@@ -431,7 +420,8 @@ namespace Latino.Workflows.TextMining
                     }
                     else
                     {
-                        t = historyDatabase.ExecuteQuery(string.Format("select top {0} * from History where SiteId=? order by Time desc", mHistorySize), siteId);
+                        t = historyDatabase.ExecuteQuery(string.Format("select top {0} * from History where SiteId=? order by Time desc", mHistorySize), 
+                            Utils.Trunc(siteId, 400));
                     }
                     mHistory.First.Clear();
                     mHistory.Second.Clear();

@@ -92,4 +92,7 @@ GO
 SET ANSI_PADDING OFF
 GO
 
-/* TODO: add indices */
+/****** Indices ******/
+CREATE INDEX IX_History
+ON History (SiteId ASC, Time ASC)
+GO
