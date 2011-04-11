@@ -29,7 +29,7 @@ CREATE NONCLUSTERED INDEX [IX_History] ON [dbo].[History]
 (
 	[SiteId] ASC,
 	[Time] DESC
-)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
+) WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 GO
 /****** Object:  Table [dbo].[Documents]    Script Date: 04/08/2011 19:46:53 ******/
 SET ANSI_NULLS ON
@@ -47,7 +47,11 @@ CREATE TABLE [dbo].[Documents](
 	[category] [nvarchar](400) NULL,
 	[link] [varchar](400) NULL,
 	[time] [char](26) NULL,
-	[pubDate] [char](26) NULL
+	[pubDate] [char](26) NULL,
+	[mimeType] [varchar](80) NULL,
+	[contentType] [varchar](40) NULL,
+	[charSet] [varchar](40) NULL,
+	[contentLength] [bigint] NULL
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
 SET ANSI_PADDING OFF

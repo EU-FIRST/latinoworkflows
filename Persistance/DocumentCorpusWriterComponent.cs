@@ -62,16 +62,21 @@ namespace Latino.Workflows.Persistance
             foreach (Document document in corpus.Documents)
             {
                 string documentId = Guid.NewGuid().ToString("N");
-                success = mConnection.ExecuteNonQuery("insert into Documents (id, corpusId, name, description, text, category, link, time, pubDate) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    documentId, 
-                    corpusId, 
+                success = mConnection.ExecuteNonQuery("insert into Documents (id, corpusId, name, description, text, category, link, time, pubDate, mimeType, contentType, charSet, contentLength) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    documentId,
+                    corpusId,
                     Utils.Trunc(document.Name, 400),
                     Utils.Trunc(document.Features.GetFeatureValue("description"), 400),
                     document.Text,
                     Utils.Trunc(document.Features.GetFeatureValue("category"), 400),
                     Utils.Trunc(document.Features.GetFeatureValue("link"), 400),
                     Utils.Trunc(document.Features.GetFeatureValue("_time"), 26),
-                    Utils.Trunc(document.Features.GetFeatureValue("pubDate"), 26));
+                    Utils.Trunc(document.Features.GetFeatureValue("pubDate"), 26),
+                    Utils.Trunc(document.Features.GetFeatureValue("_mimeType"), 80),
+                    Utils.Trunc(document.Features.GetFeatureValue("_contentType"), 40),
+                    Utils.Trunc(document.Features.GetFeatureValue("_charSet"), 40),
+                    Convert.ToInt64(document.Features.GetFeatureValue("_contentLength"))
+                );
                 if (!success) { mLogger.Warn("ConsumeData", "Unable to write to database."); }
             }
         }

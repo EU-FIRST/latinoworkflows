@@ -21,6 +21,7 @@ using System.Net;
 using System.Threading;
 using System.Data.OleDb;
 using System.Data;
+using System.Text.RegularExpressions;
 using Latino.Web;
 using Latino.Persistance;
 
@@ -34,6 +35,14 @@ namespace Latino.Workflows.TextMining
     */
     public class RssFeedComponent : StreamDataProducer
     {
+        private enum ContentType
+        {
+            Xml,
+            Html,
+            Text,
+            BinaryBase64
+        }
+
         private ArrayList<string> mSources;
         private bool mIncludeRawData
             = false;
@@ -51,6 +60,33 @@ namespace Latino.Workflows.TextMining
             = new Set<string>(new string[] { "title", "link", "description", "language", "copyright", "managingEditor", "pubDate", "category" });
         private static Set<string> mItemElements
             = new Set<string>(new string[] { "title", "link", "description", "author", "category", "comments", "pubDate", "source" });
+
+        private static Regex mHtmlMimeTypeRegex
+            = new Regex(@"(text/html)|(application/xhtml\+xml)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static Regex mXmlMimeTypeRegex
+            = new Regex(@"(application/xml)|(application/[^+ ;]+\+xml)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static Regex mTextMimeTypeRegex
+            = new Regex(@"text/plain", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        private ContentType GetContentType(string mimeType)
+        {
+            if (mHtmlMimeTypeRegex.Match(mimeType).Success)
+            {
+                return ContentType.Html;
+            }
+            else if (mXmlMimeTypeRegex.Match(mimeType).Success)
+            {
+                return ContentType.Xml;
+            }
+            else if (mTextMimeTypeRegex.Match(mimeType).Success)
+            {
+                return ContentType.Text;
+            }
+            else
+            {
+                return ContentType.BinaryBase64;
+            }
+        }
 
         private void CreateLogger(string siteId)
         {
@@ -149,67 +185,87 @@ namespace Latino.Workflows.TextMining
 
         private void ProcessItem(Dictionary<string, string> itemAttr, DocumentCorpus corpus, string rssXmlUrl)
         {
-            string name = "";
-            itemAttr.TryGetValue("title", out name);
-            string desc = "";
-            itemAttr.TryGetValue("description", out desc);
-            string pubDate = "";
-            itemAttr.TryGetValue("pubDate", out pubDate);
-            Guid guid = MakeGuid(name, desc, pubDate);
-            mLogger.Info("ProcessItem", "Found item \"{0}\" [{1}].", Utils.ToOneLine(name, /*compact=*/true), guid.ToString("N"));
-            if (!mHistory.CheckHistory(guid, rssXmlUrl, mSiteId, mHistoryDatabase))
-            {            
-                DateTime time = DateTime.Now;
-                string content = "";
-                if (itemAttr.ContainsKey("link") && itemAttr["link"].Trim() != "")
+            try
+            {
+                string name = "";
+                itemAttr.TryGetValue("title", out name);
+                string desc = "";
+                itemAttr.TryGetValue("description", out desc);
+                string pubDate = "";
+                itemAttr.TryGetValue("pubDate", out pubDate);
+                Guid guid = MakeGuid(name, desc, pubDate);
+                mLogger.Info("ProcessItem", "Found item \"{0}\" [{1}].", Utils.ToOneLine(name, /*compact=*/true), guid.ToString("N"));
+                if (!mHistory.CheckHistory(guid, rssXmlUrl, mSiteId, mHistoryDatabase))
                 {
-                    // get referenced Web page
-                    try
+                    DateTime time = DateTime.Now;
+                    string content = "";
+                    if (itemAttr.ContainsKey("link") && itemAttr["link"].Trim() != "")
                     {
-                        mLogger.Info("ProcessItem", "Getting HTML from {0} ...", itemAttr["link"]);
-                        content = WebUtils.GetWebPageDetectEncoding(itemAttr["link"]);
-                        if (mIncludeRawData)
+                        // get referenced Web page
+                        try
                         {
-                            CookieContainer cookies = null;                            
-                            Encoding extAsciiEnc = Encoding.GetEncoding("ISO-8859-1");
-                            string ascii = WebUtils.GetWebPage(itemAttr["link"], /*refUrl=*/null, ref cookies, extAsciiEnc, WebUtils.DefaultTimeout);
-                            ascii = Convert.ToBase64String(extAsciiEnc.GetBytes(ascii));
-                            itemAttr.Add("raw", ascii);                            
+                            mLogger.Info("ProcessItem", "Getting HTML from {0} ...", itemAttr["link"]);
+                            string mimeType, charSet;
+                            byte[] bytes = WebUtils.GetWebResource(itemAttr["link"], out mimeType, out charSet);
+                            ContentType contentType = GetContentType(mimeType);
+                            itemAttr.Add("_mimeType", mimeType);
+                            itemAttr.Add("_contentType", contentType.ToString());
+                            if (charSet == null) { charSet = "ISO-8859-1"; }
+                            itemAttr.Add("_charSet", charSet);
+                            itemAttr.Add("_contentLength", bytes.Length.ToString());
+                            if (contentType == ContentType.BinaryBase64)
+                            {
+                                // save as base64-encoded binary data
+                                content = Convert.ToBase64String(bytes);
+                            }
+                            else
+                            { 
+                                // save as text                                
+                                content = Encoding.GetEncoding(charSet).GetString(bytes);
+                                if (mIncludeRawData)
+                                {
+                                    itemAttr.Add("raw", Convert.ToBase64String(bytes));
+                                }
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            mLogger.Warn("ProcessItem", e);
+                        }
+                        Thread.Sleep(mPolitenessSleep);
+                    }
+                    if (content == "")
+                    {
+                        if (itemAttr.ContainsKey("description"))
+                        {
+                            content = itemAttr["description"];
+                        }
+                        else if (itemAttr.ContainsKey("title"))
+                        {
+                            content = itemAttr["title"];
                         }
                     }
-                    catch (Exception e)
+                    //Console.WriteLine("name = \"{0}\"", name);
+                    //Console.WriteLine("html = \"{0}\"", content);
+                    if (itemAttr.ContainsKey("comments"))
                     {
-                        mLogger.Warn("ProcessItem", e);
+                        // TODO: handle comments 
                     }
-                    Thread.Sleep(mPolitenessSleep); 
-                }
-                if (content == "")
-                {
-                    if (itemAttr.ContainsKey("description"))
+                    itemAttr.Add("_guid", guid.ToString());
+                    itemAttr.Add("_time", time.ToString(Utils.DATE_TIME_SIMPLE));
+                    Document document = new Document(name, content);
+                    //Console.WriteLine("Item attributes:");
+                    foreach (KeyValuePair<string, string> attr in itemAttr)
                     {
-                        content = itemAttr["description"];
+                        //Console.WriteLine("{0} = \"{1}\"", attr.Key, attr.Value);
+                        document.Features.SetFeatureValue(attr.Key, attr.Value);
                     }
-                    else if (itemAttr.ContainsKey("title"))
-                    {
-                        content = itemAttr["title"];
-                    }
+                    corpus.AddDocument(document);
                 }
-                //Console.WriteLine("name = \"{0}\"", name);
-                //Console.WriteLine("html = \"{0}\"", content);
-                if (itemAttr.ContainsKey("comments"))
-                {
-                    // TODO: handle comments 
-                }
-                itemAttr.Add("_guid", guid.ToString());
-                itemAttr.Add("_time", time.ToString(Utils.DATE_TIME_SIMPLE));
-                Document document = new Document(name, content);
-                //Console.WriteLine("Item attributes:");
-                foreach (KeyValuePair<string, string> attr in itemAttr)
-                {
-                    //Console.WriteLine("{0} = \"{1}\"", attr.Key, attr.Value);
-                    document.Features.SetFeatureValue(attr.Key, attr.Value);
-                }
-                corpus.AddDocument(document);
+            }
+            catch (Exception e)
+            {
+                mLogger.Warn("ProcessItem", e);
             }
         }
 
@@ -230,7 +286,7 @@ namespace Latino.Workflows.TextMining
                     }
                     catch (Exception e)
                     {
-                        mLogger.Warn("ProduceData", e);
+                        mLogger.Error("ProduceData", e);
                         return null;
                     }
                     Dictionary<string, string> channelAttr = new Dictionary<string, string>();
@@ -343,7 +399,7 @@ namespace Latino.Workflows.TextMining
                 }
                 catch (Exception e)
                 {
-                    mLogger.Info("ProduceData", url);
+                    mLogger.Info("ProduceData", url); // <--- delete me
                     mLogger.Error("ProduceData", e);
                 }
             }
