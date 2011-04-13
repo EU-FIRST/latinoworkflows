@@ -206,7 +206,7 @@ namespace Latino.Workflows.TextMining
                         {
                             mLogger.Info("ProcessItem", "Getting HTML from {0} ...", itemAttr["link"]);
                             string mimeType, charSet;
-                            byte[] bytes = WebUtils.GetWebResource(itemAttr["link"], out mimeType, out charSet);
+                            byte[] bytes = WebUtils.GetWebResource(itemAttr["link"], out mimeType, out charSet, /*sizeLimit=*/0);
                             ContentType contentType = GetContentType(mimeType);
                             itemAttr.Add("_mimeType", mimeType);
                             itemAttr.Add("_contentType", contentType.ToString());
