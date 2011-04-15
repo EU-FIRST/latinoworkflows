@@ -378,28 +378,7 @@ namespace Latino.Workflows.TextMining
         {
             string templateString = Utils.GetManifestResourceString(GetType(), "Resources.DocumentTemplate.htm");
 
-            string annotationTypeList = "<ul>";          
-            
-
-            List<Color> colors = new List<Color>();
-            colors.Add(Color.White);
-            colors.Add(Color.Black);
-
-            foreach (TreeNode<string> tree in annotationTreeList)
-            {
-
-                string colorHtml = GetNewColor(colors);
-
-                annotationTypeList += "<li> <TABLE ><TR><TD name='{$annotation_name}' style='padding-right:10px' ><input type='checkbox' name='{$annotation_type_list_name}' class='" + tree.Root.Value + "'elements='" + tree.Root.Elements + "' >" + tree.Root.Value + " <TD bgcolor='" + colorHtml + "' style='border:solid black 1px'>&nbsp &nbsp &nbsp</TD></TR></TABLE>";
-
-                annotationTypeList += "<ul>";
-                annotationTypeList = WriteHtmlList(tree, annotationTypeList, colors);
-                annotationTypeList += "</ul>";
-
-                annotationTypeList += "</li>";
-            }
-
-            annotationTypeList += "</ul>";
+            string annotationTypeList = MakeHTMLAnnotationList(annotationTreeList);
 
             string documentFeatures = String.Empty;
 
@@ -419,6 +398,52 @@ namespace Latino.Workflows.TextMining
             document.Write(templateString);
             document.Close();
 
+        }
+
+        public string MakeHTMLAnnotationList(ArrayList<TreeNode<string>> annotationTreeList)
+        {
+            string annotationTypeList = "<ul>";
+
+            List<Color> colors = new List<Color>();
+            colors.Add(Color.White);
+            colors.Add(Color.Black);
+
+            foreach (TreeNode<string> tree in annotationTreeList)
+            {
+
+                string colorHtml;
+
+                if (tree.Root.Value == "positive")
+                {
+                    colorHtml = "#" + String.Format("{0:X2}", Color.GreenYellow.R) + String.Format("{0:X2}", Color.GreenYellow.G) + String.Format("{0:X2}", Color.GreenYellow.B);
+                    colors.Add(Color.GreenYellow);
+                }
+                else if (tree.Root.Value == "negative")
+                {
+                    colorHtml = "#" + String.Format("{0:X2}", Color.Tomato.R) + String.Format("{0:X2}", Color.Tomato.G) + String.Format("{0:X2}", Color.Tomato.B);
+                    colors.Add(Color.Tomato);
+                }
+                else
+                    colorHtml = GetNewColor(colors);
+
+                annotationTypeList += "<li> <TABLE ><TR><TD name='{$annotation_name}' style='padding-right:10px' ><input type='checkbox' name='{$annotation_type_list_name}' class='" + tree.Root.Value + "'elements='" + tree.Root.Elements + "' >" + tree.Root.Value + " <TD bgcolor='" + colorHtml + "' style='border:solid black 1px'>&nbsp &nbsp &nbsp</TD></TR></TABLE>";
+
+                annotationTypeList += "<ul>";
+                annotationTypeList = WriteHtmlList(tree, annotationTypeList, colors);
+                annotationTypeList += "</ul>";
+
+                annotationTypeList += "</li>";
+            }
+
+            annotationTypeList += "</ul>";
+
+            annotationTypeList = annotationTypeList.Replace("{$document_title}", mName);
+            annotationTypeList = annotationTypeList.Replace("{$document_text}", mText);           
+            annotationTypeList = annotationTypeList.Replace("{$annotation_type_list}", annotationTypeList);
+            annotationTypeList = annotationTypeList.Replace("{$annotation_type_list_name}", "annotationTypeList");
+            annotationTypeList = annotationTypeList.Replace("{$annotation_name}", "annotation");
+            
+            return annotationTypeList;
         }
 
         public ArrayList<TreeNode<string>> MakeAnnotationTree()
@@ -560,7 +585,21 @@ namespace Latino.Workflows.TextMining
 
             for (int k = 0; k < tree.Children.Count; k++)
             {
-                string colorHtml = GetNewColor(colors);
+
+                string colorHtml;
+
+                if (tree.Children[k].Value == "positive")
+                {
+                    colorHtml = "#" + String.Format("{0:X2}", Color.GreenYellow.R) + String.Format("{0:X2}", Color.GreenYellow.G) + String.Format("{0:X2}", Color.GreenYellow.B);
+                    colors.Add(Color.GreenYellow);
+                }
+                else if (tree.Children[k].Value == "negative")
+                {
+                    colorHtml = "#" + String.Format("{0:X2}", Color.Tomato.R) + String.Format("{0:X2}", Color.Tomato.G) + String.Format("{0:X2}", Color.Tomato.B);
+                    colors.Add(Color.Tomato);
+                }
+                else
+                    colorHtml = GetNewColor(colors);
 
                 html += "<li> <TABLE ><TR><TD name='{$annotation_name}' style='padding-right:10px' ><input type='checkbox' name='{$annotation_type_list_name}' class='" + tree.Children[k].Value + "'elements='" + tree.Children[k].Elements + "' >" + tree.Children[k].Value + " <TD bgcolor='" + colorHtml + " ' style='border:solid black 1px'>&nbsp &nbsp &nbsp</TD></TR></TABLE>";
 
