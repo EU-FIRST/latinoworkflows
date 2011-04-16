@@ -40,7 +40,7 @@ namespace Latino.Workflows.TextMining
             Utils.ThrowException((type.Contains(",") || type.Contains("*")) ? new ArgumentValueException("type") : null);
             mSpanStart = spanStart;
             mSpanEnd = spanEnd;            
-            mType = type.Trim().ToLower();
+            mType = type.Trim();//.ToLower();
             mFeaturesInterface = new Features(mFeatures);
         }
 

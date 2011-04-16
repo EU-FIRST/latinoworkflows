@@ -31,12 +31,19 @@ namespace Latino.Workflows
         private bool mStopped
             = false;
         private Thread mThread;
-        protected Logger mLogger;          
+        private int mMaxQueueSize
+            = 0;
+        private DateTime mMaxQueueSizeTime
+            = DateTime.MinValue;
+        private string mName
+            = null;
+        private string mLoggerBaseName;
+        protected Logger mLogger;
 
-        public StreamDataConsumer(string loggerName)
+        public StreamDataConsumer(string loggerBaseName)
         { 
             mThread = new Thread(new ThreadStart(ProcessQueue));
-            mLogger = Logger.GetLogger(loggerName);
+            mLogger = WorkflowUtils.CreateLogger(mLoggerBaseName = loggerBaseName, mName);
         }
 
         public void Stop()
@@ -124,6 +131,7 @@ namespace Latino.Workflows
             lock (mQueue)
             {
                 mQueue.Enqueue(new Pair<IDataProducer, object>(sender, data));
+                if (mQueue.Count >= mMaxQueueSize) { mMaxQueueSize = mQueue.Count; mMaxQueueSizeTime = DateTime.Now; }
                 if (!mThreadAlive && !mStopped)
                 {
                     mThreadAlive = true;
@@ -143,6 +151,26 @@ namespace Latino.Workflows
         public int QueueSize
         {
             get { return mQueue.Count; }
+        }
+
+        public int MaxQueueSize
+        {
+            get { return mMaxQueueSize; }
+        }
+
+        public DateTime MaxQueueSizeTime
+        {
+            get { return mMaxQueueSizeTime; }
+        }
+
+        public string Name
+        {
+            get { return mName; }
+            set 
+            { 
+                mName = value;
+                mLogger = WorkflowUtils.CreateLogger(mLoggerBaseName, mName);
+            }
         }
 
         // *** IDisposable interface implementation ***

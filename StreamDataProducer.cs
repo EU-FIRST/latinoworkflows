@@ -33,11 +33,15 @@ namespace Latino.Workflows
             = null;
         private bool mCloneDataOnFork
             = true;
+        private string mName
+            = null;
+        private string mLoggerBaseName;
         protected Logger mLogger;
 
-        public StreamDataProducer(string loggerName)
+        public StreamDataProducer(string loggerBaseName)
         {
-            mLogger = Logger.GetLogger(loggerName);
+            mLoggerBaseName = loggerBaseName;
+            mLogger = WorkflowUtils.CreateLogger(mLoggerBaseName, mName);
         }
 
         public bool CloneDataOnFork
@@ -84,6 +88,21 @@ namespace Latino.Workflows
             {
                 Utils.ThrowException(value < 0 ? new ArgumentOutOfRangeException("TimeBetweenPolls") : null);
                 mTimeBetweenPolls = value; 
+            }
+        }
+
+        public Set<IDataConsumer>.ReadOnly SubscribedConsumers
+        {
+            get { return mDataConsumers; }
+        }
+
+        public string Name
+        {
+            get { return mName; }
+            set 
+            { 
+                mName = value;
+                mLogger = WorkflowUtils.CreateLogger(mLoggerBaseName, mName);
             }
         }
 

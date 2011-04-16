@@ -53,5 +53,25 @@ namespace Latino.Workflows
         //    }
         //    return outData;
         //}
+
+        public static Logger CreateLogger(string loggerBaseName, string name)
+        {
+            if (loggerBaseName == null && name == null)
+            {
+                return Logger.GetRootLogger();
+            }
+            else if (loggerBaseName == null)
+            {
+                return Logger.GetLogger(name);
+            }
+            else if (name == null)
+            {
+                return Logger.GetLogger(loggerBaseName);
+            }
+            else
+            {
+                return Logger.GetLogger(loggerBaseName + "." + name);
+            }
+        }
     }
 }

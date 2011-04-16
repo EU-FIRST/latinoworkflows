@@ -88,30 +88,24 @@ namespace Latino.Workflows.TextMining
             }
         }
 
-        private void CreateLogger(string siteId)
+        public RssFeedComponent(string siteId) : base(typeof(RssFeedComponent).ToString())
         {
-            if (siteId == null) { mLogger = Logger.GetLogger(typeof(RssFeedComponent)); }
-            else { mLogger = Logger.GetLogger(typeof(RssFeedComponent).ToString() + "." + siteId); }
-        }
-
-        public RssFeedComponent(string siteId) : base(null)
-        {
-            CreateLogger(mSiteId = siteId);
+            mSiteId = siteId;
             mSources = new ArrayList<string>();
         }
 
-        public RssFeedComponent(string rssUrl, string siteId) : base(null)
+        public RssFeedComponent(string rssUrl, string siteId) : base(typeof(RssFeedComponent).ToString())
         {            
             Utils.ThrowException(rssUrl == null ? new ArgumentNullException("rssUrl") : null);
-            CreateLogger(mSiteId = siteId);
+            mSiteId = siteId;
             mSources = new ArrayList<string>(new string[] { rssUrl });
             TimeBetweenPolls = 300000; // poll every 5 minutes by default
         }
 
-        public RssFeedComponent(IEnumerable<string> rssList, string siteId) : base(null)
+        public RssFeedComponent(IEnumerable<string> rssList, string siteId) : base(typeof(RssFeedComponent).ToString())
         {
             Utils.ThrowException(rssList == null ? new ArgumentNullException("rssList") : null);
-            CreateLogger(mSiteId = siteId);
+            mSiteId = siteId;
             mSources = new ArrayList<string>();
             AddSources(rssList); // throws ArgumentNullException, ArgumentValueException
             //Utils.ThrowException(mSources.Count == 0 ? new ArgumentValueException("rssList") : null); // allow empty source list
