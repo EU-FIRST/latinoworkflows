@@ -30,10 +30,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MDG, Version=1.2.9.0, Culture=neutral, PublicKeyToken=98927b61ec42a6b8">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>Data\Idms\Debug\MDG.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
@@ -42,6 +38,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Persistance\DocumentCorpusWriterComponent.cs" />
+    <Compile Include="TextMining\BoilerplateRemoverComponent.cs" />
     <Compile Include="TextMining\DocumentCorpus\Tree.cs" />
     <None Include="TextMining\LnDocComponent.cs" />
     <Compile Include="TextMining\RssFeedComponent.cs" />
@@ -68,6 +65,10 @@
     <Content Include="TODO.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\JsintProxy\HtmlAgilityPack\HtmlAgilityPack.csproj">
+      <Project>{34B63EAF-E0D0-4B07-85C5-42E0559FAC9F}</Project>
+      <Name>HtmlAgilityPack</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Latino\Latino.csproj">
       <Project>{FFA3AB32-D56A-4544-BCF2-CBC51B57550B}</Project>
       <Name>Latino</Name>
