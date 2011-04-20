@@ -84,6 +84,11 @@ namespace Latino.Workflows
             get { return mThread.IsAlive; }
         }
 
+        public bool IsSuspended
+        {
+            get { return (mThread.ThreadState & ThreadState.Suspended) != 0; }
+        }
+
         private void ProcessQueue()
         {
             while (!mStopped)

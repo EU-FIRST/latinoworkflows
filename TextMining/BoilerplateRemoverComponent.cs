@@ -35,22 +35,23 @@ namespace Latino.Workflows.TextMining
             if (contentType != null && contentType != "Html") { return; } // TODO: handle XHTML as well
             try
             {
+                StringBuilder tokens = new StringBuilder();
                 HtmlTokenizerHap tok = new HtmlTokenizerHap(document.Text);
                 tok.Normalize = false;
                 int numTags = 0;
                 foreach (string token in tok)
                 {
-                    Console.WriteLine(token);
                     numTags++;
                 }
-                mLogger.Info("ProcessDocument", "************************************************************* {0}", numTags);
+                //Guid docGuid = Guid.NewGuid();
+                //File.WriteAllText(@"c:\ex\ok\" + docGuid + ".tok", tokens.ToString());
                 //document.Features.SetFeatureValue("_contentType", "Text");
             }
             catch (Exception e)
             {
                 Guid docGuid = Guid.NewGuid();
                 mLogger.Error("ProcessDocument", "hapfail {0}", docGuid);
-                File.WriteAllText(@"c:\ex\" + docGuid + ".html", document.Text);
+                File.WriteAllText(@"c:\ex\fail\" + docGuid + ".html", document.Text);
                 mLogger.Error("ProcessDocument", e);
             }
         }
