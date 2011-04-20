@@ -65,10 +65,6 @@
     <Content Include="TODO.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\JsintProxy\HtmlAgilityPack\HtmlAgilityPack.csproj">
-      <Project>{34B63EAF-E0D0-4B07-85C5-42E0559FAC9F}</Project>
-      <Name>HtmlAgilityPack</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Latino\Latino.csproj">
       <Project>{FFA3AB32-D56A-4544-BCF2-CBC51B57550B}</Project>
       <Name>Latino</Name>
