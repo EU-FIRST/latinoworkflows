@@ -2,8 +2,8 @@
  *
  *  This file is part of LATINO. See http://latino.sf.net
  *
- *  File:    GenericStreamDataProducer.cs
- *  Desc:    Generic (customizable) stream data producer
+ *  File:    GenericStreamDataProducerPoll.cs
+ *  Desc:    Generic (customizable) stream data producer (polling)
  *  Created: Dec-2010
  *
  *  Authors: Miha Grcar
@@ -16,18 +16,18 @@ namespace Latino.Workflows
 {
     /* .-----------------------------------------------------------------------
        |
-       |  Class GenericStreamDataProducer
+       |  Class GenericStreamDataProducerPoll
        |
        '-----------------------------------------------------------------------
     */
-    public class GenericStreamDataProducer : StreamDataProducer
+    public class GenericStreamDataProducerPoll : StreamDataProducerPoll
     {
         public delegate object ProduceDataHandler();
 
         public event ProduceDataHandler OnProduceData
             = null;
 
-        public GenericStreamDataProducer() : base(typeof(GenericStreamDataProducer).ToString())
+        public GenericStreamDataProducerPoll() : base(typeof(GenericStreamDataProducerPoll).ToString())
         {
         }
 

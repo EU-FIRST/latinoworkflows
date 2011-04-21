@@ -33,7 +33,7 @@ namespace Latino.Workflows.TextMining
        |
        '-----------------------------------------------------------------------
     */
-    public class RssFeedComponent : StreamDataProducer
+    public class RssFeedComponent : StreamDataProducerPoll
     {
         private enum ContentType
         {

@@ -3,7 +3,7 @@
  *  This file is part of LATINO. See http://latino.sf.net
  *
  *  File:    StreamDataConsumer.cs
- *  Desc:    Stream data consumer base 
+ *  Desc:    Stream data consumer base class
  *  Created: Dec-2010
  *
  *  Authors: Miha Grcar
@@ -46,47 +46,34 @@ namespace Latino.Workflows
             mLogger = WorkflowUtils.CreateLogger(mLoggerBaseName = loggerBaseName, mName);
         }
 
-        public void Stop()
-        {
-            if (IsRunning)
-            {
-                mLogger.Debug("Stop", "Stopping ...");
-                lock (mQueue)
-                {
-                    mStopped = true;
-                    if (!mThreadAlive)
-                    {
-                        while ((mThread.ThreadState & ThreadState.Suspended) == 0) { Thread.Sleep(1); }
-                        mThread.Resume();
-                    }
-                }
-            }
-        }
-
-        public void Resume()
-        {
-            if (!IsRunning)
-            {
-                mLogger.Debug("Resume", "Resuming ...");
-                lock (mQueue)
-                {
-                    mStopped = false;
-                    mThread = new Thread(new ThreadStart(ProcessQueue));
-                    mThreadAlive = mQueue.Count > 0;
-                    if (mThreadAlive) { mThread.Start(); }
-                }
-                mLogger.Debug("Resume", "Resumed.");
-            }
-        }
-
-        public bool IsRunning
-        {
-            get { return mThread.IsAlive; }
-        }
-
         public bool IsSuspended
         {
             get { return (mThread.ThreadState & ThreadState.Suspended) != 0; }
+        }
+
+        public int QueueSize
+        {
+            get { return mQueue.Count; }
+        }
+
+        public int MaxQueueSize
+        {
+            get { return mMaxQueueSize; }
+        }
+
+        public DateTime MaxQueueSizeTime
+        {
+            get { return mMaxQueueSizeTime; }
+        }
+
+        public string Name
+        {
+            get { return mName; }
+            set
+            {
+                mName = value;
+                mLogger = WorkflowUtils.CreateLogger(mLoggerBaseName, mName);
+            }
         }
 
         private void ProcessQueue()
@@ -128,6 +115,44 @@ namespace Latino.Workflows
 
         // *** IDataConsumer interface implementation ***
 
+        public void Start()
+        {
+            if (!IsRunning)
+            {
+                mLogger.Debug("Start", "Resuming ...");
+                lock (mQueue)
+                {
+                    mStopped = false;
+                    mThread = new Thread(new ThreadStart(ProcessQueue));
+                    mThreadAlive = mQueue.Count > 0;
+                    if (mThreadAlive) { mThread.Start(); }
+                }
+                mLogger.Debug("Start", "Resumed.");
+            }
+        }
+
+        public void Stop()
+        {
+            if (IsRunning)
+            {
+                mLogger.Debug("Stop", "Stopping ...");
+                lock (mQueue)
+                {
+                    mStopped = true;
+                    if (!mThreadAlive)
+                    {
+                        while ((mThread.ThreadState & ThreadState.Suspended) == 0) { Thread.Sleep(1); }
+                        mThread.Resume();
+                    }
+                }
+            }
+        }
+
+        public bool IsRunning
+        {
+            get { return mThread.IsAlive; }
+        }
+
         public void ReceiveData(IDataProducer sender, object data)
         {
             Utils.ThrowException(data == null ? new ArgumentNullException("data") : null);
@@ -150,31 +175,6 @@ namespace Latino.Workflows
                         mThread.Resume();
                     }
                 }
-            }
-        }
-
-        public int QueueSize
-        {
-            get { return mQueue.Count; }
-        }
-
-        public int MaxQueueSize
-        {
-            get { return mMaxQueueSize; }
-        }
-
-        public DateTime MaxQueueSizeTime
-        {
-            get { return mMaxQueueSizeTime; }
-        }
-
-        public string Name
-        {
-            get { return mName; }
-            set 
-            { 
-                mName = value;
-                mLogger = WorkflowUtils.CreateLogger(mLoggerBaseName, mName);
             }
         }
 

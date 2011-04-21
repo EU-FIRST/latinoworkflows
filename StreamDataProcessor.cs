@@ -3,7 +3,7 @@
  *  This file is part of LATINO. See http://latino.sf.net
  *
  *  File:    StreamDataProcessor.cs
- *  Desc:    Stream data processor base 
+ *  Desc:    Stream data processor base class
  *  Created: Dec-2010
  *
  *  Authors: Miha Grcar

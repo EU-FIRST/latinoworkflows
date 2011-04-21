@@ -3,7 +3,7 @@
  *  This file is part of LATINO. See http://latino.sf.net
  *
  *  File:    DocumentProcessor.cs
- *  Desc:    Document processor base 
+ *  Desc:    Document processor base class
  *  Created: Dec-2010
  *
  *  Authors: Miha Grcar

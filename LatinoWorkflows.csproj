@@ -37,18 +37,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="StreamDataProducer.cs" />
     <Compile Include="Persistance\DocumentCorpusWriterComponent.cs" />
     <Compile Include="TextMining\BoilerplateRemoverComponent.cs" />
     <Compile Include="TextMining\DocumentCorpus\Tree.cs" />
     <None Include="TextMining\LnDocComponent.cs" />
     <Compile Include="TextMining\RssFeedComponent.cs" />
-    <Compile Include="GenericStreamDataProducer.cs" />
+    <Compile Include="GenericStreamDataProducerPoll.cs" />
     <Compile Include="TextMining\DocumentCorpus\Annotation.cs" />
     <Compile Include="TextMining\DocumentConsumer.cs" />
     <Compile Include="TextMining\DocumentCorpus\Document.cs" />
     <Compile Include="TextMining\DocumentCorpus\DocumentCorpus.cs" />
     <Compile Include="StreamDataConsumer.cs" />
-    <Compile Include="StreamDataProducer.cs" />
+    <Compile Include="StreamDataProducerPoll.cs" />
     <Compile Include="IDataConsumer.cs" />
     <Compile Include="IDataProducer.cs" />
     <Compile Include="StreamDataProcessor.cs" />
@@ -58,6 +59,7 @@
     <Compile Include="TextMining\DocumentCorpus\Features.cs" />
     <Compile Include="TextMining\RegexTokenizerComponent.cs" />
     <Compile Include="TextMining\DocumentCorpus\TextBlock.cs" />
+    <Compile Include="IWorkflowComponent.cs" />
     <Compile Include="WorkflowUtils.cs" />
     <EmbeddedResource Include="TextMining\DocumentCorpus\Resources\DocumentTemplate.htm" />
     <EmbeddedResource Include="TextMining\DocumentCorpus\Resources\IndexTemplate.htm" />

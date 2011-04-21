@@ -3,7 +3,7 @@
  *  This file is part of LATINO. See http://latino.sf.net
  *
  *  File:    DocumentConsumer.cs
- *  Desc:    Document consumer base 
+ *  Desc:    Document consumer base class
  *  Created: Dec-2010
  *
  *  Authors: Miha Grcar

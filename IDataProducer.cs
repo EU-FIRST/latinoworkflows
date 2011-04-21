@@ -20,12 +20,9 @@ namespace Latino.Workflows
        |
        '-----------------------------------------------------------------------
     */
-    public interface IDataProducer : IDisposable
+    public interface IDataProducer : IWorkflowComponent
     {
         void Subscribe(IDataConsumer dataConsumer);
         void Unsubscribe(IDataConsumer dataConsumer);
-        void Stop();
-        void Resume();
-        bool IsRunning { get; }
     }
 }

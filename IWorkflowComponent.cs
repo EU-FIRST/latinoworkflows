@@ -2,9 +2,9 @@
  *
  *  This file is part of LATINO. See http://latino.sf.net
  *
- *  File:    IDataConsumer.cs
- *  Desc:    Data consumer interface
- *  Created: Dec-2010
+ *  File:    IWorkflowComponent.cs
+ *  Desc:    LATINO workflow component interface
+ *  Created: Apr-2011
  *
  *  Authors: Miha Grcar
  *
@@ -16,12 +16,14 @@ namespace Latino.Workflows
 {
     /* .-----------------------------------------------------------------------
        |
-       |  Interface IDataConsumer
+       |  Interface IWorkflowComponent
        |
        '-----------------------------------------------------------------------
     */
-    public interface IDataConsumer : IWorkflowComponent
+    public interface IWorkflowComponent : IDisposable
     {
-        void ReceiveData(IDataProducer sender, object data);
+        void Start();
+        void Stop();
+        bool IsRunning { get; }
     }
 }
