@@ -196,7 +196,7 @@ namespace Latino.Workflows.TextMining
                     if (itemAttr.ContainsKey("link") && itemAttr["link"].Trim() != "")
                     {
                         // get referenced Web page
-                        try
+                        //try
                         {
                             mLogger.Info("ProcessItem", "Getting HTML from {0} ...", itemAttr["link"]);
                             string mimeType, charSet;
@@ -222,10 +222,10 @@ namespace Latino.Workflows.TextMining
                                 }
                             }
                         }
-                        catch (Exception e)
-                        {
-                            mLogger.Warn("ProcessItem", e);
-                        }
+                        //catch (Exception e)
+                        //{
+                        //    mLogger.Warn("ProcessItem", e);
+                        //}
                         Thread.Sleep(mPolitenessSleep);
                     }
                     if (content == "")
