@@ -82,6 +82,12 @@ namespace Latino.Workflows.TextMining
         public string Text
         {
             get { return mText; }
+            set 
+            {
+                Utils.ThrowException(value == null ? new ArgumentNullException("Text") : null);
+                Utils.ThrowException(mAnnotations.Count > 0 ? new InvalidOperationException() : null);
+                mText = value; 
+            }
         }
 
         public int AnnotationCount

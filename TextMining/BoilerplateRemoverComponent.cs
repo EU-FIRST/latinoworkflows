@@ -13,7 +13,8 @@
 using System;
 using System.IO;
 using System.Text;
-using Latino.TextMining;
+using System.Collections.Generic;
+using Latino.WebMining;
 
 namespace Latino.Workflows.TextMining
 {
@@ -32,26 +33,31 @@ namespace Latino.Workflows.TextMining
         protected override void ProcessDocument(Document document)
         {
             string contentType = document.Features.GetFeatureValue("_contentType");
-            if (contentType != null && contentType != "Html") { return; } // TODO: handle XHTML as well
+            if (contentType != "Html") { return; } // *** currently handles only documents that have _contentType set to Html
             try
             {
-                StringBuilder tokens = new StringBuilder();
-                HtmlTokenizerHap tok = new HtmlTokenizerHap(document.Text);
-                tok.Normalize = false;
-                int numTags = 0;
-                foreach (string token in tok)
+                BoilerplateRemover br = BoilerplateRemover.GetDefaultBoilerplateRemover();
+                List<BoilerplateRemover.HtmlBlock> blocks;
+                br.ExtractText(new StringReader(document.Text), BoilerplateRemover.TextClass.Unknown, out blocks);
+                StringBuilder text = new StringBuilder();
+                ArrayList<Annotation> tmp = new ArrayList<Annotation>();
+                foreach (BoilerplateRemover.HtmlBlock block in blocks)
                 {
-                    numTags++;
+                    int spanStart = text.Length;
+                    string blockTxt = block.text;
+                    if (blockTxt != null && blockTxt.Length > 0)
+                    {
+                        Annotation annot = new Annotation(spanStart, spanStart + (blockTxt.Length - 1), "Block/" + block.textClass.ToString());
+                        tmp.Add(annot);
+                        text.AppendLine(blockTxt);
+                        text.AppendLine();
+                    }
                 }
-                //Guid docGuid = Guid.NewGuid();
-                //File.WriteAllText(@"c:\ex\ok\" + docGuid + ".tok", tokens.ToString());
-                //document.Features.SetFeatureValue("_contentType", "Text");
+                document.Text = text.ToString().TrimEnd();
+                foreach (Annotation annot in tmp) { document.AddAnnotation(annot); }
             }
             catch (Exception e)
             {
-                Guid docGuid = Guid.NewGuid();
-                mLogger.Error("ProcessDocument", "hapfail {0}", docGuid);
-                File.WriteAllText(@"c:\ex\fail\" + docGuid + ".html", document.Text);
                 mLogger.Error("ProcessDocument", e);
             }
         }

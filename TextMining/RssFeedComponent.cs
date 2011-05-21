@@ -40,7 +40,7 @@ namespace Latino.Workflows.TextMining
             Xml,
             Html,
             Text,
-            BinaryBase64
+            Binary
         }
 
         private ArrayList<string> mSources;
@@ -84,7 +84,7 @@ namespace Latino.Workflows.TextMining
             }
             else
             {
-                return ContentType.BinaryBase64;
+                return ContentType.Binary;
             }
         }
 
@@ -207,7 +207,7 @@ namespace Latino.Workflows.TextMining
                             if (charSet == null) { charSet = "ISO-8859-1"; }
                             itemAttr.Add("_charSet", charSet);
                             itemAttr.Add("_contentLength", bytes.Length.ToString());
-                            if (contentType == ContentType.BinaryBase64)
+                            if (contentType == ContentType.Binary)
                             {
                                 // save as base64-encoded binary data
                                 content = Convert.ToBase64String(bytes);
@@ -448,12 +448,12 @@ namespace Latino.Workflows.TextMining
                     if (siteId != null)
                     {
                         historyDatabase.ExecuteNonQuery("insert into History (SiteId, ItemId, Source, Time) values (?, ?, ?, ?)", 
-                            Utils.Trunc(siteId, 400), id.ToString("N"), Utils.Trunc(source, 900), timeStr);
+                            Utils.Truncate(siteId, 400), id.ToString("N"), Utils.Truncate(source, 900), timeStr);
                     }
                     else
                     {
-                        historyDatabase.ExecuteNonQuery("insert into History (ItemId, Source, Time) values (?, ?, ?)", 
-                            id.ToString("N"), Utils.Trunc(source, 900), timeStr);
+                        historyDatabase.ExecuteNonQuery("insert into History (ItemId, Source, Time) values (?, ?, ?)",
+                            id.ToString("N"), Utils.Truncate(source, 900), timeStr);
                     }
                 }
                 return retVal;
@@ -471,7 +471,7 @@ namespace Latino.Workflows.TextMining
                     else
                     {
                         t = historyDatabase.ExecuteQuery(string.Format("select top {0} * from History where SiteId=? order by Time desc", mHistorySize), 
-                            Utils.Trunc(siteId, 400));
+                            Utils.Truncate(siteId, 400));
                     }
                     mHistory.First.Clear();
                     mHistory.Second.Clear();

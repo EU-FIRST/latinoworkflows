@@ -233,7 +233,7 @@ namespace Latino.Workflows.TextMining
 
                 document = new StreamWriter(string.Format("{0}\\Document{1}.html", path, i));
                 documentList += "<p class='documentTitle'><a href=Document" + i + ".html>" + d.Name + "</a></br>";
-                documentList += "<p class='documentText'>" + Utils.Trunc(d.Text, 400) + "...</p>";
+                documentList += "<p class='documentText'>" + Utils.Truncate(d.Text, 400) + "...</p>";
 
                 string annotationsString = d.Annotations.Count == 1 ? " annotation" : " annotations";
                 string featuresString = d.Features.Names.Count == 1 ? " feature" : " features";
