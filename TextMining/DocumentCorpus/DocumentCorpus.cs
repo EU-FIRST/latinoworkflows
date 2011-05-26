@@ -17,6 +17,7 @@ using System.Xml.Serialization;
 using System.Xml.Schema;
 using System.Reflection;
 using System.IO;
+using System.Web;
 
 namespace Latino.Workflows.TextMining
 {
@@ -250,7 +251,7 @@ namespace Latino.Workflows.TextMining
 
             foreach (KeyValuePair<string, string> f in this.Features)
             {
-                corpusFeatures += f.Key + " = " + f.Value + " <br/>";
+                corpusFeatures += "<b>" + f.Key + "</b>" + " = " + Utils.Truncate(HttpUtility.HtmlEncode(f.Value), 100) + (f.Value.Length > 100 ? " ..." : "") + " <br/><br/>";
             }
 
             indexString = indexString.Replace("{$document_list}", documentList);

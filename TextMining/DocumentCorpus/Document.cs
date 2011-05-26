@@ -18,6 +18,7 @@ using System.Xml.Schema;
 using System.IO;
 using System.Reflection;
 using System.Drawing;
+using System.Web;
 
 namespace Latino.Workflows.TextMining
 {
@@ -390,7 +391,7 @@ namespace Latino.Workflows.TextMining
 
             foreach (KeyValuePair<string, string> f in this.Features)
             {
-                documentFeatures += f.Key + " = " + f.Value + " <br/>";
+                documentFeatures += "<b>" + f.Key + "</b>" + " = " + Utils.Truncate(HttpUtility.HtmlEncode(f.Value), 100) + (f.Value.Length > 100?" ...":"") + " <br/><br/>";
             }
 
             templateString = templateString.Replace("{$document_title}", mName);
