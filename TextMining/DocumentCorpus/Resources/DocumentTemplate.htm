@@ -3,44 +3,71 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 
     <head>
+        
+        <style type="text/css">
+
+            #TextLayer {position:absolute;left:450px;top:60px;width:60%;height:auto;padding-left:3em;border-left:1px #3C64B6 solid;z-index:1;}
+            #DocumentText {white-space:pre-wrap;padding-top:30px;}
+            #DocumentTitle {color:#3C64B6;background-color: #EEEEEE;font-weight:bold;font-size:1.5em;padding-bottom:1em;padding-top:1em;padding-left:0.3em}
+            #ListLayer {position:relative;left:50px;top:60px;width:30%;height:auto;z-index:1;}
+            #DocumentFeaturesLayer {position:absolute;left:50px;width:300px;height:auto;padding-left:2.1em;padding-top:1.5em;z-index:1;word-wrap:break-word;}
+            ul, li, ul li a {list-style: none;width:100%;}
+            h3 {color: #004D99; font-weight:bold}
+
+            .tooltip {background-color:#26517E;border:1px solid #fff;padding:10px 15px;display:none;color:#fff;text-align:left;font-size:15px;font-weight:bolder;z-index: 8000;-moz-box-shadow:0 0 10px #000;-webkit-box-shadow:0 0 10px #000;}
+
+        </style>
     
-        <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        
         <title>{$document_title}</title> 
         
         <!-- jQuery Library + ALL jQuery Tools -->
-        <script src="http://cdn.jquerytools.org/1.2.5/full/jquery.tools.min.js" type="text/javascript"></script>
-        
-        <!--  <script language="javascript" type="text/javascript" src="MakeHTML/jQuery/jquery-1.4.1.js"></script>    -->     
+        <script src="http://code.jquery.com/jquery-1.6.1.min.js" type="text/javascript"></script>
+        <script src="http://cdn.jquerytools.org/1.2.5/full/jquery.tools.min.js" type="text/javascript"></script>        
         
         <script type="text/javascript">
             var inlineCss = "{$inline_css}";
 
-        if (inlineCss)
-        {
-            document.write('<style type="text/css">');
-            document.write('#TextLayer {position:absolute;left:450px;top:60px;width:60%;height:auto;padding-left:3em;border-left:1px #3C64B6 solid;z-index:1;}');
-            document.write('#DocumentText {white-space:pre-wrap;}');
-            document.write('#DocumentTitle {color:#3C64B6;background-color: #EEEEEE;font-weight:bold;font-size:1.5em;padding-bottom:1em;padding-top:1em;padding-left:0.3em}');
-            document.write('#ListLayer {position:relative;left:50px;top:60px;width:30%;height:auto;z-index:1;}');
-            document.write('#DocumentFeaturesLayer {position:absolute;left:50px;width:300px;height:auto;padding-left:2.1em;padding-top:1.5em;z-index:1;word-wrap:break-word;}');
-            document.write('ul, li, ul li a {list-style: none;width:100%;}');
-            document.write('h3 {color: #004D99; font-weight:bold}');
+//        if (inlineCss)
+//        {
+//            document.write('<style type="text/css">');
+//            document.write('#TextLayer {position:absolute;left:450px;top:60px;width:60%;height:auto;padding-left:3em;border-left:1px #3C64B6 solid;z-index:1;}');
+//            document.write('#DocumentText {white-space:pre-wrap;padding-top:30px;}');
+//            document.write('#DocumentTitle {color:#3C64B6;background-color: #EEEEEE;font-weight:bold;font-size:1.5em;padding-bottom:1em;padding-top:1em;padding-left:0.3em}');
+//            document.write('#ListLayer {position:relative;left:50px;top:60px;width:30%;height:auto;z-index:1;}');
+//            document.write('#DocumentFeaturesLayer {position:absolute;left:50px;width:300px;height:auto;padding-left:2.1em;padding-top:1.5em;z-index:1;word-wrap:break-word;}');
+//            document.write('ul, li, ul li a {list-style: none;width:100%;}');
+//            document.write('h3 {color: #004D99; font-weight:bold}');
 
-            document.write('.tooltip {background-color:#26517E;border:1px solid #fff;padding:10px 15px;display:none;color:#fff;text-align:left;font-size:15px;font-weight:bolder;z-index: 8000;-moz-box-shadow:0 0 10px #000;-webkit-box-shadow:0 0 10px #000;}');
-            document.write('</style>');           
-        }
-        else
-        {
-        /* <link rel="stylesheet" type="text/css" href="/Resources/style.css"/>  */
-        }
+//            document.write('.tooltip {background-color:#26517E;border:1px solid #fff;padding:10px 15px;display:none;color:#fff;text-align:left;font-size:15px;font-weight:bolder;z-index: 8000;-moz-box-shadow:0 0 10px #000;-webkit-box-shadow:0 0 10px #000;}');
+//            document.write('</style>');           
+//        }
+//        else
+//        {
+//        /* <link rel="stylesheet" type="text/css" href="/Resources/style.css"/>  */
+            //        }
+
+       
 
         $(document).ready(function () {
 
-            var html = $("#DocumentText").html();
+            var text = $("#DocumentText").text();
+
+            /*
+            In IE and Opera new line character will consume 2 spaces because they use the characters “\r\n”,
+            however if the message is saved under Chrome, Firefox 2 or Firefox 3, the new line character only consume 1 space “\n”.            
+            */
+
+            if ($.browser.mozilla || $.browser.safari) {
+                $('#DocumentText').text(text.replace(/\n/g, "\r\n"));
+            }
+
+            text = $("#DocumentText").text();
 
             $('input[name="{$annotation_type_list_name}"]').click(function () {
 
-                refreshPage(html);
+                refreshPage(text);
 
             });
 
@@ -82,7 +109,7 @@
 
             function refreshPage(html) {
 
-                $("#DocumentText").html(html);
+                $("#DocumentText")[0].innerHTML = html;
 
                 var elements;
 
@@ -117,7 +144,7 @@
                 var i;
                 var displacement = 0;
 
-                var htmlResult = "";
+                var htmlResult = html;
 
                 if (colorArray.length > 0)
                     htmlResult = "";
@@ -125,16 +152,16 @@
 
                 var firstHighlight = false;
 
-                for (i = 0; i < colorArray.length + displacement + 3; i++) {
+                for (i = 0; i < colorArray.length + displacement; i++) {
 
                     var letter = html.substring(i + displacement, i + displacement + 1) == "" ? "&nbsp" : html.substring(i + displacement, i + displacement + 1)
 
                     var style;
 
-                    if (featureArray[i - displacement - 3] != "")
-                        style = colorArray[i - displacement - 3] == undefined ? letter : "<span class='text' title='Features: <br/> " + featureArray[i - displacement - 3] + "' style='background-color:" + colorArray[i - displacement - 3] + ";' >" + letter + "</span>";
+                    if (featureArray[i - displacement] != "")
+                        style = colorArray[i - displacement] == undefined ? letter : "<span class='text' title='Features: <br/> " + featureArray[i - displacement] + "' style='background-color:" + colorArray[i - displacement] + ";' >" + letter + "</span>";
                     else
-                        style = colorArray[i - displacement - 3] == undefined ? letter : "<span style='background-color:" + colorArray[i - displacement - 3] + ";' >" + letter + "</span>";
+                        style = colorArray[i - displacement] == undefined ? letter : "<span style='background-color:" + colorArray[i - displacement] + ";' >" + letter + "</span>";
 
                     if (firstHighlight == false && colorArray.length > 1) {
 
@@ -142,7 +169,7 @@
 
                         firstHighlight = true;
                     }
-                    else if (i < colorArray.length - 1 + displacement + 3) {
+                    else if (i < colorArray.length - 1 + displacement) {
 
                         htmlResult += style + html.substring(i + displacement + 1, i + displacement + 1);
                     }
@@ -152,10 +179,13 @@
                     }
 
 
+
+
                 }
 
 
-                $("#DocumentText").html(htmlResult);
+
+                $("#DocumentText")[0].innerHTML = htmlResult;
 
                 $('span[class="text"]').tooltip({
 
@@ -202,9 +232,7 @@
             <div id="DocumentTitle">
                 {$document_title}
             </div>
-            <div id="DocumentText">
-                {$document_text}
-            </div>
+            <div id="DocumentText">{$document_text}</div>
         </div>         
         
 
