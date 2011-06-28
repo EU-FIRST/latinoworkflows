@@ -39,12 +39,14 @@
 [x] move log to latino, enable overriding static settings
 [x] remove jsint from Latino.Web.WebUtils 
 [x] add pubDate into history hash-key
-[x] make Dacq store history for each component separately (this is now handled by RDBMS)
+[x] make Dacq store history for each component separately (solved: this is now handled by RDBMS)
 [x] commit
+[ ] boilerplate remover: handle comments in GetTextBlocks
+[ ] boilerplate remover: changes behavior if href changed in <a>. Should not happen (?) 
 [ ] put jsint support into LatinoWorkflows
-[ ] logging of progress
+[x] logging of progress
 [ ] document corpus Resources -> Templates
-[ ] fix URIs like http://www.bseindia.com/cirbrief/new_notice_detail.asp?Noticeid={AED515A2-ECF9-4539-988E-8D51634B5E8B}&noticeno=20110311-3&dt=03/11/2011&icount=3&totcount=9&flag=0
+[/] fix URIs like http://www.bseindia.com/cirbrief/new_notice_detail.asp?Noticeid={AED515A2-ECF9-4539-988E-8D51634B5E8B}&noticeno=20110311-3&dt=03/11/2011&icount=3&totcount=9&flag=0
     (should be http://www.bseindia.com/cirbrief/new_notice_detail.asp?Noticeid=%7bAED515A2-ECF9-4539-988E-8D51634B5E8B%7d&noticeno=20110311-3&dt=03/11/2011&icount=3&totcount=9&flag=0)
     See http://www.ietf.org/rfc/rfc2396.txt, Section 2.2
 [/] remove illegal characters from RSS XMLs (see Dacq logs)
@@ -53,6 +55,6 @@
 [ ] commit
 [/] Logging as stream component
 [ ] fixed-size queue 
-[ ] powerful query language for retrieving text blocks
+[ ] more powerful query language for retrieving text blocks
 [ ] handle RSS comments
-[ ] DB query timeouts (?)
+[x] DB query timeouts (solved: using write-through cache)

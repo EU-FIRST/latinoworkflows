@@ -368,6 +368,7 @@ namespace Latino.Workflows.TextMining
                             }
                         }
                         reader.Close();
+                        channelAttr.Add("siteId", mSiteId);
                         channelAttr.Add("_provider", GetType().ToString());
                         channelAttr.Add("_sourceUrl", url);
                         if (mIncludeRssXml) { channelAttr.Add("_source", xml); }

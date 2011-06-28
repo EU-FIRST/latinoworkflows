@@ -15,6 +15,7 @@ using System.Xml;
 using System.IO;
 using Latino.Workflows.TextMining;
 using Latino.Persistance;
+using System.Text;
 
 namespace Latino.Workflows.Persistance
 {
@@ -42,10 +43,11 @@ namespace Latino.Workflows.Persistance
             //
             // debug code
             //
+            // Jasmina
             string id = Guid.NewGuid().ToString("N");
-            string path = @"C:\Users\Administrator\Desktop\htmls\" + id;
+            string path = @"C:\Users\Administrator\Desktop\htmls";// + "\\" + id;
             Directory.CreateDirectory(path);
-            corpus.MakeHtmlPage(path, true);
+            //corpus.MakeHtmlPage(path, true);
             //
             // end of debug code
             //
@@ -61,10 +63,33 @@ namespace Latino.Workflows.Persistance
             //
             // debug code
             //
+            // Jasmina
             StreamWriter w = new StreamWriter(path + "\\" + id + ".xml");
             w.Write(stringWriter.ToString().Replace("<?xml version=\"1.0\" encoding=\"utf-16\"?>", 
                 "<?xml version=\"1.0\" encoding=\"utf-8\"?>"));
             w.Close();
+            // Marko
+            //string siteId = corpus.Features.GetFeatureValue("siteId");
+            //if (siteId == null) { siteId = "(NULL)"; }
+            //string __path = string.Format(@"E:\Users\miha\Work\DacqpipeMarko\Data\{0}\", siteId);
+            //if (!Directory.Exists(__path)) { Directory.CreateDirectory(__path); }
+            //foreach (Document document in corpus.Documents)
+            //{
+            //    if (document.Features.GetFeatureValue("_contentType") == "Html")
+            //    {
+            //        string fileName = __path + Guid.NewGuid().ToString("N") + ".html";
+            //        byte[] bytes = Convert.FromBase64String(document.Features.GetFeatureValue("raw"));
+            //        string html = Encoding.GetEncoding(document.Features.GetFeatureValue("_charSet")).GetString(bytes);
+            //        StreamWriter w = new StreamWriter(fileName, /*append=*/false, Encoding.UTF8);
+            //        w.WriteLine("<!--");
+            //        w.WriteLine("pubDate: {0}", document.Features.GetFeatureValue("pubDate"));
+            //        w.WriteLine("acqDate: {0}", document.Features.GetFeatureValue("_time"));
+            //        w.WriteLine("link: {0}", document.Features.GetFeatureValue("link"));                    
+            //        w.WriteLine("-->");
+            //        w.Write(html);
+            //        w.Close();
+            //    }
+            //}
             //
             // end of debug code
             //

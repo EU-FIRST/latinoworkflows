@@ -50,7 +50,6 @@ namespace Latino.Workflows.TextMining
                         Annotation annot = new Annotation(spanStart, spanStart + (blockTxt.Length - 1), "Block/" + block.textClass.ToString());
                         tmp.Add(annot);
                         text.AppendLine(blockTxt);
-                        text.AppendLine();
                     }
                 }
                 document.Text = text.ToString().TrimEnd();
