@@ -35,12 +35,13 @@ namespace Latino.Workflows.TextMining
     */
     public class RssFeedComponent : StreamDataProducerPoll
     {
+        [Flags]
         private enum ContentType
         {
-            Xml,
-            Html,
-            Text,
-            Binary
+            Xml = 1,
+            Html = 2,
+            Text = 4,
+            Binary = 8
         }
 
         private ArrayList<string> mSources;
@@ -67,6 +68,11 @@ namespace Latino.Workflows.TextMining
             = new Regex(@"(application/xml)|(application/[^+ ;]+\+xml)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static Regex mTextMimeTypeRegex
             = new Regex(@"text/plain", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        private int mSizeLimit // *** make this adjustable
+            = 10485760;
+        private ContentType mContentFilter // *** make this adjustable
+            = ContentType.Html | ContentType.Text;
 
         private ContentType GetContentType(string mimeType)
         {
@@ -188,7 +194,7 @@ namespace Latino.Workflows.TextMining
                 string pubDate = "";
                 itemAttr.TryGetValue("pubDate", out pubDate);
                 Guid guid = MakeGuid(name, desc, pubDate);
-                mLogger.Info("ProcessItem", "Found item \"{0}\" [{1}].", Utils.ToOneLine(name, /*compact=*/true), guid.ToString("N"));
+                mLogger.Info("ProcessItem", "Found item \"{0}\".", Utils.ToOneLine(name, /*compact=*/true));
                 if (!mHistory.CheckHistory(guid, rssXmlUrl, mSiteId, mHistoryDatabase))
                 {
                     DateTime time = DateTime.Now;
@@ -196,36 +202,39 @@ namespace Latino.Workflows.TextMining
                     if (itemAttr.ContainsKey("link") && itemAttr["link"].Trim() != "")
                     {
                         // get referenced Web page
-                        //try
+                        mLogger.Info("ProcessItem", "Getting HTML from {0} ...", itemAttr["link"]);
+                        string mimeType, charSet;
+                        byte[] bytes = WebUtils.GetWebResource(itemAttr["link"], out mimeType, out charSet, mSizeLimit);
+                        if (bytes == null) 
                         {
-                            mLogger.Info("ProcessItem", "Getting HTML from {0} ...", itemAttr["link"]);
-                            string mimeType, charSet;
-                            byte[] bytes = WebUtils.GetWebResource(itemAttr["link"], out mimeType, out charSet, /*sizeLimit=*/0);
-                            ContentType contentType = GetContentType(mimeType);
-                            itemAttr.Add("_mimeType", mimeType);
-                            itemAttr.Add("_contentType", contentType.ToString());
-                            if (charSet == null) { charSet = "ISO-8859-1"; }
-                            itemAttr.Add("_charSet", charSet);
-                            itemAttr.Add("_contentLength", bytes.Length.ToString());
-                            if (contentType == ContentType.Binary)
-                            {
-                                // save as base64-encoded binary data
-                                content = Convert.ToBase64String(bytes);
-                            }
-                            else
-                            { 
-                                // save as text                                
-                                content = Encoding.GetEncoding(charSet).GetString(bytes);
-                                if (mIncludeRawData)
-                                {
-                                    itemAttr.Add("raw", Convert.ToBase64String(bytes));
-                                }
-                            }
+                            mLogger.Info("ProcessItem", "Item rejected because of its size.");
+                            return;                        
                         }
-                        //catch (Exception e)
-                        //{
-                        //    mLogger.Warn("ProcessItem", e);
-                        //}
+                        ContentType contentType = GetContentType(mimeType);
+                        if ((contentType & mContentFilter) == 0) 
+                        {
+                            mLogger.Info("ProcessItem", "Item rejected because of its content type.");
+                            return;
+                        }
+                        itemAttr.Add("_mimeType", mimeType);
+                        itemAttr.Add("_contentType", contentType.ToString());
+                        if (charSet == null) { charSet = "ISO-8859-1"; }
+                        itemAttr.Add("_charSet", charSet);
+                        itemAttr.Add("_contentLength", bytes.Length.ToString());
+                        if (contentType == ContentType.Binary)
+                        {
+                            // save as base64-encoded binary data
+                            content = Convert.ToBase64String(bytes);
+                        }
+                        else
+                        { 
+                            // save as text                                
+                            content = Encoding.GetEncoding(charSet).GetString(bytes);
+                            if (mIncludeRawData)
+                            {
+                                itemAttr.Add("raw", Convert.ToBase64String(bytes));
+                            }
+                        }                        
                         Thread.Sleep(mPolitenessSleep);
                     }
                     if (content == "")
@@ -239,8 +248,6 @@ namespace Latino.Workflows.TextMining
                             content = itemAttr["title"];
                         }
                     }
-                    //Console.WriteLine("name = \"{0}\"", name);
-                    //Console.WriteLine("html = \"{0}\"", content);
                     if (itemAttr.ContainsKey("comments"))
                     {
                         // TODO: handle comments 
@@ -263,13 +270,22 @@ namespace Latino.Workflows.TextMining
             }
         }
 
+        private string FixXml(string xml)
+        {
+            int i = xml.IndexOf("<");
+            if (i < 0) { return xml; }
+            return xml.Substring(i); 
+        }
+
         protected override object ProduceData()
         {
+            //Guid _guid;
             for (int i = 0; i < mSources.Count; i++)
             {
+                //_guid = Guid.NewGuid();
                 string url = mSources[i];
                 try
-                {
+                {                    
                     DateTime timeStart = DateTime.Now;
                     // get RSS XML
                     string xml;
@@ -277,6 +293,10 @@ namespace Latino.Workflows.TextMining
                     {
                         mLogger.Info("ProduceData", "Getting RSS XML from {0} ...", url);
                         xml = WebUtils.GetWebPageDetectEncoding(url);
+                        xml = FixXml(xml);
+                    //    StreamWriter w = new StreamWriter(string.Format(@"c:\work\dacqpipe\data\rss\{0}.xml", _guid.ToString("N")));
+                    //    w.Write(xml);
+                    //    w.Close();
                     }
                     catch (Exception e)
                     {
@@ -302,15 +322,18 @@ namespace Latino.Workflows.TextMining
                                     {
                                         string attrName = reader.Name;
                                         string value = Utils.XmlReadValue(reader, attrName);
-                                        string oldValue;
-                                        if (attrName == "pubDate") { string tmp = Utils.NormalizeDateTimeStr(value); if (tmp != null) { value = tmp; } }
-                                        if (itemAttr.TryGetValue(attrName, out oldValue))
+                                        if (value.Trim() != "")
                                         {
-                                            itemAttr[attrName] = oldValue + " ;; " + value;
-                                        }
-                                        else
-                                        {
-                                            itemAttr.Add(attrName, value);
+                                            string oldValue;
+                                            if (attrName == "pubDate") { string tmp = Utils.NormalizeDateTimeStr(value); if (tmp != null) { value = tmp; } }
+                                            if (itemAttr.TryGetValue(attrName, out oldValue))
+                                            {
+                                                itemAttr[attrName] = oldValue + " ;; " + value;
+                                            }
+                                            else
+                                            {
+                                                itemAttr.Add(attrName, value);
+                                            }
                                         }
                                     }
                                     else
@@ -382,7 +405,7 @@ namespace Latino.Workflows.TextMining
                             corpus.Features.SetFeatureValue(attr.Key, attr.Value);
                         }
                         mLogger.Info("ProduceData", "{0} new items.", corpus.Documents.Count);
-                        // dispatch data 
+                        // dispatch data
                         DispatchData(corpus);
                     }
                     else
@@ -394,7 +417,8 @@ namespace Latino.Workflows.TextMining
                 }
                 catch (Exception e)
                 {
-                    mLogger.Info("ProduceData", url); // <--- delete me
+                    //mLogger.Info("ProduceData", url + " " + _guid.ToString("N")); 
+                    mLogger.Info("ProduceData", url); // *** delete this
                     mLogger.Error("ProduceData", e);
                 }
             }

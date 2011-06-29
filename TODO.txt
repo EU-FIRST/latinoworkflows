@@ -58,3 +58,5 @@
 [ ] more powerful query language for retrieving text blocks
 [ ] handle RSS comments
 [x] DB query timeouts (solved: using write-through cache)
+[x] Can boilerplate remover handle [x]XHTML / [x]plain text?
+[x] Make filters in RSS reader to reject content of incorrect content type

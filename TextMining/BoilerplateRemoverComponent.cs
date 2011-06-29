@@ -33,7 +33,7 @@ namespace Latino.Workflows.TextMining
         protected override void ProcessDocument(Document document)
         {
             string contentType = document.Features.GetFeatureValue("_contentType");
-            if (contentType != "Html") { return; } // *** currently handles only documents that have _contentType set to Html
+            if (contentType != "Html") { return; } 
             try
             {
                 BoilerplateRemover br = BoilerplateRemover.GetDefaultBoilerplateRemover();
@@ -47,7 +47,7 @@ namespace Latino.Workflows.TextMining
                     string blockTxt = block.text;
                     if (blockTxt != null && blockTxt.Length > 0)
                     {
-                        Annotation annot = new Annotation(spanStart, spanStart + (blockTxt.Length - 1), "Block/" + block.textClass.ToString());
+                        Annotation annot = new Annotation(spanStart, spanStart + (blockTxt.Length - 1), "TextBlock/" + block.textClass.ToString());
                         tmp.Add(annot);
                         text.AppendLine(blockTxt);
                     }
