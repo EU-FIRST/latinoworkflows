@@ -11,6 +11,7 @@
  ***************************************************************************/
 
 using System;
+using System.Text.RegularExpressions;
 
 namespace Latino.Workflows.TextMining
 {
@@ -22,8 +23,25 @@ namespace Latino.Workflows.TextMining
     */
     public abstract class DocumentProcessor : StreamDataProcessor
     {
+        protected string mBlockSelector
+            = ".*";
+
         public DocumentProcessor(string loggerName) : base(loggerName)
         { 
+        }
+
+        public DocumentProcessor(Type loggerType) : this(loggerType.ToString())
+        { 
+        }
+
+        public string BlockSelector
+        {
+            get { return mBlockSelector; }
+            set 
+            {
+                Utils.ThrowException(value == null ? new ArgumentNullException("BlockSelector") : null);
+                mBlockSelector = value; 
+            }
         }
 
         protected override object ProcessData(IDataProducer sender, object data)

@@ -12,6 +12,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Latino.Workflows.TextMining
 {
@@ -27,8 +28,7 @@ namespace Latino.Workflows.TextMining
         private int mSpanEnd;
         private string mType;
         private string mText;
-        private Dictionary<string, string> mFeatures
-            = new Dictionary<string, string>();
+        private Features mFeatures;
 
         internal TextBlock(int spanStart, int spanEnd, string type, string text, Dictionary<string, string> features)
         {
@@ -36,7 +36,7 @@ namespace Latino.Workflows.TextMining
             mSpanEnd = spanEnd;
             mType = type;
             mText = text;
-            mFeatures = features;
+            mFeatures = new Features(features);
         }
 
         public int SpanStart
@@ -59,20 +59,34 @@ namespace Latino.Workflows.TextMining
             get { return mText; }
         }
 
-        public Dictionary<string, string>.KeyCollection Features
+        public Features Features
         {
-            get { return mFeatures.Keys; }
+            get { return mFeatures; }
         }
 
-        public string GetFeatureValue(string name)
+        public TextBlock[] GetAnnotatedBlocks(string regexStr, Document document)
         {
-            Utils.ThrowException(name == null ? new ArgumentNullException("name") : null);
-            string value;
-            if (mFeatures.TryGetValue(name, out value))
+            Utils.ThrowException(regexStr == null ? new ArgumentNullException("regexStr") : null);
+            Utils.ThrowException(document == null ? new ArgumentNullException("document") : null);
+            return GetAnnotatedBlocks(new Regex(regexStr, RegexOptions.Compiled), document);
+        }
+
+        public TextBlock[] GetAnnotatedBlocks(Regex regex, Document document)
+        {            
+            Utils.ThrowException(regex == null ? new ArgumentNullException("regex") : null);
+            Utils.ThrowException(document == null ? new ArgumentNullException("document") : null);
+            ArrayList<TextBlock> blocks = new ArrayList<TextBlock>();
+            foreach (Annotation annotation in document.Annotations)
             {
-                return value;
+                if (regex.Match(annotation.Type).Success)
+                {
+                    if (annotation.SpanStart >= mSpanStart && annotation.SpanEnd <= mSpanEnd)
+                    {
+                        blocks.Add(annotation.GetAnnotatedBlock(document.Text));
+                    }
+                }
             }
-            return null;
+            return blocks.ToArray();
         }
     }
 }

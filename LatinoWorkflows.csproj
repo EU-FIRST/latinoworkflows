@@ -42,6 +42,8 @@
     <Compile Include="TextMining\BoilerplateRemoverComponent.cs" />
     <Compile Include="TextMining\DocumentCorpus\Tree.cs" />
     <None Include="TextMining\LnDocComponent.cs" />
+    <Compile Include="TextMining\EnglishTokenizerComponent.cs" />
+    <Compile Include="TextMining\PosTaggerComponent.cs" />
     <Compile Include="TextMining\RssFeedComponent.cs" />
     <Compile Include="GenericStreamDataProducerPoll.cs" />
     <Compile Include="TextMining\DocumentCorpus\Annotation.cs" />
@@ -60,6 +62,7 @@
     <Compile Include="TextMining\RegexTokenizerComponent.cs" />
     <Compile Include="TextMining\DocumentCorpus\TextBlock.cs" />
     <Compile Include="IWorkflowComponent.cs" />
+    <Compile Include="TextMining\SentenceSplitterComponent.cs" />
     <Compile Include="WorkflowUtils.cs" />
     <EmbeddedResource Include="TextMining\DocumentCorpus\Resources\DocumentTemplate.htm" />
     <EmbeddedResource Include="TextMining\DocumentCorpus\Resources\IndexTemplate.htm" />
@@ -67,6 +70,10 @@
     <Content Include="TODO.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\SharpNLP\OpenNLP\OpenNLP\OpenNLP.csproj">
+      <Project>{B70185DF-81FD-4417-914F-7C90E65E7D9F}</Project>
+      <Name>OpenNLP</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Latino\Latino.csproj">
       <Project>{FFA3AB32-D56A-4544-BCF2-CBC51B57550B}</Project>
       <Name>Latino</Name>
@@ -74,6 +81,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Persistance\CreateTables.sql" />
+    <EmbeddedResource Include="TextMining\Models\EnglishPOS.nbin" />
+    <EmbeddedResource Include="TextMining\Models\EnglishSD.nbin" />
+    <EmbeddedResource Include="TextMining\Models\EnglishTok.nbin" />
     <EmbeddedResource Include="TextMining\DocumentCorpus\DocumentCorpusSchema.xsd">
       <SubType>Designer</SubType>
     </EmbeddedResource>

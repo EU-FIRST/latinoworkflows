@@ -14,7 +14,6 @@ using System;
 using System.Xml;
 using System.IO;
 using Latino.Workflows.TextMining;
-using Latino.Persistance;
 using System.Text;
 
 namespace Latino.Workflows.Persistance
@@ -27,15 +26,11 @@ namespace Latino.Workflows.Persistance
     */
     public class DocumentCorpusWriterComponent : StreamDataConsumer
     {
-        private DatabaseConnection mConnection
-            = new DatabaseConnection();
         private static object mLock
             = new object();
 
-        public DocumentCorpusWriterComponent(string dbConnectionString) : base(typeof(DocumentCorpusWriterComponent).ToString())
+        public DocumentCorpusWriterComponent() : base(typeof(DocumentCorpusWriterComponent))
         {
-            mConnection.ConnectionString = dbConnectionString; // throws ArgumentNullException
-            mConnection.Connect(); // throws OleDbException            
         }
 
         protected override void ConsumeData(IDataProducer sender, object data)
@@ -51,63 +46,29 @@ namespace Latino.Workflows.Persistance
             XmlWriter writer = XmlWriter.Create(stringWriter = new StringWriter(), xmlSettings); 
             corpus.WriteXml(writer, /*writeTopElement=*/true);
             writer.Close();
-            // write to file
             DateTime now = DateTime.Now;
+            string recordId = now.ToString("HH_mm_ss_") + corpusId;
             string path = string.Format(@"C:\Work\DacqPipe\Data\{0}\{1}\{2}\", now.Year, now.Month, now.Day);
             //string path = string.Format(@"E:\Users\miha\Work\DacqPipeBig_6\Data\{0}\{1}\{2}\", now.Year, now.Month, now.Day);
-            if (!Directory.Exists(path))
-            { 
-                lock (mLock)
+            string pathHtml = string.Format(@"C:\Work\DacqPipe\DataHtml\{0}\{1}\{2}\{3}\", now.Year, now.Month, now.Day, recordId);
+            //string pathHtml = string.Format(@"E:\Users\miha\Work\DacqPipeBig_6\DataHtml\{0}\{1}\{2}\{3}\", now.Year, now.Month, now.Day, recordId);
+            foreach (string p in new string[] { path, pathHtml })
+            {
+                if (!Directory.Exists(p))
                 {
-                    if (!Directory.Exists(path))
+                    lock (mLock)
                     {
-                        Directory.CreateDirectory(path);
+                        if (!Directory.Exists(p))
+                        {
+                            Directory.CreateDirectory(p);
+                        }
                     }
                 }
             }
-            StreamWriter w = new StreamWriter(path + corpusId + now.ToString("_HH_mm_ss") + ".xml", /*append=*/false, Encoding.UTF8);
+            StreamWriter w = new StreamWriter(path + recordId + ".xml", /*append=*/false, Encoding.UTF8);
             w.Write(stringWriter.ToString().Replace("<?xml version=\"1.0\" encoding=\"utf-16\"?>", "<?xml version=\"1.0\" encoding=\"utf-8\"?>"));
             w.Close();
-            // write to database
-            bool success = mConnection.ExecuteNonQuery("insert into Corpora (id, xml, title, provider, language, sourceUrl, source, timeStart, timeEnd) values (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
-                corpusId, 
-                stringWriter.ToString(),
-                Utils.Truncate(corpus.Features.GetFeatureValue("title"), 400),
-                Utils.Truncate(corpus.Features.GetFeatureValue("_provider"), 400),
-                Utils.Truncate(corpus.Features.GetFeatureValue("language"), 400),
-                Utils.Truncate(corpus.Features.GetFeatureValue("_sourceUrl"), 400),
-                corpus.Features.GetFeatureValue("_source"),
-                Utils.Truncate(corpus.Features.GetFeatureValue("_timeStart"), 26),
-                Utils.Truncate(corpus.Features.GetFeatureValue("_timeEnd"), 26));
-            if (!success) { mLogger.Warn("ConsumeData", "Unable to write to database."); }
-            foreach (Document document in corpus.Documents)
-            {
-                string documentId = new Guid(document.Features.GetFeatureValue("_guid")).ToString("N");
-                success = mConnection.ExecuteNonQuery("insert into Documents (id, corpusId, name, description, text, category, link, time, pubDate, mimeType, contentType, charSet, contentLength) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    documentId,
-                    corpusId,
-                    Utils.Truncate(document.Name, 400),
-                    Utils.Truncate(document.Features.GetFeatureValue("description"), 400),
-                    document.Text,
-                    Utils.Truncate(document.Features.GetFeatureValue("category"), 400),
-                    Utils.Truncate(document.Features.GetFeatureValue("link"), 400),
-                    Utils.Truncate(document.Features.GetFeatureValue("_time"), 26),
-                    Utils.Truncate(document.Features.GetFeatureValue("pubDate"), 26),
-                    Utils.Truncate(document.Features.GetFeatureValue("_mimeType"), 80),
-                    Utils.Truncate(document.Features.GetFeatureValue("_contentType"), 40),
-                    Utils.Truncate(document.Features.GetFeatureValue("_charSet"), 40),
-                    Convert.ToInt64(document.Features.GetFeatureValue("_contentLength"))
-                );
-                if (!success) { mLogger.Warn("ConsumeData", "Unable to write to database."); }
-            }
-        }
-
-        // *** IDisposable interface implementation ***
-
-        public new void Dispose()
-        {
-            base.Dispose();
-            try { mConnection.Disconnect(); } catch { }
+            corpus.MakeHtmlPage(pathHtml, /*inlineCss=*/true);
         }
     }
 }

@@ -27,13 +27,9 @@ namespace Latino.Workflows.TextMining
         private RegexTokenizer mTokenizer
             = new RegexTokenizer();
 
-        private const string DEST_ANNOT_TYPE 
-            = "token";
-        private const string SRC_ANNOT_TYPE
-            = "content_block,*";
-
-        public RegexTokenizerComponent() : base(typeof(RegexTokenizerComponent).ToString())
-        { 
+        public RegexTokenizerComponent() : base(typeof(RegexTokenizerComponent))
+        {
+            mBlockSelector = "Sentence";
         }
 
         public string TokenRegex
@@ -56,17 +52,23 @@ namespace Latino.Workflows.TextMining
 
         protected override void ProcessDocument(Document document)
         {
-            TextBlock[] textBlocks = document.GetAnnotatedBlocks(SRC_ANNOT_TYPE);
-            foreach (TextBlock textBlock in textBlocks)
-            {                
-                // do tokenization, add annotations to document
-                mTokenizer.Text = textBlock.Text;
-                for (RegexTokenizer.Enumerator e = (RegexTokenizer.Enumerator)mTokenizer.GetEnumerator(); e.MoveNext(); )
+            string contentType = document.Features.GetFeatureValue("_contentType");
+            if (contentType != "Text") { return; }
+            try
+            {
+                TextBlock[] textBlocks = document.GetAnnotatedBlocks(mBlockSelector);
+                foreach (TextBlock textBlock in textBlocks)
                 {
-                    //Console.WriteLine("{0} {1} {2}", textBlock.SpanStart + e.CurrentTokenIdx, textBlock.SpanStart + e.CurrentTokenIdx + e.Current.Length - 1, e.Current);
-                    Annotation annot = new Annotation(textBlock.SpanStart + e.CurrentTokenIdx, textBlock.SpanStart + e.CurrentTokenIdx + e.Current.Length - 1, DEST_ANNOT_TYPE);
-                    document.AddAnnotation(annot);
+                    mTokenizer.Text = textBlock.Text;
+                    for (RegexTokenizer.Enumerator e = (RegexTokenizer.Enumerator)mTokenizer.GetEnumerator(); e.MoveNext();)
+                    {
+                        document.AddAnnotation(new Annotation(textBlock.SpanStart + e.CurrentTokenIdx, textBlock.SpanStart + e.CurrentTokenIdx + e.Current.Length - 1, "Token"));
+                    }
                 }
+            }
+            catch (Exception exception)
+            {
+                mLogger.Error("ProcessDocument", exception);
             }
         }
     }

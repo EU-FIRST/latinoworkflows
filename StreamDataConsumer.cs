@@ -46,6 +46,10 @@ namespace Latino.Workflows
             mLogger = WorkflowUtils.CreateLogger(mLoggerBaseName = loggerBaseName, mName);
         }
 
+        public StreamDataConsumer(Type loggerType) : this(loggerType.ToString())
+        { 
+        }
+
         public bool IsSuspended
         {
             get { return (mThread.ThreadState & ThreadState.Suspended) != 0; }

@@ -18,6 +18,7 @@ using System.Xml.Schema;
 using System.IO;
 using System.Reflection;
 using System.Drawing;
+using System.Text.RegularExpressions;
 using System.Web;
 
 namespace Latino.Workflows.TextMining
@@ -86,7 +87,7 @@ namespace Latino.Workflows.TextMining
             set 
             {
                 Utils.ThrowException(value == null ? new ArgumentNullException("Text") : null);
-                Utils.ThrowException(mAnnotations.Count > 0 ? new InvalidOperationException() : null);
+                //Utils.ThrowException(mAnnotations.Count > 0 ? new InvalidOperationException() : null);
                 mText = value; 
             }
         }
@@ -159,44 +160,24 @@ namespace Latino.Workflows.TextMining
             return mAnnotations[idx]; // throws ArgumentOutOfRangeException
         }
 
-        public TextBlock[] GetAnnotatedBlocks(string query) // TODO: more powerful query language for retrieving text blocks
+        public TextBlock[] GetAnnotatedBlocks(string regexStr)
         {
-            Utils.ThrowException(query == null ? new ArgumentNullException("query") : null);
-            Utils.ThrowException(query == "" ? new ArgumentValueException("query") : null);
-            string[] tmp = query.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
-            ArrayList<string> annotTypes = new ArrayList<string>(tmp.Length);
-            foreach (string annotType in tmp) { if (annotType.Trim() != "") { annotTypes.Add(annotType.Trim().ToLower()); } }
-            Set<string> availTypes = new Set<string>();
-            foreach (Annotation annot in mAnnotations) { availTypes.Add(annot.Type); }
-            foreach (string annotType in annotTypes)
-            {
-                if (availTypes.Contains(annotType))
-                {
-                    return GetAnnotatedBlocksByType(annotType).ToArray();
-                }
-                else if (annotType == "*")
-                {
-                    return new TextBlock[] { new TextBlock(0, mText.Val.Length - 1, "*", mText.Val, mFeatures) };
-                }
-            }
-            return null;
+            Utils.ThrowException(regexStr == null ? new ArgumentNullException("regexStr") : null);
+            return GetAnnotatedBlocks(new Regex(regexStr, RegexOptions.Compiled)); 
         }
 
-        private ArrayList<TextBlock> GetAnnotatedBlocksByType(string annotType) 
+        public TextBlock[] GetAnnotatedBlocks(Regex regex) 
         {
-            //Utils.ThrowException(annotType == null ? new ArgumentNullException("annotType") : null);
-            //annotType = annotType.Trim().ToLower();
-            //Utils.ThrowException(annotType == "" ? new ArgumentValueException("annotType") : null);
+            Utils.ThrowException(regex == null ? new ArgumentNullException("regex") : null);
             ArrayList<TextBlock> blocks = new ArrayList<TextBlock>();
-            foreach (Annotation annot in mAnnotations)
+            foreach (Annotation annotation in mAnnotations)
             {
-                if (annot.Type == annotType)
-                { 
-                    // extract text block
-                    blocks.Add(annot.GetAnnotatedBlock(mText));
+                if (regex.Match(annotation.Type).Success)
+                {
+                    blocks.Add(annotation.GetAnnotatedBlock(mText));
                 }
             }
-            return blocks;
+            return blocks.ToArray();
         }
 
         // *** ICloneable<Document> interface implementation
