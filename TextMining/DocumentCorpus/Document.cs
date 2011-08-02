@@ -117,7 +117,7 @@ namespace Latino.Workflows.TextMining
                 }
                 annotation.SetId(id + 1);
             }
-            mAnnotations.Add(annotation);
+            mAnnotations.InsertSorted(annotation);
         }
 
         private int GetIdx(int id)
@@ -175,6 +175,29 @@ namespace Latino.Workflows.TextMining
                 if (regex.Match(annotation.Type).Success)
                 {
                     blocks.Add(annotation.GetAnnotatedBlock(mText));
+                }
+            }
+            return blocks.ToArray();
+        }
+
+        public TextBlock[] GetAnnotatedBlocks(string regex, int spanStart, int spanEnd)
+        {
+            Utils.ThrowException(regex == null ? new ArgumentNullException("regex") : null);
+            Annotation key = new Annotation(spanStart, spanEnd, "dummy"); // throws ArgumentOutOfRangeException
+            Regex regexObj = new Regex(regex, RegexOptions.Compiled); // throws ArgumentException
+            ArrayList<TextBlock> blocks = new ArrayList<TextBlock>();
+            int idx = mAnnotations.BinarySearch(key);
+            if (idx < 0) { idx = ~idx; }
+            for (int i = idx; i < mAnnotations.Count; i++)
+            {
+                Annotation annotation = mAnnotations[i];                
+                if (annotation.SpanStart > spanEnd) { break; }
+                if (annotation.SpanEnd <= spanEnd) 
+                {
+                    if (regexObj.Match(annotation.Type).Success)
+                    {
+                        blocks.Add(annotation.GetAnnotatedBlock(mText));
+                    }
                 }
             }
             return blocks.ToArray();

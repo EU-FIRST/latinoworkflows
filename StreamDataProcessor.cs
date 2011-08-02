@@ -26,6 +26,10 @@ namespace Latino.Workflows
             = new Set<IDataConsumer>();
         private bool mCloneDataOnFork
             = true;
+        private DispatchPolicy mDispatchPolicy
+            = DispatchPolicy.ToAll;
+        private Random mRandom
+            = new Random();
 
         public StreamDataProcessor(string loggerName) : base(loggerName)
         { 
@@ -37,23 +41,40 @@ namespace Latino.Workflows
             set { mCloneDataOnFork = value; }
         }
 
+        public DispatchPolicy DispatchPolicy
+        {
+            get { return mDispatchPolicy; }
+            set { mDispatchPolicy = value; }
+        }
+
         protected override void ConsumeData(IDataProducer sender, object data)
         {
             // process data
             data = ProcessData(sender, data);
             // dispatch data
-            if (mDataConsumers.Count > 1 && mCloneDataOnFork)
+            if (mDispatchPolicy == DispatchPolicy.Random)
             {
-                foreach (IDataConsumer dataConsumer in mDataConsumers)
-                {
-                    dataConsumer.ReceiveData(this, Utils.Clone(data, /*deepClone=*/true));
-                }
+                mLogger.Trace("DispatchData", "Dispatching data of type {0} (random policy) ...", data.GetType());
+                ArrayList<IDataConsumer> tmp = new ArrayList<IDataConsumer>(mDataConsumers.Count);
+                foreach (IDataConsumer dataConsumer in mDataConsumers) { tmp.Add(dataConsumer); }
+                tmp[mRandom.Next(0, tmp.Count)].ReceiveData(this, data);
             }
-            else 
+            else
             {
-                foreach (IDataConsumer dataConsumer in mDataConsumers)
+                mLogger.Trace("DispatchData", "Dispatching data of type {0} (to-all policy) ...", data.GetType());
+                if (mDataConsumers.Count > 1 && mCloneDataOnFork)
                 {
-                    dataConsumer.ReceiveData(this, data);
+                    foreach (IDataConsumer dataConsumer in mDataConsumers)
+                    {
+                        dataConsumer.ReceiveData(this, Utils.Clone(data, /*deepClone=*/true));
+                    }
+                }
+                else
+                {
+                    foreach (IDataConsumer dataConsumer in mDataConsumers)
+                    {
+                        dataConsumer.ReceiveData(this, data);
+                    }
                 }
             }
         }

@@ -71,7 +71,7 @@ namespace Latino.Workflows.TextMining
                     TextBlock[] tokenGroups = document.GetAnnotatedBlocks(mTokenGroupSelector);
                     foreach (TextBlock tokenGroup in tokenGroups)
                     {
-                        TextBlock[] textBlocks = tokenGroup.GetAnnotatedBlocks(mBlockSelector, document);
+                        TextBlock[] textBlocks = document.GetAnnotatedBlocks(mBlockSelector, tokenGroup.SpanStart, tokenGroup.SpanEnd);
                         ProcessTokens(textBlocks);
                     }
                 }

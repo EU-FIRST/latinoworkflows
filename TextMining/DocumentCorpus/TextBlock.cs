@@ -23,7 +23,7 @@ namespace Latino.Workflows.TextMining
        '-----------------------------------------------------------------------
     */
     public class TextBlock
-    {        
+    {
         private int mSpanStart;
         private int mSpanEnd;
         private string mType;
@@ -62,31 +62,6 @@ namespace Latino.Workflows.TextMining
         public Features Features
         {
             get { return mFeatures; }
-        }
-
-        public TextBlock[] GetAnnotatedBlocks(string regexStr, Document document)
-        {
-            Utils.ThrowException(regexStr == null ? new ArgumentNullException("regexStr") : null);
-            Utils.ThrowException(document == null ? new ArgumentNullException("document") : null);
-            return GetAnnotatedBlocks(new Regex(regexStr, RegexOptions.Compiled), document);
-        }
-
-        public TextBlock[] GetAnnotatedBlocks(Regex regex, Document document)
-        {            
-            Utils.ThrowException(regex == null ? new ArgumentNullException("regex") : null);
-            Utils.ThrowException(document == null ? new ArgumentNullException("document") : null);
-            ArrayList<TextBlock> blocks = new ArrayList<TextBlock>();
-            foreach (Annotation annotation in document.Annotations)
-            {
-                if (regex.Match(annotation.Type).Success)
-                {
-                    if (annotation.SpanStart >= mSpanStart && annotation.SpanEnd <= mSpanEnd)
-                    {
-                        blocks.Add(annotation.GetAnnotatedBlock(document.Text));
-                    }
-                }
-            }
-            return blocks.ToArray();
         }
     }
 }

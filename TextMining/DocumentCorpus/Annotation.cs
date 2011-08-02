@@ -21,7 +21,7 @@ namespace Latino.Workflows.TextMining
        |
        '-----------------------------------------------------------------------
     */
-    public class Annotation : ICloneable<Annotation>
+    public class Annotation : ICloneable<Annotation>, IComparable<Annotation>
     {
         private int mId
             = -1;
@@ -36,11 +36,10 @@ namespace Latino.Workflows.TextMining
         {
             Utils.ThrowException(spanStart < 0 ? new ArgumentOutOfRangeException("spanStart") : null);
             Utils.ThrowException(spanEnd < spanStart ? new ArgumentOutOfRangeException("SpanEnd") : null);
-            Utils.ThrowException(type == null ? new ArgumentNullException("type") : null);
-            Utils.ThrowException((type.Contains(",") || type.Contains("*")) ? new ArgumentValueException("type") : null);
+            Utils.ThrowException(string.IsNullOrEmpty(type) ? new ArgumentNullException("type") : null);
             mSpanStart = spanStart;
             mSpanEnd = spanEnd;            
-            mType = type.Trim();//.ToLower();
+            mType = type;
             mFeaturesInterface = new Features(mFeatures);
         }
 
@@ -76,9 +75,6 @@ namespace Latino.Workflows.TextMining
 
         internal TextBlock GetAnnotatedBlock(Ref<string> text)
         {
-            //Utils.ThrowException((text == null || text.Val == null) ? new ArgumentNullException("text") : null);
-            //Utils.ThrowException(mSpanStart >= text.Val.Length ? new ArgumentOutOfRangeException("SpanStart") : null);
-            //Utils.ThrowException(mSpanEnd >= text.Val.Length ? new ArgumentOutOfRangeException("SpanEnd") : null);
             TextBlock block = new TextBlock(mSpanStart, mSpanEnd, mType, text.Val.Substring(mSpanStart, mSpanEnd - mSpanStart + 1), mFeatures);
             return block;
         }
@@ -99,6 +95,14 @@ namespace Latino.Workflows.TextMining
         object ICloneable.Clone()
         {
             return Clone();
+        }
+
+        // *** IComparable<Annotation> interface implementation ***
+
+        public int CompareTo(Annotation other)
+        {
+            Utils.ThrowException(other == null ? new ArgumentNullException("other") : null);
+            return mSpanStart.CompareTo(other.mSpanStart);
         }
     }
 }
