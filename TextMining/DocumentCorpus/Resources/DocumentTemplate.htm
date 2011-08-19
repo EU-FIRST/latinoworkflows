@@ -1,4 +1,4 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 
@@ -28,6 +28,7 @@
         
         <script type="text/javascript">
             var inlineCss = "{$inline_css}";
+            {$var_document_text};
 
 //        if (inlineCss)
 //        {
@@ -48,49 +49,85 @@
 //        /* <link rel="stylesheet" type="text/css" href="/Resources/style.css"/>  */
             //        }
 
-       
-
-        $(document).ready(function () {
-
-            var text = $("#DocumentText").text();
-
-            /*
-            In IE and Opera new line character will consume 2 spaces because they use the characters “\r\n”,
-            however if the message is saved under Chrome, Firefox 2 or Firefox 3, the new line character only consume 1 space “\n”.            
-            */
-
-            if ($.browser.mozilla || $.browser.safari) {
-                $('#DocumentText').text(text.replace(/\n/g, "\r\n"));
-            }
-
-            text = $("#DocumentText").text();
-
-            $('input[name="{$annotation_type_list_name}"]').click(function () {
-
-                refreshPage(text);
-
-            });
 
 
-            function selectChildren(selector, colorArray, featureArray, color) {
+            $(document).ready(function () {                
 
-                var originalColor = color;
+                $("#DocumentText")[0].innerHTML = documentText;
 
-                if ($(selector).children("ul").children().length > 0) {
+                var text = $("#DocumentText").text();
 
-                    $(selector).children("ul").children().each(function () {
+                /*
+                In IE and Opera new line character will consume 2 spaces because they use the characters “\r\n”,
+                however if the message is saved under Chrome, Firefox 2 or Firefox 3, the new line character only consume 1 space “\n”.            
+                */
 
-                        var elements = $(this).children("table").children("tbody").children("tr").children("td").eq(0).children("input").attr("elements")
+                if ($.browser.mozilla || $.browser.safari) {
+                    $('#DocumentText').text(text.replace(/\n/g, "\r\n"));
+                }
 
-                        if ($(this).children("table").children("tbody").children("tr").children("td").eq(0).children("input").is(":checked")) {
-                            color = $(this).children("table").children("tbody").children("tr").children("td").eq(1).attr('bgcolor');
-                        }
-                        else {
-                            color = originalColor;
-                        }
+                text = $("#DocumentText").text();
 
+                $('input[name="{$annotation_type_list_name}"]').click(function () {
+
+                    refreshPage(text);
+
+                });
+
+
+                function selectChildren(selector, colorArray, featureArray, color) {
+
+                    var originalColor = color;
+
+                    if ($(selector).children("ul").children().length > 0) {
+
+                        $(selector).children("ul").children().each(function () {
+
+                            var elements = $(this).children("table").children("tbody").children("tr").children("td").eq(0).children("input").attr("elements")
+
+                            if ($(this).children("table").children("tbody").children("tr").children("td").eq(0).children("input").is(":checked")) {
+                                color = $(this).children("table").children("tbody").children("tr").children("td").eq(1).attr('bgcolor');
+                            }
+                            else {
+                                color = originalColor;
+                            }
+
+                            //update colorArray and featureArray
+                            for (var i = 0; i < elements.split(';').length; i++) {
+
+                                var annLength = parseInt(elements.split(';')[i].split(',')[1]) - parseInt(elements.split(';')[i].split(',')[0]);
+
+                                for (var j = 0; j < annLength + 1; j++) {
+                                    colorArray[parseInt(elements.split(';')[i].split(',')[0]) + j] = color;
+                                    featureArray[parseInt(elements.split(';')[i].split(',')[0]) + j] = elements.split(';')[i].split(',')[2];
+                                }
+                            }
+
+                            selectChildren(this, colorArray, featureArray, color);
+
+                        });
+
+                    }
+                }
+
+                function refreshPage(html) {
+
+                    $("#DocumentText")[0].innerHTML = html;
+
+                    var elements;
+
+                    var colorArray = new Array();
+                    var color;
+
+                    var featureArray = new Array();
+                    var feature;
+
+                    $("input:checked").each(function () {
+
+                        elements = $(this).attr("elements");
+                        color = $(this).parent().next().attr('bgcolor');
                         //update colorArray and featureArray
-                        for (var i = 0; i < elements.split(';').length; i++) {
+                        for (var i = 0; i < elements.split(';').length - 1; i++) {
 
                             var annLength = parseInt(elements.split(';')[i].split(',')[1]) - parseInt(elements.split(';')[i].split(',')[0]);
 
@@ -100,114 +137,80 @@
                             }
                         }
 
-                        selectChildren(this, colorArray, featureArray, color);
+                        if ($(this).parent().parent().parent().parent().parent().children("ul").children().length > 0) {
+                            selectChildren($(this).parent().parent().parent().parent().parent(), colorArray, featureArray, color);
+                        }
+
+                    });
+
+
+                    var i;
+                    var displacement = 0;
+
+                    var htmlResult = html;
+
+                    if (colorArray.length > 0)
+                        htmlResult = "";
+
+
+                    var firstHighlight = false;
+
+                    for (i = 0; i < colorArray.length + displacement; i++) {
+
+                        var letter = html.substring(i + displacement, i + displacement + 1) == "" ? "&nbsp" : html.substring(i + displacement, i + displacement + 1)
+
+                        var style;
+
+                        if (featureArray[i - displacement] != "")
+                            style = colorArray[i - displacement] == undefined ? letter : "<span class='text' title='Features: <br/> " + featureArray[i - displacement] + "' style='background-color:" + colorArray[i - displacement] + ";' >" + letter + "</span>";
+                        else
+                            style = colorArray[i - displacement] == undefined ? letter : "<span style='background-color:" + colorArray[i - displacement] + ";' >" + letter + "</span>";
+
+                        if (firstHighlight == false && colorArray.length > 1) {
+
+                            htmlResult += html.substring(displacement, i + displacement) + style + html.substring(i + displacement + 1, i + displacement + 1);
+
+                            firstHighlight = true;
+                        }
+                        else if (i < colorArray.length - 1 + displacement) {
+
+                            htmlResult += style + html.substring(i + displacement + 1, i + displacement + 1);
+                        }
+                        else {
+
+                            htmlResult += style + html.substring(i + displacement + 1, html.length);
+                        }
+
+
+
+
+                    }
+
+
+
+                    $("#DocumentText")[0].innerHTML = htmlResult;
+
+                    $('span[class="text"]').tooltip({
+
+                        // place tooltip on the right edge
+                        position: "center right",
+
+                        // a little tweaking of the position
+                        offset: [0, 20],
+
+                        // use the built-in fadeIn/fadeOut effect
+                        //effect: "fade",
+
+                        // custom opacity setting
+                        opacity: 0.95
 
                     });
 
                 }
-            }
-
-            function refreshPage(html) {
-
-                $("#DocumentText")[0].innerHTML = html;
-
-                var elements;
-
-                var colorArray = new Array();
-                var color;
-
-                var featureArray = new Array();
-                var feature;
-
-                $("input:checked").each(function () {
-
-                    elements = $(this).attr("elements");
-                    color = $(this).parent().next().attr('bgcolor');
-                    //update colorArray and featureArray
-                    for (var i = 0; i < elements.split(';').length - 1; i++) {
-
-                        var annLength = parseInt(elements.split(';')[i].split(',')[1]) - parseInt(elements.split(';')[i].split(',')[0]);
-
-                        for (var j = 0; j < annLength + 1; j++) {
-                            colorArray[parseInt(elements.split(';')[i].split(',')[0]) + j] = color;
-                            featureArray[parseInt(elements.split(';')[i].split(',')[0]) + j] = elements.split(';')[i].split(',')[2];
-                        }
-                    }
-
-                    if ($(this).parent().parent().parent().parent().parent().children("ul").children().length > 0) {
-                        selectChildren($(this).parent().parent().parent().parent().parent(), colorArray, featureArray, color);
-                    }
-
-                });
-
-
-                var i;
-                var displacement = 0;
-
-                var htmlResult = html;
-
-                if (colorArray.length > 0)
-                    htmlResult = "";
-
-
-                var firstHighlight = false;
-
-                for (i = 0; i < colorArray.length + displacement; i++) {
-
-                    var letter = html.substring(i + displacement, i + displacement + 1) == "" ? "&nbsp" : html.substring(i + displacement, i + displacement + 1)
-
-                    var style;
-
-                    if (featureArray[i - displacement] != "")
-                        style = colorArray[i - displacement] == undefined ? letter : "<span class='text' title='Features: <br/> " + featureArray[i - displacement] + "' style='background-color:" + colorArray[i - displacement] + ";' >" + letter + "</span>";
-                    else
-                        style = colorArray[i - displacement] == undefined ? letter : "<span style='background-color:" + colorArray[i - displacement] + ";' >" + letter + "</span>";
-
-                    if (firstHighlight == false && colorArray.length > 1) {
-
-                        htmlResult += html.substring(displacement, i + displacement) + style + html.substring(i + displacement + 1, i + displacement + 1);
-
-                        firstHighlight = true;
-                    }
-                    else if (i < colorArray.length - 1 + displacement) {
-
-                        htmlResult += style + html.substring(i + displacement + 1, i + displacement + 1);
-                    }
-                    else {
-
-                        htmlResult += style + html.substring(i + displacement + 1, html.length);
-                    }
 
 
 
-
-                }
-
-
-
-                $("#DocumentText")[0].innerHTML = htmlResult;
-
-                $('span[class="text"]').tooltip({
-
-                    // place tooltip on the right edge
-                    position: "center right",
-
-                    // a little tweaking of the position
-                    offset: [0, 20],
-
-                    // use the built-in fadeIn/fadeOut effect
-                    //effect: "fade",
-
-                    // custom opacity setting
-                    opacity: 0.95
-
-                });
-
-            }
-
-
-
-        });  
+            });  
               
            
         </script>         
@@ -232,7 +235,7 @@
             <div id="DocumentTitle">
                 {$document_title}
             </div>
-            <div id="DocumentText">{$document_text}</div>
+            <div id="DocumentText"></div>
         </div>         
         
 

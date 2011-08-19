@@ -20,6 +20,7 @@ using System.Reflection;
 using System.Drawing;
 using System.Text.RegularExpressions;
 using System.Web;
+using System.Text;
 
 namespace Latino.Workflows.TextMining
 {
@@ -399,7 +400,7 @@ namespace Latino.Workflows.TextMining
             }
 
             templateString = templateString.Replace("{$document_title}", mName);
-            templateString = templateString.Replace("{$document_text}", mText.Val);
+            templateString = templateString.Replace("{$var_document_text}", MakeVarText(mText.Val, "documentText"));
             templateString = templateString.Replace("{$document_features}", documentFeatures);
             templateString = templateString.Replace("{$annotation_type_list}", annotationTypeList);
             templateString = templateString.Replace("{$annotation_type_list_name}", "annotationTypeList");
@@ -449,7 +450,7 @@ namespace Latino.Workflows.TextMining
             annotationTypeList += "</ul>";
 
             annotationTypeList = annotationTypeList.Replace("{$document_title}", mName);
-            annotationTypeList = annotationTypeList.Replace("{$document_text}", mText);           
+            annotationTypeList = annotationTypeList.Replace("{$var_document_text}", MakeVarText(mText, "documentText"));      
             annotationTypeList = annotationTypeList.Replace("{$annotation_type_list}", annotationTypeList);
             annotationTypeList = annotationTypeList.Replace("{$annotation_type_list_name}", "annotationTypeList");
             annotationTypeList = annotationTypeList.Replace("{$annotation_name}", "annotation");
@@ -671,6 +672,17 @@ namespace Latino.Workflows.TextMining
             else
                 return node.GetChild(child);
 
+        }
+
+        public static string MakeVarText(string text, string varName)
+        {
+            StringBuilder str = new StringBuilder("var " + varName + " = \"");
+            foreach (char ch in text)
+            {
+                if (ch >= 32 && ch <= 126 && ch != 34) { str.Append(ch); } // "readable" range
+                else { str.Append("\\u" + ((int)ch).ToString("X").PadLeft(4, '0')); } // encoded as Unicode
+            }
+            return str.ToString() + "\"";
         }
     }
 }
