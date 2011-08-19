@@ -55,18 +55,20 @@
 
                 $("#DocumentText")[0].innerHTML = documentText;
 
-                var text = $("#DocumentText").text();
+                //var text = $("#DocumentText").text();
+
+                var text = documentText;
 
                 /*
                 In IE and Opera new line character will consume 2 spaces because they use the characters “\r\n”,
                 however if the message is saved under Chrome, Firefox 2 or Firefox 3, the new line character only consume 1 space “\n”.            
                 */
 
-                if ($.browser.mozilla || $.browser.safari) {
-                    $('#DocumentText').text(text.replace(/\n/g, "\r\n"));
-                }
+//                if ($.browser.mozilla || $.browser.safari) {
+//                    $('#DocumentText').text(text.replace(/\n/g, "\r\n"));
+//                }
 
-                text = $("#DocumentText").text();
+//                text = $("#DocumentText").text();
 
                 $('input[name="{$annotation_type_list_name}"]').click(function () {
 
@@ -157,12 +159,12 @@
 
                     for (i = 0; i < colorArray.length + displacement; i++) {
 
-                        var letter = html.substring(i + displacement, i + displacement + 1) == "" ? "&nbsp" : html.substring(i + displacement, i + displacement + 1)
+                        var letter = html.substring(i + displacement, i + displacement + 1) == "" ? "&nbsp" : html.substring(i + displacement, i + displacement + 1);
 
                         var style;
-                        
+
                         if (featureArray[i - displacement] != "" && featureArray[i - displacement] != undefined) {
-                            featureArray[i - displacement] = featureArray[i - displacement].replace(/\'/g, "&#39;").replace(/:/g, "&#58;");
+                            featureArray[i - displacement] = featureArray[i - displacement].replace(/\'/g, "&#39;");
                             style = colorArray[i - displacement] == undefined ? letter : "<span class='text' title='Features: <br/> " + featureArray[i - displacement] + "' style='background-color:" + colorArray[i - displacement] + ";' >" + letter + "</span>";
                         }
                         else
