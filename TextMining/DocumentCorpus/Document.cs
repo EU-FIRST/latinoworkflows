@@ -490,12 +490,12 @@ namespace Latino.Workflows.TextMining
                             rootNode.Children[rootNode.Children.Count - 1].Elements += a.SpanStart + "," + a.SpanEnd + ",";
                             
                             foreach (KeyValuePair<string, string> f in a.Features)
-                            {                              
-                                rootNode.Children[rootNode.Children.Count - 1].Elements += f.Key + " = " + f.Value + " <br/>";
+                            {
+                                rootNode.Children[rootNode.Children.Count - 1].Elements += HttpUtility.HtmlEncode(f.Key + " = " + f.Value).Replace("'", "&#39;").Replace(":", "&#58;") + " <br/>";
                             }
                         }
 
-                        rootNode.Children[rootNode.Children.Count - 1].Elements += ';';
+                        rootNode.Children[rootNode.Children.Count - 1].Elements += ':';
 
                         result.Add(rootNode);
                     }
@@ -515,11 +515,11 @@ namespace Latino.Workflows.TextMining
                             ((Tree<string>)result[t]).Elements += a.SpanStart + "," + a.SpanEnd + ",";
                           
                             foreach (KeyValuePair<string, string> f in a.Features)
-                            {                              
-                                ((Tree<string>)result[t]).Elements += f.Key + " = " + f.Value + " <br/>";
+                            {
+                                ((Tree<string>)result[t]).Elements += HttpUtility.HtmlEncode(f.Key + " = " + f.Value).Replace("'", "&#39;").Replace(":", "&#58;") +" <br/>";
                             }
 
-                            ((Tree<string>)result[t]).Elements += ";";
+                            ((Tree<string>)result[t]).Elements += ":";
                         }
                     }
 
@@ -531,11 +531,11 @@ namespace Latino.Workflows.TextMining
                         rootNode.Root.Elements += a.SpanStart + "," + a.SpanEnd + ",";
                       
                         foreach (KeyValuePair<string, string> f in a.Features)
-                        {                           
-                            rootNode.Root.Elements += f.Key + " = " + f.Value + " <br/>";
+                        {
+                            rootNode.Root.Elements += HttpUtility.HtmlEncode(f.Key + " = " + f.Value).Replace("'", "&#39;").Replace(":", "&#58;") + " <br/>";
                         }
 
-                        rootNode.Root.Elements += ";";
+                        rootNode.Root.Elements += ":";
 
                     }
                 }
@@ -641,10 +641,10 @@ namespace Latino.Workflows.TextMining
 
                         foreach (KeyValuePair<string, string> f in a.Features)
                         {
-                            newNode.Elements += f.Key + " = " + f.Value + " <br/>";
+                            newNode.Elements += HttpUtility.HtmlEncode(f.Key + " = " + f.Value).Replace("'", "&#39;").Replace(":", "&#58;") + " <br/>";
                         }
 
-                        newNode.Elements += ";";
+                        newNode.Elements += ":";
 
                     }
 

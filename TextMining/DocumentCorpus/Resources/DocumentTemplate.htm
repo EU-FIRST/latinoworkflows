@@ -51,7 +51,7 @@
 
 
 
-            $(document).ready(function () {                
+            $(document).ready(function () {
 
                 $("#DocumentText")[0].innerHTML = documentText;
 
@@ -93,13 +93,13 @@
                             }
 
                             //update colorArray and featureArray
-                            for (var i = 0; i < elements.split(';').length; i++) {
+                            for (var i = 0; i < elements.split(':').length; i++) {
 
-                                var annLength = parseInt(elements.split(';')[i].split(',')[1]) - parseInt(elements.split(';')[i].split(',')[0]);
+                                var annLength = parseInt(elements.split(':')[i].split(',')[1]) - parseInt(elements.split(':')[i].split(',')[0]);
 
                                 for (var j = 0; j < annLength + 1; j++) {
-                                    colorArray[parseInt(elements.split(';')[i].split(',')[0]) + j] = color;
-                                    featureArray[parseInt(elements.split(';')[i].split(',')[0]) + j] = elements.split(';')[i].split(',')[2];
+                                    colorArray[parseInt(elements.split(':')[i].split(',')[0]) + j] = color;
+                                    featureArray[parseInt(elements.split(':')[i].split(',')[0]) + j] = elements.split(':')[i].split(',')[2];
                                 }
                             }
 
@@ -127,13 +127,13 @@
                         elements = $(this).attr("elements");
                         color = $(this).parent().next().attr('bgcolor');
                         //update colorArray and featureArray
-                        for (var i = 0; i < elements.split(';').length - 1; i++) {
+                        for (var i = 0; i < elements.split(':').length - 1; i++) {
 
-                            var annLength = parseInt(elements.split(';')[i].split(',')[1]) - parseInt(elements.split(';')[i].split(',')[0]);
+                            var annLength = parseInt(elements.split(':')[i].split(',')[1]) - parseInt(elements.split(':')[i].split(',')[0]);
 
                             for (var j = 0; j < annLength + 1; j++) {
-                                colorArray[parseInt(elements.split(';')[i].split(',')[0]) + j] = color;
-                                featureArray[parseInt(elements.split(';')[i].split(',')[0]) + j] = elements.split(';')[i].split(',')[2];
+                                colorArray[parseInt(elements.split(':')[i].split(',')[0]) + j] = color;
+                                featureArray[parseInt(elements.split(':')[i].split(',')[0]) + j] = elements.split(':')[i].split(',')[2];
                             }
                         }
 
@@ -160,9 +160,11 @@
                         var letter = html.substring(i + displacement, i + displacement + 1) == "" ? "&nbsp" : html.substring(i + displacement, i + displacement + 1)
 
                         var style;
-
-                        if (featureArray[i - displacement] != "")
+                        
+                        if (featureArray[i - displacement] != "" && featureArray[i - displacement] != undefined) {
+                            featureArray[i - displacement] = featureArray[i - displacement].replace(/\'/g, "&#39;").replace(/:/g, "&#58;");
                             style = colorArray[i - displacement] == undefined ? letter : "<span class='text' title='Features: <br/> " + featureArray[i - displacement] + "' style='background-color:" + colorArray[i - displacement] + ";' >" + letter + "</span>";
+                        }
                         else
                             style = colorArray[i - displacement] == undefined ? letter : "<span style='background-color:" + colorArray[i - displacement] + ";' >" + letter + "</span>";
 
