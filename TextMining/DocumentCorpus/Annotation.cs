@@ -23,8 +23,6 @@ namespace Latino.Workflows.TextMining
     */
     public class Annotation : ICloneable<Annotation>, IComparable<Annotation>
     {
-        private int mId
-            = -1;
         private string mType;
         private int mSpanStart;
         private int mSpanEnd;
@@ -41,16 +39,6 @@ namespace Latino.Workflows.TextMining
             mSpanEnd = spanEnd;            
             mType = type;
             mFeaturesInterface = new Features(mFeatures);
-        }
-
-        internal void SetId(int id)
-        {
-            mId = id;
-        }
-
-        public int Id
-        {
-            get { return mId; }
         }
 
         public string Type
@@ -84,7 +72,6 @@ namespace Latino.Workflows.TextMining
         public Annotation Clone()
         {
             Annotation clone = new Annotation(mSpanStart, mSpanEnd, mType);
-            clone.mId = mId;
             foreach (KeyValuePair<string, string> item in mFeatures)
             {
                 clone.mFeatures.Add(item.Key, item.Value);

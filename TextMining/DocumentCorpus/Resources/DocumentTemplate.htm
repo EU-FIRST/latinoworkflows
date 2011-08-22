@@ -5,7 +5,8 @@
     <head>
         
         <style type="text/css">
-
+        
+            body {font-family:helvetica;}
             #TextLayer {position:absolute;left:450px;top:60px;width:60%;height:auto;padding-left:3em;border-left:1px #3C64B6 solid;z-index:1;}
             #DocumentText {white-space:pre-wrap;padding-top:30px;}
             #DocumentTitle {color:#3C64B6;background-color: #EEEEEE;font-weight:bold;font-size:1.5em;padding-bottom:1em;padding-top:1em;padding-left:0.3em}
@@ -30,45 +31,9 @@
             var inlineCss = "{$inline_css}";
             {$var_document_text};
 
-//        if (inlineCss)
-//        {
-//            document.write('<style type="text/css">');
-//            document.write('#TextLayer {position:absolute;left:450px;top:60px;width:60%;height:auto;padding-left:3em;border-left:1px #3C64B6 solid;z-index:1;}');
-//            document.write('#DocumentText {white-space:pre-wrap;padding-top:30px;}');
-//            document.write('#DocumentTitle {color:#3C64B6;background-color: #EEEEEE;font-weight:bold;font-size:1.5em;padding-bottom:1em;padding-top:1em;padding-left:0.3em}');
-//            document.write('#ListLayer {position:relative;left:50px;top:60px;width:30%;height:auto;z-index:1;}');
-//            document.write('#DocumentFeaturesLayer {position:absolute;left:50px;width:300px;height:auto;padding-left:2.1em;padding-top:1.5em;z-index:1;word-wrap:break-word;}');
-//            document.write('ul, li, ul li a {list-style: none;width:100%;}');
-//            document.write('h3 {color: #004D99; font-weight:bold}');
-
-//            document.write('.tooltip {background-color:#26517E;border:1px solid #fff;padding:10px 15px;display:none;color:#fff;text-align:left;font-size:15px;font-weight:bolder;z-index: 8000;-moz-box-shadow:0 0 10px #000;-webkit-box-shadow:0 0 10px #000;}');
-//            document.write('</style>');           
-//        }
-//        else
-//        {
-//        /* <link rel="stylesheet" type="text/css" href="/Resources/style.css"/>  */
-            //        }
-
-
-
             $(document).ready(function () {
 
-                $("#DocumentText")[0].innerHTML = documentText;
-
-                //var text = $("#DocumentText").text();
-
-                var text = documentText;
-
-                /*
-                In IE and Opera new line character will consume 2 spaces because they use the characters “\r\n”,
-                however if the message is saved under Chrome, Firefox 2 or Firefox 3, the new line character only consume 1 space “\n”.            
-                */
-
-//                if ($.browser.mozilla || $.browser.safari) {
-//                    $('#DocumentText').text(text.replace(/\n/g, "\r\n"));
-//                }
-
-//                text = $("#DocumentText").text();
+                $("#DocumentText")[0].innerHTML = text;
 
                 $('input[name="{$annotation_type_list_name}"]').click(function () {
 
@@ -95,13 +60,14 @@
                             }
 
                             //update colorArray and featureArray
-                            for (var i = 0; i < elements.split(':').length; i++) {
-
-                                var annLength = parseInt(elements.split(':')[i].split(',')[1]) - parseInt(elements.split(':')[i].split(',')[0]);
+                            var tmp = elements.split(':');
+                            for (var i = 0; i < tmp.length; i++) {
+                                var tmp2 = tmp[i].split(',');
+                                var annLength = parseInt(tmp2[1]) - parseInt(tmp2[0]);
 
                                 for (var j = 0; j < annLength + 1; j++) {
-                                    colorArray[parseInt(elements.split(':')[i].split(',')[0]) + j] = color;
-                                    featureArray[parseInt(elements.split(':')[i].split(',')[0]) + j] = elements.split(':')[i].split(',')[2];
+                                    colorArray[parseInt(tmp2[0]) + j] = color;
+                                    featureArray[parseInt(tmp2[0]) + j] = tmp2[2];
                                 }
                             }
 
@@ -112,9 +78,9 @@
                     }
                 }
 
-                function refreshPage(html) {
+                function refreshPage(text) {
 
-                    $("#DocumentText")[0].innerHTML = html;
+                    $("#DocumentText")[0].innerHTML = text;
 
                     var elements;
 
@@ -129,13 +95,14 @@
                         elements = $(this).attr("elements");
                         color = $(this).parent().next().attr('bgcolor');
                         //update colorArray and featureArray
-                        for (var i = 0; i < elements.split(':').length - 1; i++) {
-
-                            var annLength = parseInt(elements.split(':')[i].split(',')[1]) - parseInt(elements.split(':')[i].split(',')[0]);
+                        var tmp = elements.split(':');
+                        for (var i = 0; i < tmp.length - 1; i++) {
+                            var tmp2 = tmp[i].split(',');
+                            var annLength = parseInt(tmp2[1]) - parseInt(tmp2[0]);
 
                             for (var j = 0; j < annLength + 1; j++) {
-                                colorArray[parseInt(elements.split(':')[i].split(',')[0]) + j] = color;
-                                featureArray[parseInt(elements.split(':')[i].split(',')[0]) + j] = elements.split(':')[i].split(',')[2];
+                                colorArray[parseInt(tmp2[0]) + j] = color;
+                                featureArray[parseInt(tmp2[0]) + j] = tmp2[2];
                             }
                         }
 
@@ -147,49 +114,41 @@
 
 
                     var i;
-                    var displacement = 0;
 
-                    var htmlResult = html;
+                    var htmlResult = text;
 
-                    if (colorArray.length > 0)
+					if (colorArray.length > 0)
+					{
                         htmlResult = "";
+						if (colorArray[0] != undefined)
+						{
+							if (featureArray[0] == undefined || featureArray[0] == "") { htmlResult += "<span style='background-color:" + colorArray[0] + ";'>"; }
+							else { htmlResult += "<span style='background-color:" + colorArray[0] + ";' class='text' title='Features: &lt;br/&gt; " + featureArray[0] + "'>"; }
+						}
+						htmlResult += text.charAt(0);
+					}
 
-
-                    var firstHighlight = false;
-
-                    for (i = 0; i < colorArray.length + displacement; i++) {
-
-                        var letter = html.substring(i + displacement, i + displacement + 1) == "" ? "&nbsp" : html.substring(i + displacement, i + displacement + 1);
-
-                        var style;
-
-                        if (featureArray[i - displacement] != "" && featureArray[i - displacement] != undefined) {
-                            featureArray[i - displacement] = encodeHTML(featureArray[i - displacement].replace(/\'/g, "&#39;"));
-                            style = colorArray[i - displacement] == undefined ? letter : "<span class='text' title='Features: <br/> " + featureArray[i - displacement] + "' style='background-color:" + colorArray[i - displacement] + ";' >" + letter + "</span>";
-                        }
-                        else
-                            style = colorArray[i - displacement] == undefined ? letter : "<span style='background-color:" + colorArray[i - displacement] + ";' >" + letter + "</span>";
-
-                        if (firstHighlight == false && colorArray.length > 1) {
-
-                            htmlResult += html.substring(displacement, i + displacement) + style + html.substring(i + displacement + 1, i + displacement + 1);
-
-                            firstHighlight = true;
-                        }
-                        else if (i < colorArray.length - 1 + displacement) {
-
-                            htmlResult += style + html.substring(i + displacement + 1, i + displacement + 1);
-                        }
-                        else {
-
-                            htmlResult += style + html.substring(i + displacement + 1, html.length);
-                        }
-
-
-
-
-                    }
-
+					for (i = 0; i < text.length - 1; i++)
+					{
+						if (colorArray[i] != colorArray[i + 1] || featureArray[i] != featureArray[i + 1])
+						{
+							if (colorArray[i] != undefined) { htmlResult += "</span>"; }
+							if (colorArray[i + 1] != undefined) 
+							{
+								if (featureArray[i + 1] == undefined || featureArray[i + 1] == "") { htmlResult += "<span style='background-color:" + colorArray[i + 1] + ";'>"; }
+								else { htmlResult += "<span style='background-color:" + colorArray[i + 1] + ";' class='text' title='Features: &lt;br/&gt; " + featureArray[i + 1] + "'>"; }
+							}
+							htmlResult += text.charAt(i + 1);							
+						}
+						else
+						{
+							htmlResult += text.charAt(i + 1);
+						}
+						if (i == text.length - 1 && colorArray[i + 1] != undefined)
+						{
+							htmlResult += "</span>";
+						}
+					}
 
 
                     $("#DocumentText")[0].innerHTML = htmlResult;
@@ -213,11 +172,6 @@
                 }
 
             });
-
-            function encodeHTML(text) {
-                return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            }         
-
 
         </script>         
        

@@ -37,27 +37,9 @@ namespace Latino.Workflows.TextMining
         private string mName;
         private ArrayList<Annotation> mAnnotations
             = new ArrayList<Annotation>();
-        private static AnnotationComparer mAnnotationComparer
-            = new AnnotationComparer();
         private Dictionary<string, string> mFeatures
             = new Dictionary<string, string>();
         private Features mFeaturesInterface;
-
-        /* .-----------------------------------------------------------------------
-           |
-           |  Class AnnotationComparer
-           |
-           '-----------------------------------------------------------------------
-        */
-        private class AnnotationComparer : IComparer<Annotation>
-        {
-            // *** IComparer<Annotation> interface implementation ***
-
-            public int Compare(Annotation x, Annotation y)
-            {
-                return x.Id.CompareTo(y.Id);
-            }
-        }
 
         public Document(string name, string text)
         {
@@ -107,37 +89,7 @@ namespace Latino.Workflows.TextMining
         {
             Utils.ThrowException(annotation == null ? new ArgumentNullException("annotation") : null);
             Utils.ThrowException(mAnnotations.Contains(annotation) ? new ArgumentValueException("annotation") : null);
-            Utils.ThrowException((annotation.Id != -1 && mAnnotations.Count != 0 && mAnnotations.Last.Id >= annotation.Id) ?
-                new ArgumentValueException("annotation") : null);
-            if (annotation.Id == -1)
-            {
-                int id = -1;
-                if (mAnnotations.Count != 0)
-                {
-                    id = mAnnotations.Last.Id;
-                }
-                annotation.SetId(id + 1);
-            }
-            mAnnotations.InsertSorted(annotation);
-        }
-
-        private int GetIdx(int id)
-        {
-            Annotation key = new Annotation(0, 0, "");
-            key.SetId(id);
-            return mAnnotations.BinarySearch(key, mAnnotationComparer);
-        }
-
-        public bool RemoveAnnotation(int id)
-        {
-            Utils.ThrowException(id < 0 ? new ArgumentOutOfRangeException("id") : null);
-            int idx = GetIdx(id);
-            if (idx > 0)
-            {
-                mAnnotations.RemoveAt(idx);
-                return true;
-            }
-            return false;
+            mAnnotations.Add(annotation); 
         }
 
         public void RemoveAnnotationAt(int idx)
@@ -145,35 +97,18 @@ namespace Latino.Workflows.TextMining
             mAnnotations.RemoveAt(idx); // throws ArgumentOutOfRangeException
         }
 
-        public Annotation GetAnnotation(int id)
-        {
-            Utils.ThrowException(id < 0 ? new ArgumentOutOfRangeException("id") : null);
-            int idx = GetIdx(id);
-            if (idx > 0)
-            {
-                return mAnnotations[idx];
-            }
-            return null;
-        }
-
         public Annotation GetAnnotationAt(int idx)
         {
             return mAnnotations[idx]; // throws ArgumentOutOfRangeException
         }
 
-        public TextBlock[] GetAnnotatedBlocks(string regexStr)
+        public TextBlock[] GetAnnotatedBlocks(string selector) 
         {
-            Utils.ThrowException(regexStr == null ? new ArgumentNullException("regexStr") : null);
-            return GetAnnotatedBlocks(new Regex(regexStr, RegexOptions.Compiled)); 
-        }
-
-        public TextBlock[] GetAnnotatedBlocks(Regex regex) 
-        {
-            Utils.ThrowException(regex == null ? new ArgumentNullException("regex") : null);
+            Utils.ThrowException(selector == null ? new ArgumentNullException("selector") : null);
             ArrayList<TextBlock> blocks = new ArrayList<TextBlock>();
             foreach (Annotation annotation in mAnnotations)
             {
-                if (regex.Match(annotation.Type).Success)
+                if (annotation.Type.StartsWith(selector))
                 {
                     blocks.Add(annotation.GetAnnotatedBlock(mText));
                 }
@@ -181,12 +116,22 @@ namespace Latino.Workflows.TextMining
             return blocks.ToArray();
         }
 
-        public TextBlock[] GetAnnotatedBlocks(string regex, int spanStart, int spanEnd)
+        public TextBlock[] GetAnnotatedBlocks(string selector, int spanStart, int spanEnd)
         {
-            Utils.ThrowException(regex == null ? new ArgumentNullException("regex") : null);
+            Utils.ThrowException(selector == null ? new ArgumentNullException("selector") : null);
             Annotation key = new Annotation(spanStart, spanEnd, "dummy"); // throws ArgumentOutOfRangeException
-            Regex regexObj = new Regex(regex, RegexOptions.Compiled); // throws ArgumentException
             ArrayList<TextBlock> blocks = new ArrayList<TextBlock>();
+            // sort annotations by SpanStart if not sorted
+            int currentSpanStart = -1;
+            foreach (Annotation annotation in mAnnotations)
+            {
+                if (annotation.SpanStart < currentSpanStart) 
+                {
+                    mAnnotations.Sort(); 
+                    break;
+                }
+                currentSpanStart = annotation.SpanStart;
+            }
             int idx = mAnnotations.BinarySearch(key);
             if (idx < 0) { idx = ~idx; }
             for (int i = idx; i < mAnnotations.Count; i++)
@@ -195,7 +140,7 @@ namespace Latino.Workflows.TextMining
                 if (annotation.SpanStart > spanEnd) { break; }
                 if (annotation.SpanEnd <= spanEnd) 
                 {
-                    if (regexObj.Match(annotation.Type).Success)
+                    if (annotation.Type.StartsWith(selector))
                     {
                         blocks.Add(annotation.GetAnnotatedBlock(mText));
                     }
@@ -274,11 +219,7 @@ namespace Latino.Workflows.TextMining
                     ArrayList<Pair<string, string>> features = new ArrayList<Pair<string, string>>();
                     while (reader.Read() && !(reader.NodeType == XmlNodeType.EndElement && reader.Name == "Annotation"))
                     {
-                        if (reader.NodeType == XmlNodeType.Element && reader.Name == "Id")
-                        {
-                            annotId = Convert.ToInt32(Utils.XmlReadValue(reader, "Id")); 
-                        }
-                        else if (reader.NodeType == XmlNodeType.Element && reader.Name == "SpanStart")
+                        if (reader.NodeType == XmlNodeType.Element && reader.Name == "SpanStart")
                         {
                             spanStart = Convert.ToInt32(Utils.XmlReadValue(reader, "SpanStart")); 
                         }
@@ -313,7 +254,6 @@ namespace Latino.Workflows.TextMining
                         }
                     }
                     Annotation annot = new Annotation(spanStart, spanEnd, annotType);
-                    annot.SetId(annotId);
                     AddAnnotation(annot);
                     foreach (Pair<string, string> feature in features)
                     {
@@ -351,7 +291,6 @@ namespace Latino.Workflows.TextMining
             foreach (Annotation annot in mAnnotations)
             {
                 writer.WriteStartElement("Annotation", ns);
-                writer.WriteElementString("Id", ns, annot.Id.ToString());
                 writer.WriteElementString("SpanStart", ns, annot.SpanStart.ToString());
                 writer.WriteElementString("SpanEnd", ns, annot.SpanEnd.ToString());
                 writer.WriteElementString("Type", ns, annot.Type);
@@ -396,11 +335,11 @@ namespace Latino.Workflows.TextMining
 
             foreach (KeyValuePair<string, string> f in this.Features)
             {
-                documentFeatures += "<b>" + f.Key + "</b>" + " = " + Utils.Truncate(HttpUtility.HtmlEncode(f.Value), 100) + (f.Value.Length > 100?" ...":"") + " <br/><br/>";
+                documentFeatures += "<b>" + HttpUtility.HtmlEncode(f.Key) + "</b>" + " = " + HttpUtility.HtmlEncode(Utils.Truncate(f.Value, 100) + (f.Value.Length > 100?" ...":"")) + " <br/><br/>";
             }
 
-            templateString = templateString.Replace("{$document_title}", mName);
-            templateString = templateString.Replace("{$var_document_text}", MakeVarText(mText.Val, "documentText"));
+            templateString = templateString.Replace("{$document_title}", HttpUtility.HtmlEncode(mName));
+            templateString = templateString.Replace("{$var_document_text}", MakeVarText(mText.Val, "text"));
             templateString = templateString.Replace("{$document_features}", documentFeatures);
             templateString = templateString.Replace("{$annotation_type_list}", annotationTypeList);
             templateString = templateString.Replace("{$annotation_type_list_name}", "annotationTypeList");
@@ -425,20 +364,9 @@ namespace Latino.Workflows.TextMining
 
                 string colorHtml;
 
-                if (tree.Root.Value == "positive")
-                {
-                    colorHtml = "#" + String.Format("{0:X2}", Color.GreenYellow.R) + String.Format("{0:X2}", Color.GreenYellow.G) + String.Format("{0:X2}", Color.GreenYellow.B);
-                    colors.Add(Color.GreenYellow);
-                }
-                else if (tree.Root.Value == "negative")
-                {
-                    colorHtml = "#" + String.Format("{0:X2}", Color.Tomato.R) + String.Format("{0:X2}", Color.Tomato.G) + String.Format("{0:X2}", Color.Tomato.B);
-                    colors.Add(Color.Tomato);
-                }
-                else
-                    colorHtml = GetNewColor(colors);
+                colorHtml = GetNewColor(colors);
 
-                annotationTypeList += "<li> <TABLE ><TR><TD name='{$annotation_name}' style='padding-right:10px' ><input type='checkbox' name='{$annotation_type_list_name}' class='" + tree.Root.Value + "'elements='" + tree.Root.Elements + "' >" + tree.Root.Value + " <TD bgcolor='" + colorHtml + "' style='border:solid black 1px'>&nbsp &nbsp &nbsp</TD></TR></TABLE>";
+                annotationTypeList += "<li> <TABLE ><TR><TD name='{$annotation_name}' style='padding-right:10px' ><input type='checkbox' name='{$annotation_type_list_name}' class='" + HttpUtility.HtmlEncode(tree.Root.Value) + "' elements='" + HttpUtility.HtmlEncode(tree.Root.Elements) + "' >" + HttpUtility.HtmlEncode(tree.Root.Value) + " <TD bgcolor='" + colorHtml + "' style='border:solid black 1px'>&nbsp &nbsp &nbsp</TD></TR></TABLE>";
 
                 annotationTypeList += "<ul>";
                 annotationTypeList = WriteHtmlList(tree, annotationTypeList, colors);
@@ -449,8 +377,8 @@ namespace Latino.Workflows.TextMining
 
             annotationTypeList += "</ul>";
 
-            annotationTypeList = annotationTypeList.Replace("{$document_title}", mName);
-            annotationTypeList = annotationTypeList.Replace("{$var_document_text}", MakeVarText(mText, "documentText"));      
+            annotationTypeList = annotationTypeList.Replace("{$document_title}", HttpUtility.HtmlEncode(mName));
+            annotationTypeList = annotationTypeList.Replace("{$var_document_text}", MakeVarText(mText, "text"));      
             annotationTypeList = annotationTypeList.Replace("{$annotation_type_list}", annotationTypeList);
             annotationTypeList = annotationTypeList.Replace("{$annotation_type_list_name}", "annotationTypeList");
             annotationTypeList = annotationTypeList.Replace("{$annotation_name}", "annotation");
@@ -491,7 +419,7 @@ namespace Latino.Workflows.TextMining
                             
                             foreach (KeyValuePair<string, string> f in a.Features)
                             {
-                                rootNode.Children[rootNode.Children.Count - 1].Elements += HttpUtility.HtmlEncode(f.Key + " = " + f.Value).Replace("'", "&#39;").Replace(":", "&#58;") + " <br/>";
+                                rootNode.Children[rootNode.Children.Count - 1].Elements += HttpUtility.HtmlEncode(f.Key + " = " + f.Value).Replace("'", "&#39;").Replace(":", "&#58;").Replace(",", "&#44;") + " <br/>";
                             }
                         }
 
@@ -516,7 +444,7 @@ namespace Latino.Workflows.TextMining
                           
                             foreach (KeyValuePair<string, string> f in a.Features)
                             {
-                                ((Tree<string>)result[t]).Elements += HttpUtility.HtmlEncode(f.Key + " = " + f.Value).Replace("'", "&#39;").Replace(":", "&#58;") +" <br/>";
+                                ((Tree<string>)result[t]).Elements += HttpUtility.HtmlEncode(f.Key + " = " + f.Value).Replace("'", "&#39;").Replace(":", "&#58;").Replace(",", "&#44;") + " <br/>";
                             }
 
                             ((Tree<string>)result[t]).Elements += ":";
@@ -532,7 +460,7 @@ namespace Latino.Workflows.TextMining
                       
                         foreach (KeyValuePair<string, string> f in a.Features)
                         {
-                            rootNode.Root.Elements += HttpUtility.HtmlEncode(f.Key + " = " + f.Value).Replace("'", "&#39;").Replace(":", "&#58;") + " <br/>";
+                            rootNode.Root.Elements += HttpUtility.HtmlEncode(f.Key + " = " + f.Value).Replace("'", "&#39;").Replace(":", "&#58;").Replace(",", "&#44;") + " <br/>";
                         }
 
                         rootNode.Root.Elements += ":";
@@ -600,20 +528,9 @@ namespace Latino.Workflows.TextMining
 
                 string colorHtml;
 
-                if (tree.Children[k].Value == "positive")
-                {
-                    colorHtml = "#" + String.Format("{0:X2}", Color.GreenYellow.R) + String.Format("{0:X2}", Color.GreenYellow.G) + String.Format("{0:X2}", Color.GreenYellow.B);
-                    colors.Add(Color.GreenYellow);
-                }
-                else if (tree.Children[k].Value == "negative")
-                {
-                    colorHtml = "#" + String.Format("{0:X2}", Color.Tomato.R) + String.Format("{0:X2}", Color.Tomato.G) + String.Format("{0:X2}", Color.Tomato.B);
-                    colors.Add(Color.Tomato);
-                }
-                else
-                    colorHtml = GetNewColor(colors);
+                colorHtml = GetNewColor(colors);
 
-                html += "<li> <TABLE ><TR><TD name='{$annotation_name}' style='padding-right:10px' ><input type='checkbox' name='{$annotation_type_list_name}' class='" + tree.Children[k].Value + "'elements='" + tree.Children[k].Elements + "' >" + tree.Children[k].Value + " <TD bgcolor='" + colorHtml + " ' style='border:solid black 1px'>&nbsp &nbsp &nbsp</TD></TR></TABLE>";
+                html += "<li> <TABLE ><TR><TD name='{$annotation_name}' style='padding-right:10px' ><input type='checkbox' name='{$annotation_type_list_name}' class='" + HttpUtility.HtmlEncode(tree.Children[k].Value) + "' elements='" + HttpUtility.HtmlEncode(tree.Children[k].Elements) + "' >" + HttpUtility.HtmlEncode(tree.Children[k].Value) + " <TD bgcolor='" + colorHtml + " ' style='border:solid black 1px'>&nbsp &nbsp &nbsp</TD></TR></TABLE>";
 
                 html += "<ul>";
                 html = WriteHtmlList(tree.Children[k], html, colors);
@@ -641,7 +558,7 @@ namespace Latino.Workflows.TextMining
 
                         foreach (KeyValuePair<string, string> f in a.Features)
                         {
-                            newNode.Elements += HttpUtility.HtmlEncode(f.Key + " = " + f.Value).Replace("'", "&#39;").Replace(":", "&#58;") + " <br/>";
+                            newNode.Elements += HttpUtility.HtmlEncode(f.Key + " = " + f.Value).Replace("'", "&#39;").Replace(":", "&#58;").Replace(",", "&#44;") + " <br/>";
                         }
 
                         newNode.Elements += ":";
@@ -679,7 +596,7 @@ namespace Latino.Workflows.TextMining
             StringBuilder str = new StringBuilder("var " + varName + " = \"");
             foreach (char ch in text)
             {
-                if (ch >= 32 && ch <= 126 && ch != 34) { str.Append(ch); } // "readable" range
+                if (ch >= 32 && ch <= 126 && ch != '"' && ch != '\\') { str.Append(ch); } // "readable" range
                 else { str.Append("\\u" + ((int)ch).ToString("X").PadLeft(4, '0')); } // encoded as Unicode
             }
             return str.ToString() + "\"";
