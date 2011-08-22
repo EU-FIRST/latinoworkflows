@@ -164,7 +164,7 @@
                         var style;
 
                         if (featureArray[i - displacement] != "" && featureArray[i - displacement] != undefined) {
-                            featureArray[i - displacement] = featureArray[i - displacement].replace(/\'/g, "&#39;");
+                            featureArray[i - displacement] = encodeHTML(featureArray[i - displacement].replace(/\'/g, "&#39;"));
                             style = colorArray[i - displacement] == undefined ? letter : "<span class='text' title='Features: <br/> " + featureArray[i - displacement] + "' style='background-color:" + colorArray[i - displacement] + ";' >" + letter + "</span>";
                         }
                         else
@@ -212,11 +212,13 @@
 
                 }
 
+            });
+
+            function encodeHTML(text) {
+                return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            }         
 
 
-            });  
-              
-           
         </script>         
        
     </head>
