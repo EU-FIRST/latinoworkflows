@@ -251,7 +251,7 @@ namespace Latino.Workflows.TextMining
 
             foreach (KeyValuePair<string, string> f in this.Features)
             {
-                corpusFeatures += "<b>" + HttpUtility.HtmlEncode(f.Key) + "</b>" + " = " + HttpUtility.HtmlEncode(Utils.Truncate(HttpUtility.HtmlEncode(f.Value), 100) + (f.Value.Length > 100 ? " ..." : "")) + " <br/><br/>";
+                corpusFeatures += "<b>" + HttpUtility.HtmlEncode(f.Key) + "</b>" + " = " + HttpUtility.HtmlEncode(Utils.Truncate(f.Value, 100) + (f.Value.Length > 100 ? " ..." : "")) + " <br/><br/>";
             }
 
             indexString = indexString.Replace("{$document_list}", documentList);
