@@ -233,8 +233,8 @@ namespace Latino.Workflows.TextMining
                 annotationTreeList = d.MakeAnnotationTree();
 
                 document = new StreamWriter(string.Format("{0}\\Document{1}.html", path, i));
-                documentList += "<p class='documentTitle'><a href=Document" + i + ".html>" + d.Name + "</a></br>";
-                documentList += "<p class='documentText'>" + Utils.Truncate(d.Text, 400) + "...</p>";
+                documentList += "<p class='documentTitle'><a href=Document" + i + ".html>" + HttpUtility.HtmlEncode(d.Name) + "</a></br>";
+                documentList += "<p class='documentText'>" + HttpUtility.HtmlEncode(Utils.Truncate(d.Text, 400)) + "...</p>";
 
                 string annotationsString = d.Annotations.Count == 1 ? " annotation" : " annotations";
                 string featuresString = d.Features.Names.Count == 1 ? " feature" : " features";
@@ -251,7 +251,7 @@ namespace Latino.Workflows.TextMining
 
             foreach (KeyValuePair<string, string> f in this.Features)
             {
-                corpusFeatures += "<b>" + f.Key + "</b>" + " = " + Utils.Truncate(HttpUtility.HtmlEncode(f.Value), 100) + (f.Value.Length > 100 ? " ..." : "") + " <br/><br/>";
+                corpusFeatures += "<b>" + HttpUtility.HtmlEncode(f.Key) + "</b>" + " = " + HttpUtility.HtmlEncode(Utils.Truncate(HttpUtility.HtmlEncode(f.Value), 100) + (f.Value.Length > 100 ? " ..." : "")) + " <br/><br/>";
             }
 
             indexString = indexString.Replace("{$document_list}", documentList);
