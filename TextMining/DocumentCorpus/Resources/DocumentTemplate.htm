@@ -11,8 +11,9 @@
             #DocumentText {white-space:pre-wrap;padding-top:30px;}
             #DocumentTitle {color:#3C64B6;background-color: #EEEEEE;font-weight:bold;font-size:1.5em;padding-bottom:1em;padding-top:1em;padding-left:0.3em}
             #ListLayer {position:relative;left:50px;top:60px;width:30%;height:auto;z-index:1;}
-            #DocumentFeaturesLayer {position:absolute;left:50px;width:300px;height:auto;padding-left:2.1em;padding-top:1.5em;z-index:1;word-wrap:break-word;}
+            #DocumentFeaturesLayer {position:absolute;left:50px;width:300px;height:auto;padding-left:2.1em;padding-top:1.5em;z-index:1;word-wrap:break-word;font-size:0.9em;}
             ul, li, ul li a {list-style: none;width:100%;}
+            h2 {color: #004D99; font-weight:bold}
             h3 {color: #004D99; font-weight:bold}
 
             .tooltip {background-color:#26517E;border:1px solid #fff;padding:10px 15px;display:none;color:#fff;text-align:left;font-size:15px;font-weight:bolder;z-index: 8000;-moz-box-shadow:0 0 10px #000;-webkit-box-shadow:0 0 10px #000;}
@@ -194,7 +195,7 @@
             </ul>
         
             <div id="DocumentFeaturesLayer">
-                <h3>Features</h3>
+                <h2>Features</h2>
                 {$document_features}                
             </div>
         </div>
