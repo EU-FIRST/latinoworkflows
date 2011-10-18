@@ -103,13 +103,14 @@ namespace Latino.Workflows.Persistance
                 foreach (Document document in corpus.Documents)
                 {
                     string documentId = new Guid(document.Features.GetFeatureValue("_guid")).ToString("N");
-                    success = mConnection.ExecuteNonQuery("insert into Documents (id, corpusId, name, description, category, link, time, pubDate, mimeType, contentType, charSet, contentLength) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    success = mConnection.ExecuteNonQuery("insert into Documents (id, corpusId, name, description, category, link, responseUrl, time, pubDate, mimeType, contentType, charSet, contentLength) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         documentId,
                         corpusId,
                         Utils.Truncate(document.Name, 400),
                         Utils.Truncate(document.Features.GetFeatureValue("description"), 400),
                         Utils.Truncate(document.Features.GetFeatureValue("category"), 400),
                         Utils.Truncate(document.Features.GetFeatureValue("link"), 400),
+                        Utils.Truncate(document.Features.GetFeatureValue("_responseUrl"), 400),
                         Utils.Truncate(document.Features.GetFeatureValue("_time"), 26),
                         Utils.Truncate(document.Features.GetFeatureValue("pubDate"), 26),
                         Utils.Truncate(document.Features.GetFeatureValue("_mimeType"), 80),

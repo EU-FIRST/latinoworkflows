@@ -26,19 +26,24 @@ namespace Latino.Workflows
     {
         private Queue<Pair<IDataProducer, object>> mQueue
             = new Queue<Pair<IDataProducer, object>>();
+
         private Ref<int> mLoad
             = 0;
         private int mMaxLoad
+            = 0;
+        private Ref<TimeSpan> mProcessingTime
+            = TimeSpan.Zero;
+        private Ref<int> mNumItemsProcessed
             = 0;
         private bool mThreadAlive
             = false;
         private bool mStopped
             = false;
-        private Thread mThread;
-        private DateTime mMaxLoadTime
-            = DateTime.MinValue;
         private string mName
             = null;
+
+        private Thread mThread;
+
         private string mLoggerBaseName;
         protected Logger mLogger;
 
@@ -59,17 +64,37 @@ namespace Latino.Workflows
 
         public int Load
         {
-            get { return mLoad; }
+            get { return mLoad.Val; }
         }
 
-        public int MaxLoad
+        public int GetMaxLoad()
         {
-            get { return mMaxLoad; }
+            lock (mLoad)
+            {
+                int maxLoad = mMaxLoad;
+                mMaxLoad = 0;
+                return maxLoad;
+            }
         }
 
-        public DateTime MaxLoadTime
+        public double GetProcessingTimeSec()
         {
-            get { return mMaxLoadTime; }
+            lock (mProcessingTime)
+            {
+                double timeSec = mProcessingTime.Val.TotalSeconds;
+                mProcessingTime.Val = TimeSpan.Zero;
+                return timeSec;
+            }
+        }
+
+        public int GetNumItemsProcessed()
+        {
+            lock (mNumItemsProcessed)
+            {
+                int val = mNumItemsProcessed.Val;
+                mNumItemsProcessed.Val = 0;
+                return val;
+            }
         }
 
         public string Name
@@ -98,7 +123,10 @@ namespace Latino.Workflows
                     // consume data
                     try
                     {
+                        DateTime start = DateTime.Now;
                         ConsumeData(data.First, data.Second);
+                        lock (mProcessingTime) { mProcessingTime.Val += DateTime.Now - start; }
+                        lock (mNumItemsProcessed) { mNumItemsProcessed.Val++; }
                     }
                     catch (Exception exc)
                     {
@@ -107,7 +135,7 @@ namespace Latino.Workflows
                     // check if more data available
                     lock (mQueue)
                     {
-                        lock (mLoad) { mLoad--; }
+                        lock (mLoad) { mLoad.Val--; }
                         if (mStopped) { mLogger.Debug("Stop", "Stopped."); return; }
                         mThreadAlive = mQueue.Count > 0;
                         if (!mThreadAlive) { break; }
@@ -170,8 +198,8 @@ namespace Latino.Workflows
                 mQueue.Enqueue(new Pair<IDataProducer, object>(sender, data));
                 lock (mLoad) 
                 { 
-                    mLoad++;
-                    if (mLoad >= mMaxLoad) { mMaxLoad = mLoad; mMaxLoadTime = DateTime.Now; }
+                    mLoad.Val++;
+                    if (mLoad.Val >= mMaxLoad) { mMaxLoad = mLoad.Val; }
                 }
                 if (!mThreadAlive && !mStopped)
                 {

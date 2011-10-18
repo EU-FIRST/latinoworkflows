@@ -21,7 +21,7 @@ namespace Latino.Workflows.TextMining
        |
        '-----------------------------------------------------------------------
     */
-    public class Annotation : ICloneable<Annotation>, IComparable<Annotation>
+    public class Annotation : ICloneable<Annotation>
     {
         private string mType;
         private int mSpanStart;
@@ -82,14 +82,6 @@ namespace Latino.Workflows.TextMining
         object ICloneable.Clone()
         {
             return Clone();
-        }
-
-        // *** IComparable<Annotation> interface implementation ***
-
-        public int CompareTo(Annotation other)
-        {
-            Utils.ThrowException(other == null ? new ArgumentNullException("other") : null);
-            return mSpanStart.CompareTo(other.mSpanStart);
         }
     }
 }

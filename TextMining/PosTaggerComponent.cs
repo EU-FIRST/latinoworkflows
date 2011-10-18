@@ -69,11 +69,11 @@ namespace Latino.Workflows.TextMining
                 }
                 else
                 {
+                    document.CreateAnnotationIndex();
                     TextBlock[] tokenGroups = document.GetAnnotatedBlocks(mTokenGroupSelector);
                     foreach (TextBlock tokenGroup in tokenGroups)
                     {
                         TextBlock[] textBlocks = document.GetAnnotatedBlocks(mBlockSelector, tokenGroup.SpanStart, tokenGroup.SpanEnd);
-                        // *** make sure not to insert annotations at this point to keep the annotation list sorted 
                         ProcessTokens(textBlocks);
                     }
                 }

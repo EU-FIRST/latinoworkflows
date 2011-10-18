@@ -40,6 +40,9 @@ namespace Latino.Workflows.TextMining
         private Dictionary<string, string> mFeatures
             = new Dictionary<string, string>();
         private Features mFeaturesInterface;
+        
+        private ArrayList<KeyDat<int, Annotation>> mAnnotationIndex
+            = null;
 
         public Document(string name, string text)
         {
@@ -116,27 +119,30 @@ namespace Latino.Workflows.TextMining
             return blocks.ToArray();
         }
 
-        public TextBlock[] GetAnnotatedBlocks(string selector, int spanStart, int spanEnd)
+        public void CreateAnnotationIndex()
         {
-            Utils.ThrowException(selector == null ? new ArgumentNullException("selector") : null);
-            Annotation key = new Annotation(spanStart, spanEnd, "dummy"); // throws ArgumentOutOfRangeException
-            ArrayList<TextBlock> blocks = new ArrayList<TextBlock>();
-            // sort annotations by SpanStart if not sorted
-            int currentSpanStart = -1;
+            mAnnotationIndex = new ArrayList<KeyDat<int, Annotation>>(mAnnotations.Count);
             foreach (Annotation annotation in mAnnotations)
             {
-                if (annotation.SpanStart < currentSpanStart) 
-                {
-                    mAnnotations.Sort(); 
-                    break;
-                }
-                currentSpanStart = annotation.SpanStart;
+                mAnnotationIndex.Add(new KeyDat<int, Annotation>(annotation.SpanStart, annotation));
             }
-            int idx = mAnnotations.BinarySearch(key);
+            mAnnotationIndex.Sort();
+        }
+
+        public TextBlock[] GetAnnotatedBlocks(string selector, int spanStart, int spanEnd)
+        {
+            // TODO: set mAnnotationIndex to null if annotation array changes
+            Utils.ThrowException(mAnnotationIndex == null ? new InvalidOperationException() : null);
+            Utils.ThrowException(selector == null ? new ArgumentNullException("selector") : null);
+            Utils.ThrowException(spanStart < 0 ? new ArgumentOutOfRangeException("spanStart") : null);
+            Utils.ThrowException(spanEnd < spanStart ? new ArgumentOutOfRangeException("SpanEnd") : null);
+            KeyDat<int, Annotation> key = new KeyDat<int, Annotation>(spanStart, null);
+            ArrayList<TextBlock> blocks = new ArrayList<TextBlock>();
+            int idx = mAnnotationIndex.BinarySearch(key);
             if (idx < 0) { idx = ~idx; }
-            for (int i = idx; i < mAnnotations.Count; i++)
+            for (int i = idx; i < mAnnotationIndex.Count; i++)
             {
-                Annotation annotation = mAnnotations[i];                
+                Annotation annotation = mAnnotationIndex[i].Dat;                
                 if (annotation.SpanStart > spanEnd) { break; }
                 if (annotation.SpanEnd <= spanEnd) 
                 {
