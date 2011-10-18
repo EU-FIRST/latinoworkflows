@@ -25,7 +25,9 @@ namespace Latino.Workflows
     public enum DispatchPolicy
     {
         ToAll,
-        Random
+        Random,
+        BalanceLoadSum,
+        BalanceLoadMax
     }
 
     /* .-----------------------------------------------------------------------

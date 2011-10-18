@@ -30,16 +30,35 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Apache.NMS, Version=1.5.0.2194, Culture=neutral, PublicKeyToken=82756feee3957618, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>ZeroMQ\Apache.NMS.dll</HintPath>
+    </Reference>
+    <Reference Include="Apache.NMS.ActiveMQ, Version=1.5.1.2341, Culture=neutral, PublicKeyToken=82756feee3957618, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>ZeroMQ\Apache.NMS.ActiveMQ.dll</HintPath>
+    </Reference>
+    <Reference Include="clrzmq, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>ZeroMQ\clrzmq.dll</HintPath>
+    </Reference>
+    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>ZeroMQ\log4net.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Messenger.cs" />
     <Compile Include="StreamDataProducer.cs" />
     <Compile Include="Persistance\DocumentCorpusWriterComponent.cs" />
     <Compile Include="TextMining\BoilerplateRemoverComponent.cs" />
+    <Compile Include="TextMining\FoobarComponent.cs" />
     <Compile Include="TextMining\DocumentCorpus\Tree.cs" />
     <None Include="TextMining\LnDocComponent.cs" />
     <Compile Include="TextMining\EnglishTokenizerComponent.cs" />
@@ -64,6 +83,7 @@
     <Compile Include="IWorkflowComponent.cs" />
     <Compile Include="TextMining\SentenceSplitterComponent.cs" />
     <Compile Include="WorkflowUtils.cs" />
+    <Compile Include="ZeroMqEmitterComponent.cs" />
     <EmbeddedResource Include="TextMining\DocumentCorpus\Resources\DocumentTemplate.htm" />
     <EmbeddedResource Include="TextMining\DocumentCorpus\Resources\IndexTemplate.htm" />
     <EmbeddedResource Include="TextMining\DocumentCorpus\Resources\Style.css" />

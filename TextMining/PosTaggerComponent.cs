@@ -21,10 +21,11 @@ namespace Latino.Workflows.TextMining
        |
        '-----------------------------------------------------------------------
     */
+    // TODO: [X] reduce beam size, [ ] add lexicon
     public class EnglishPosTaggerComponent : DocumentProcessor
     {
         private EnglishMaximumEntropyPosTagger mPosTagger
-            = new EnglishMaximumEntropyPosTagger(Utils.GetManifestResourceStream(typeof(EnglishTokenizerComponent), "EnglishPOS.nbin"));
+            = new EnglishMaximumEntropyPosTagger(Utils.GetManifestResourceStream(typeof(EnglishTokenizerComponent), "EnglishPOS.nbin"), /*beamSize=*/1);
 
         private string mTokenGroupSelector 
             = "Sentence";
@@ -72,6 +73,7 @@ namespace Latino.Workflows.TextMining
                     foreach (TextBlock tokenGroup in tokenGroups)
                     {
                         TextBlock[] textBlocks = document.GetAnnotatedBlocks(mBlockSelector, tokenGroup.SpanStart, tokenGroup.SpanEnd);
+                        // *** make sure not to insert annotations at this point to keep the annotation list sorted 
                         ProcessTokens(textBlocks);
                     }
                 }

@@ -59,4 +59,5 @@
 [x] DB query timeouts (solved: using write-through cache)
 [x] Can boilerplate remover handle [x]XHTML / [x]plain text?
 [x] Make filters in RSS reader to reject content of incorrect content type
+[x] Get rid of id in annotations
 [ ] commit

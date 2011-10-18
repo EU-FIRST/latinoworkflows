@@ -73,6 +73,8 @@ namespace Latino.Workflows.TextMining
             = 10485760;
         private ContentType mContentFilter // *** make this adjustable
             = ContentType.Html | ContentType.Text;
+        private int mMaxDocsPerCorpus
+            = 50;//-1; // *** make this adjustable
 
         private ContentType GetContentType(string mimeType)
         {
@@ -183,7 +185,7 @@ namespace Latino.Workflows.TextMining
             return new Guid(md5.ComputeHash(Encoding.UTF8.GetBytes(string.Format("{0} {1} {2}", title, desc, pubDate))));
         }
 
-        private void ProcessItem(Dictionary<string, string> itemAttr, DocumentCorpus corpus, string rssXmlUrl)
+        private void ProcessItem(Dictionary<string, string> itemAttr, ArrayList<DocumentCorpus> corpora, string rssXmlUrl)
         {
             try
             {
@@ -204,7 +206,9 @@ namespace Latino.Workflows.TextMining
                         // get referenced Web page
                         mLogger.Info("ProcessItem", "Getting HTML from {0} ...", itemAttr["link"]);
                         string mimeType, charSet;
-                        byte[] bytes = WebUtils.GetWebResource(itemAttr["link"], out mimeType, out charSet, mSizeLimit);
+                        string responseUrl;
+                        CookieContainer cookies = null;
+                        byte[] bytes = WebUtils.GetWebResource(itemAttr["link"], /*refUrl=*/null, ref cookies, WebUtils.DefaultTimeout, out mimeType, out charSet, mSizeLimit, out responseUrl);
                         if (bytes == null) 
                         {
                             mLogger.Info("ProcessItem", "Item rejected because of its size.");
@@ -216,6 +220,7 @@ namespace Latino.Workflows.TextMining
                             mLogger.Info("ProcessItem", "Item rejected because of its content type.");
                             return;
                         }
+                        itemAttr.Add("_responseUrl", responseUrl);
                         itemAttr.Add("_mimeType", mimeType);
                         itemAttr.Add("_contentType", contentType.ToString());
                         if (charSet == null) { charSet = "ISO-8859-1"; }
@@ -248,20 +253,18 @@ namespace Latino.Workflows.TextMining
                             content = itemAttr["title"];
                         }
                     }
-                    if (itemAttr.ContainsKey("comments"))
-                    {
-                        // TODO: handle comments 
-                    }
                     itemAttr.Add("_guid", guid.ToString());
                     itemAttr.Add("_time", time.ToString(Utils.DATE_TIME_SIMPLE));
                     Document document = new Document(name, content);
-                    //Console.WriteLine("Item attributes:");
                     foreach (KeyValuePair<string, string> attr in itemAttr)
                     {
-                        //Console.WriteLine("{0} = \"{1}\"", attr.Key, attr.Value);
                         document.Features.SetFeatureValue(attr.Key, attr.Value);
                     }
-                    corpus.AddDocument(document);
+                    if (mMaxDocsPerCorpus > 0 && corpora.Last.Documents.Count == mMaxDocsPerCorpus)
+                    {
+                        corpora.Add(new DocumentCorpus());
+                    }
+                    corpora.Last.AddDocument(document);
                 }
             }
             catch (Exception e)
@@ -279,10 +282,8 @@ namespace Latino.Workflows.TextMining
 
         protected override object ProduceData()
         {
-            //Guid _guid;
             for (int i = 0; i < mSources.Count; i++)
             {
-                //_guid = Guid.NewGuid();
                 string url = mSources[i];
                 try
                 {                    
@@ -294,9 +295,6 @@ namespace Latino.Workflows.TextMining
                         mLogger.Info("ProduceData", "Getting RSS XML from {0} ...", url);
                         xml = WebUtils.GetWebPageDetectEncoding(url);
                         xml = FixXml(xml);
-                    //    StreamWriter w = new StreamWriter(string.Format(@"c:\work\dacqpipe\data\rss\{0}.xml", _guid.ToString("N")));
-                    //    w.Write(xml);
-                    //    w.Close();
                     }
                     catch (Exception e)
                     {
@@ -304,7 +302,7 @@ namespace Latino.Workflows.TextMining
                         return null;
                     }
                     Dictionary<string, string> channelAttr = new Dictionary<string, string>();
-                    DocumentCorpus corpus = new DocumentCorpus();
+                    ArrayList<DocumentCorpus> corpora = new ArrayList<DocumentCorpus>(new DocumentCorpus[] { new DocumentCorpus() });
                     XmlTextReader reader = new XmlTextReader(new StringReader(xml));
                     // first pass: items
                     mLogger.Info("ProduceData", "Reading items ...");
@@ -345,15 +343,15 @@ namespace Latino.Workflows.TextMining
                             // stopped?
                             if (mStopped)
                             {
-                                if (corpus.Documents.Count == 0) { return null; }
+                                if (corpora[0].Documents.Count == 0) { return null; }
                                 break;
                             }
-                            ProcessItem(itemAttr, corpus, url);
+                            ProcessItem(itemAttr, corpora, url); 
                         }
                     }
                     reader.Close();
                     reader = new XmlTextReader(new StringReader(xml));
-                    if (corpus.Documents.Count > 0)
+                    if (corpora[0].Documents.Count > 0)
                     {
                         // second pass: channel attributes
                         mLogger.Info("ProduceData", "Reading channel attributes ...");
@@ -398,15 +396,21 @@ namespace Latino.Workflows.TextMining
                         channelAttr.Add("_timeBetweenPolls", TimeBetweenPolls.ToString());
                         channelAttr.Add("_timeStart", timeStart.ToString(Utils.DATE_TIME_SIMPLE));
                         channelAttr.Add("_timeEnd", DateTime.Now.ToString(Utils.DATE_TIME_SIMPLE));
-                        //Console.WriteLine("Channel attributes:");
-                        foreach (KeyValuePair<string, string> attr in channelAttr)
+                        int newItems = 0;
+                        foreach (DocumentCorpus corpus in corpora)
                         {
-                            //Console.WriteLine("{0} = \"{1}\"", attr.Key, attr.Value);
-                            corpus.Features.SetFeatureValue(attr.Key, attr.Value);
-                        }
-                        mLogger.Info("ProduceData", "{0} new items.", corpus.Documents.Count);
+                            newItems += corpus.Documents.Count;
+                            foreach (KeyValuePair<string, string> attr in channelAttr)
+                            {
+                                corpus.Features.SetFeatureValue(attr.Key, attr.Value);
+                            }
+                        }                        
+                        mLogger.Info("ProduceData", "{0} new items.", newItems);
                         // dispatch data
-                        DispatchData(corpus);
+                        foreach (DocumentCorpus corpus in corpora)
+                        {
+                            DispatchData(corpus);
+                        }
                     }
                     else
                     {
@@ -417,8 +421,6 @@ namespace Latino.Workflows.TextMining
                 }
                 catch (Exception e)
                 {
-                    //mLogger.Info("ProduceData", url + " " + _guid.ToString("N")); 
-                    mLogger.Info("ProduceData", url); // *** delete this
                     mLogger.Error("ProduceData", e);
                 }
             }

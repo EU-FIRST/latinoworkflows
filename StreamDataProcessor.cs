@@ -47,6 +47,11 @@ namespace Latino.Workflows
             set { mDispatchPolicy = value; }
         }
 
+        public Set<IDataConsumer>.ReadOnly SubscribedConsumers
+        {
+            get { return mDataConsumers; }
+        }
+
         protected override void ConsumeData(IDataProducer sender, object data)
         {
             // process data

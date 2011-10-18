@@ -34,6 +34,8 @@ namespace Latino.Workflows
             = new Random();
         private string mLoggerBaseName;
         protected Logger mLogger;
+        private static object mDispatchLock
+            = new object();
 
         public StreamDataProducer(string loggerBaseName)
         {
@@ -68,10 +70,72 @@ namespace Latino.Workflows
             set { mDispatchPolicy = value; }
         }
 
+        internal static int GetBranchLoadMax(IWorkflowComponent component)
+        {
+            if (component is StreamDataProcessor)
+            {
+                StreamDataProcessor processor = (StreamDataProcessor)component;
+                int load = processor.Load;
+                foreach (IWorkflowComponent subscriber in processor.SubscribedConsumers)
+                {
+                    int subscriberLoad = GetBranchLoadMax(subscriber);
+                    if (subscriberLoad > load) { load = subscriberLoad; }
+                }
+                return load;
+            }
+            else if (component is StreamDataConsumer)
+            {
+                StreamDataConsumer consumer = (StreamDataConsumer)component;
+                return consumer.Load;
+            }
+            return 0;
+        }
+
+        internal static int GetBranchLoadSum(IWorkflowComponent component)
+        {
+            if (component is StreamDataProcessor)
+            {
+                StreamDataProcessor processor = (StreamDataProcessor)component;
+                int load = processor.Load;
+                foreach (IWorkflowComponent subscriber in processor.SubscribedConsumers)
+                {
+                    load += GetBranchLoadSum(subscriber);
+                }
+                return load;
+            }
+            else if (component is StreamDataConsumer)
+            {
+                StreamDataConsumer consumer = (StreamDataConsumer)component;
+                return consumer.Load;
+            }
+            return 0;
+        }
+
         protected void DispatchData(object data)
         {
             Utils.ThrowException(data == null ? new ArgumentNullException("data") : null);
-            if (mDispatchPolicy == DispatchPolicy.Random)
+            if (mDataConsumers.Count == 0)
+            {
+                mLogger.Warn("DispatchData", "Data ready but nobody is listening.");
+                return;
+            }
+            if (mDispatchPolicy == DispatchPolicy.BalanceLoadSum || mDispatchPolicy == DispatchPolicy.BalanceLoadMax)
+            {
+                mLogger.Trace("DispatchData", "Dispatching data of type {0} (load balancing) ...", data.GetType());
+                lock (mDispatchLock)
+                {
+                    int minLoad = int.MaxValue;
+                    IDataConsumer target = null;
+                    foreach (IDataConsumer consumer in mDataConsumers)
+                    {
+                        int load = (mDispatchPolicy == DispatchPolicy.BalanceLoadSum) ?
+                            GetBranchLoadSum(consumer) : GetBranchLoadMax(consumer);
+                        if (load < minLoad) { minLoad = load; target = consumer; }
+                    }
+                    target.ReceiveData(this, data);
+                }
+            }
+            else if (mDispatchPolicy == DispatchPolicy.Random)
             {
                 mLogger.Trace("DispatchData", "Dispatching data of type {0} (random policy) ...", data.GetType());
                 ArrayList<IDataConsumer> tmp = new ArrayList<IDataConsumer>(mDataConsumers.Count);

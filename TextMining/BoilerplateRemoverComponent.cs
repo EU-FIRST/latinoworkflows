@@ -26,6 +26,9 @@ namespace Latino.Workflows.TextMining
     */
     public class BoilerplateRemoverComponent : DocumentProcessor
     {
+        private BoilerplateRemover mBoilerplateRemover
+            = BoilerplateRemover.GetDefaultBoilerplateRemover();
+
         public BoilerplateRemoverComponent() : base(typeof(BoilerplateRemoverComponent))
         {
         }
@@ -36,9 +39,8 @@ namespace Latino.Workflows.TextMining
             if (contentType != "Html") { return; } 
             try
             {
-                BoilerplateRemover br = BoilerplateRemover.GetDefaultBoilerplateRemover();
                 List<BoilerplateRemover.HtmlBlock> blocks;
-                br.ExtractText(new StringReader(document.Text), BoilerplateRemover.TextClass.Unknown, out blocks);
+                mBoilerplateRemover.ExtractText(new StringReader(document.Text), BoilerplateRemover.TextClass.Unknown, out blocks);
                 StringBuilder text = new StringBuilder();
                 foreach (BoilerplateRemover.HtmlBlock block in blocks)
                 {

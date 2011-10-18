@@ -26,14 +26,16 @@ namespace Latino.Workflows
     {
         private Queue<Pair<IDataProducer, object>> mQueue
             = new Queue<Pair<IDataProducer, object>>();
+        private Ref<int> mLoad
+            = 0;
+        private int mMaxLoad
+            = 0;
         private bool mThreadAlive
             = false;
         private bool mStopped
             = false;
         private Thread mThread;
-        private int mMaxQueueSize
-            = 0;
-        private DateTime mMaxQueueSizeTime
+        private DateTime mMaxLoadTime
             = DateTime.MinValue;
         private string mName
             = null;
@@ -55,19 +57,19 @@ namespace Latino.Workflows
             get { return (mThread.ThreadState & ThreadState.Suspended) != 0; }
         }
 
-        public int QueueSize
+        public int Load
         {
-            get { return mQueue.Count; }
+            get { return mLoad; }
         }
 
-        public int MaxQueueSize
+        public int MaxLoad
         {
-            get { return mMaxQueueSize; }
+            get { return mMaxLoad; }
         }
 
-        public DateTime MaxQueueSizeTime
+        public DateTime MaxLoadTime
         {
-            get { return mMaxQueueSizeTime; }
+            get { return mMaxLoadTime; }
         }
 
         public string Name
@@ -105,6 +107,7 @@ namespace Latino.Workflows
                     // check if more data available
                     lock (mQueue)
                     {
+                        lock (mLoad) { mLoad--; }
                         if (mStopped) { mLogger.Debug("Stop", "Stopped."); return; }
                         mThreadAlive = mQueue.Count > 0;
                         if (!mThreadAlive) { break; }
@@ -165,7 +168,11 @@ namespace Latino.Workflows
             lock (mQueue)
             {
                 mQueue.Enqueue(new Pair<IDataProducer, object>(sender, data));
-                if (mQueue.Count >= mMaxQueueSize) { mMaxQueueSize = mQueue.Count; mMaxQueueSizeTime = DateTime.Now; }
+                lock (mLoad) 
+                { 
+                    mLoad++;
+                    if (mLoad >= mMaxLoad) { mMaxLoad = mLoad; mMaxLoadTime = DateTime.Now; }
+                }
                 if (!mThreadAlive && !mStopped)
                 {
                     mThreadAlive = true;
