@@ -45,18 +45,22 @@ namespace Latino.Workflows.TextMining
         }
 
         private ArrayList<string> mSources;
+        private string mSiteId
+            = null;
+
         private bool mIncludeRawData
             = false;
         private bool mIncludeRssXml
             = false;
+        
         private int mPolitenessSleep
             = 1000;
-        private string mSiteId
-            = null;
+                
         private DatabaseConnection mHistoryDatabase
             = null;
         private RssHistory mHistory
             = new RssHistory();
+        
         private static Set<string> mChannelElements
             = new Set<string>(new string[] { "title", "link", "description", "language", "copyright", "managingEditor", "pubDate", "category" });
         private static Set<string> mItemElements

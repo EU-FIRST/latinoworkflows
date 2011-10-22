@@ -25,6 +25,11 @@ namespace Latino.Workflows
     {
         private int mTimeBetweenPolls
             = 1;
+        private bool mRandomDelayAtStart
+            = true; // TODO: make this configurable
+        private Random mRng
+            = new Random();
+
         protected bool mStopped
             = false;
         private Thread mThread
@@ -46,6 +51,10 @@ namespace Latino.Workflows
 
         private void ProduceDataLoop()
         {
+            if (mRandomDelayAtStart)
+            {
+                Thread.Sleep(mRng.Next(0, mTimeBetweenPolls));
+            }            
             while (!mStopped)
             {
                 try

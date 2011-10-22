@@ -13,6 +13,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Latino.Workflows.TextMining;
 
 namespace Latino.Workflows
 {
@@ -33,7 +34,11 @@ namespace Latino.Workflows
             = 0;
         private Ref<TimeSpan> mProcessingTime
             = TimeSpan.Zero;
+        private DateTime mStartTime
+            = DateTime.MinValue;
         private Ref<int> mNumItemsProcessed
+            = 0;
+        private Ref<int> mNumDocumentsProcessed
             = 0;
         private bool mThreadAlive
             = false;
@@ -72,15 +77,20 @@ namespace Latino.Workflows
             lock (mLoad)
             {
                 int maxLoad = mMaxLoad;
-                mMaxLoad = 0;
+                mMaxLoad = mLoad.Val;
                 return maxLoad;
             }
         }
 
-        public double GetProcessingTimeSec()
+        public double GetProcessingTimeSec(DateTime currentTime)
         {
             lock (mProcessingTime)
             {
+                if (mStartTime != DateTime.MinValue)
+                {
+                    mProcessingTime.Val += currentTime - mStartTime;
+                    mStartTime = currentTime;
+                }
                 double timeSec = mProcessingTime.Val.TotalSeconds;
                 mProcessingTime.Val = TimeSpan.Zero;
                 return timeSec;
@@ -93,6 +103,16 @@ namespace Latino.Workflows
             {
                 int val = mNumItemsProcessed.Val;
                 mNumItemsProcessed.Val = 0;
+                return val;
+            }
+        }
+
+        public int GetNumDocumentsProcessed()
+        {
+            lock (mNumDocumentsProcessed)
+            {
+                int val = mNumDocumentsProcessed.Val;
+                mNumDocumentsProcessed.Val = 0;
                 return val;
             }
         }
@@ -123,10 +143,17 @@ namespace Latino.Workflows
                     // consume data
                     try
                     {
-                        DateTime start = DateTime.Now;
+                        mStartTime = DateTime.Now;
                         ConsumeData(data.First, data.Second);
-                        lock (mProcessingTime) { mProcessingTime.Val += DateTime.Now - start; }
+                        lock (mProcessingTime) { mProcessingTime.Val += DateTime.Now - mStartTime; mStartTime = DateTime.MinValue; }
                         lock (mNumItemsProcessed) { mNumItemsProcessed.Val++; }
+                        if (data.Second is DocumentCorpus)
+                        {
+                            lock (mNumDocumentsProcessed)
+                            {
+                                mNumDocumentsProcessed.Val += ((DocumentCorpus)data.Second).Documents.Count;
+                            }
+                        }
                     }
                     catch (Exception exc)
                     {
