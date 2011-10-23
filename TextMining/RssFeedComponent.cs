@@ -201,7 +201,7 @@ namespace Latino.Workflows.TextMining
                 itemAttr.TryGetValue("pubDate", out pubDate);
                 Guid guid = MakeGuid(name, desc, pubDate);
                 mLogger.Info("ProcessItem", "Found item \"{0}\".", Utils.ToOneLine(name, /*compact=*/true));
-                if (!mHistory.CheckHistory(guid, rssXmlUrl, mSiteId, mHistoryDatabase))
+                if (!mHistory.CheckHistory(guid, /*rssXmlUrl,*/ mSiteId, mHistoryDatabase))
                 {
                     DateTime time = DateTime.Now;
                     string content = "";
@@ -439,55 +439,41 @@ namespace Latino.Workflows.TextMining
         */
         private class RssHistory 
         {
-            private Pair<Dictionary<Guid, ArrayList<string>>, Queue<Guid>> mHistory
-                = new Pair<Dictionary<Guid, ArrayList<string>>, Queue<Guid>>(new Dictionary<Guid, ArrayList<string>>(), new Queue<Guid>());
+            private Pair<Set<Guid>, Queue<Guid>> mHistory
+                = new Pair<Set<Guid>, Queue<Guid>>(new Set<Guid>(), new Queue<Guid>());
             private int mHistorySize
-                = 30000; // TODO: make this adjustable
+                = 30000; // TODO: make this configurable
 
-            private bool AddToHistory(Guid id, string source)
+            private void AddToHistory(Guid id, string siteId, DatabaseConnection historyDatabase)
             {
-                if (mHistorySize == 0) { return true; }
-                if (!mHistory.First.ContainsKey(id))
+                if (mHistorySize == 0) { return; }
+                if (mHistory.First.Count + 1 > mHistorySize)
                 {
-                    if (mHistory.First.Count + 1 > mHistorySize)
-                    {
-                        mHistory.First.Remove(mHistory.Second.Dequeue());
-                    }
-                    mHistory.First.Add(id, new ArrayList<string>(new string[] { source }));
-                    mHistory.Second.Enqueue(id);
-                    return true;
+                    mHistory.First.Remove(mHistory.Second.Dequeue());
                 }
-                else
-                {
-                    ArrayList<string> links = mHistory.First[id];
-                    if (!links.Contains(source)) 
-                    { 
-                        links.Add(source);
-                        return true;
-                    }
-                }
-                return false;
-            }
-
-            public bool CheckHistory(Guid id, string source, string siteId, DatabaseConnection historyDatabase)
-            {
-                bool retVal = mHistory.First.ContainsKey(id);
-                bool historyChanged = AddToHistory(id, source);                
-                if (historyChanged && historyDatabase != null) // write through
+                mHistory.First.Add(id);
+                mHistory.Second.Enqueue(id);
+                if (historyDatabase != null) // write through
                 {
                     string timeStr = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
                     if (siteId != null)
                     {
-                        historyDatabase.ExecuteNonQuery("insert into History (SiteId, ItemId, Source, Time) values (?, ?, ?, ?)", 
-                            Utils.Truncate(siteId, 400), id.ToString("N"), Utils.Truncate(source, 900), timeStr);
+                        historyDatabase.ExecuteNonQuery("insert into History (SiteId, ItemId, Time) values (?, ?, ?)",
+                            Utils.Truncate(siteId, 400), id.ToString("N"), timeStr);
                     }
                     else
                     {
-                        historyDatabase.ExecuteNonQuery("insert into History (ItemId, Source, Time) values (?, ?, ?)",
-                            id.ToString("N"), Utils.Truncate(source, 900), timeStr);
+                        historyDatabase.ExecuteNonQuery("insert into History (ItemId, Time) values (?, ?)",
+                            id.ToString("N"), timeStr);
                     }
                 }
-                return retVal;
+            }
+
+            public bool CheckHistory(Guid id, string siteId, DatabaseConnection historyDatabase)
+            {
+                if (mHistory.First.Contains(id)) { return true; }
+                AddToHistory(id, siteId, historyDatabase);
+                return false;
             }
 
             public void Load(string siteId, DatabaseConnection historyDatabase)
@@ -501,7 +487,7 @@ namespace Latino.Workflows.TextMining
                     }
                     else
                     {
-                        t = historyDatabase.ExecuteQuery(string.Format("select top {0} * from History where SiteId=? order by Time desc", mHistorySize), 
+                        t = historyDatabase.ExecuteQuery(string.Format("select top {0} * from History where SiteId=? order by Time desc", mHistorySize),
                             Utils.Truncate(siteId, 400));
                     }
                     mHistory.First.Clear();
@@ -510,16 +496,8 @@ namespace Latino.Workflows.TextMining
                     {
                         DataRow row = t.Rows[i];
                         Guid itemId = new Guid((string)row["ItemId"]);
-                        string source = (string)row["Source"];
-                        if (!mHistory.First.ContainsKey(itemId))
-                        {
-                            mHistory.First.Add(itemId, new ArrayList<string>(new string[] { source }));
-                            mHistory.Second.Enqueue(itemId);
-                        }
-                        else
-                        {
-                            mHistory.First[itemId].Add(source);
-                        }
+                        mHistory.First.Add(itemId);
+                        mHistory.Second.Enqueue(itemId);
                     }
                 }
             }

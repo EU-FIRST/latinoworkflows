@@ -19,7 +19,7 @@ GO
 CREATE TABLE [dbo].[History](
 	[SiteId] [nvarchar](400) NULL,
 	[ItemId] [char](32) NOT NULL,
-	[Source] [varchar](900) NOT NULL,
+	/*[Source] [varchar](900) NOT NULL,*/
 	[Time] [char](23) NOT NULL
 ) ON [PRIMARY]
 GO

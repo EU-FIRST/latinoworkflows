@@ -25,6 +25,12 @@ namespace Latino.Workflows
     */
     public abstract class StreamDataConsumer : IDataConsumer
     {
+        private string mName
+            = null;
+
+        private string mLoggerBaseName;
+        protected Logger mLogger;
+
         private Queue<Pair<IDataProducer, object>> mQueue
             = new Queue<Pair<IDataProducer, object>>();
 
@@ -40,17 +46,12 @@ namespace Latino.Workflows
             = 0;
         private Ref<int> mNumDocumentsProcessed
             = 0;
+
         private bool mThreadAlive
             = false;
         private bool mStopped
             = false;
-        private string mName
-            = null;
-
         private Thread mThread;
-
-        private string mLoggerBaseName;
-        protected Logger mLogger;
 
         public StreamDataConsumer(string loggerBaseName)
         { 
