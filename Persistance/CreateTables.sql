@@ -1,5 +1,3 @@
-/*USE [DacqPipeTmp]
-GO*/
 /****** Object:  Table [dbo].[Corpora]    Script Date: 04/08/2011 19:46:53 ******/
 DROP TABLE [dbo].[Corpora]
 GO
@@ -19,7 +17,6 @@ GO
 CREATE TABLE [dbo].[History](
 	[SiteId] [nvarchar](400) NULL,
 	[ItemId] [char](32) NOT NULL,
-	/*[Source] [varchar](900) NOT NULL,*/
 	[Time] [char](23) NOT NULL
 ) ON [PRIMARY]
 GO
@@ -43,7 +40,6 @@ CREATE TABLE [dbo].[Documents](
 	[corpusId] [char](32) NOT NULL,
 	[name] [nvarchar](400) NULL,
 	[description] [nvarchar](400) NULL,
-/*	[text] [ntext] NULL,*/
 	[category] [nvarchar](400) NULL,
 	[link] [varchar](400) NULL,
 	[responseUrl] [varchar](400) NULL,
@@ -52,8 +48,9 @@ CREATE TABLE [dbo].[Documents](
 	[mimeType] [varchar](80) NULL,
 	[contentType] [varchar](40) NULL,
 	[charSet] [varchar](40) NULL,
-	[contentLength] [bigint] NULL
-) ON [PRIMARY] /*TEXTIMAGE_ON [PRIMARY]*/
+	[contentLength] [bigint] NULL,
+	[detectedLanguage] [nvarchar](400) NULL
+) ON [PRIMARY] 
 GO
 SET ANSI_PADDING OFF
 GO
@@ -66,15 +63,12 @@ SET ANSI_PADDING ON
 GO
 CREATE TABLE [dbo].[Corpora](
 	[id] [char](32) NOT NULL,
-/*	[xml] [ntext] NOT NULL,*/
 	[title] [nvarchar](400) NULL,
-/*	[provider] [varchar](400) NULL,*/
 	[language] [nvarchar](400) NULL,
 	[sourceUrl] [varchar](400) NULL,
-/*	[source] [ntext] NULL,*/
 	[timeStart] [char](26) NULL,
 	[timeEnd] [char](26) NULL
-) ON [PRIMARY] /*TEXTIMAGE_ON [PRIMARY]*/
+) ON [PRIMARY] 
 GO
 SET ANSI_PADDING OFF
 GO
