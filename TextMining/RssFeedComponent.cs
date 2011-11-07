@@ -201,7 +201,7 @@ namespace Latino.Workflows.TextMining
                 itemAttr.TryGetValue("pubDate", out pubDate);
                 Guid guid = MakeGuid(name, desc, pubDate);
                 mLogger.Info("ProcessItem", "Found item \"{0}\".", Utils.ToOneLine(name, /*compact=*/true));
-                if (!mHistory.CheckHistory(guid, /*rssXmlUrl,*/ mSiteId, mHistoryDatabase))
+                if (!mHistory.CheckHistory(guid, mSiteId, mHistoryDatabase))
                 {
                     DateTime time = DateTime.Now;
                     string content = "";
@@ -437,7 +437,7 @@ namespace Latino.Workflows.TextMining
            |
            '-----------------------------------------------------------------------
         */
-        private class RssHistory 
+        private class RssHistory // TODO: update time stamp!!!
         {
             private Pair<Set<Guid>, Queue<Guid>> mHistory
                 = new Pair<Set<Guid>, Queue<Guid>>(new Set<Guid>(), new Queue<Guid>());
@@ -480,21 +480,21 @@ namespace Latino.Workflows.TextMining
             {
                 if (mHistorySize > 0)
                 {
-                    DataTable t;
+                    DataTable table;
                     if (siteId == null)
                     {
-                        t = historyDatabase.ExecuteQuery(string.Format("select top {0} * from History where SiteId is null order by Time desc", mHistorySize));
+                        table = historyDatabase.ExecuteQuery(string.Format("select top {0} * from History where SiteId is null order by Time desc", mHistorySize));
                     }
                     else
                     {
-                        t = historyDatabase.ExecuteQuery(string.Format("select top {0} * from History where SiteId=? order by Time desc", mHistorySize),
+                        table = historyDatabase.ExecuteQuery(string.Format("select top {0} * from History where SiteId=? order by Time desc", mHistorySize),
                             Utils.Truncate(siteId, 400));
                     }
                     mHistory.First.Clear();
                     mHistory.Second.Clear();
-                    for (int i = t.Rows.Count - 1; i >= 0; i--)
+                    for (int i = table.Rows.Count - 1; i >= 0; i--)
                     {
-                        DataRow row = t.Rows[i];
+                        DataRow row = table.Rows[i];
                         Guid itemId = new Guid((string)row["ItemId"]);
                         mHistory.First.Add(itemId);
                         mHistory.Second.Enqueue(itemId);

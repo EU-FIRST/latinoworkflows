@@ -55,10 +55,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Messenger.cs" />
+    <Compile Include="Semantics\SemanticAnnotationComponent.cs" />
+    <Compile Include="Semantics\SemanticAnnotator.cs" />
     <Compile Include="StreamDataProducer.cs" />
     <Compile Include="Persistance\DocumentCorpusWriterComponent.cs" />
     <Compile Include="TextMining\BoilerplateRemoverComponent.cs" />
-    <Compile Include="TextMining\FoobarComponent.cs" />
     <Compile Include="TextMining\DocumentCorpus\Tree.cs" />
     <None Include="TextMining\LnDocComponent.cs" />
     <Compile Include="TextMining\EnglishTokenizerComponent.cs" />
@@ -91,6 +92,10 @@
     <Content Include="TODO.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\SemWeb\SemWeb.csproj">
+      <Project>{4570B82E-34F5-4630-A44A-A1E3D92FD18C}</Project>
+      <Name>SemWeb</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\SharpNLP\OpenNLP\OpenNLP\OpenNLP.csproj">
       <Project>{B70185DF-81FD-4417-914F-7C90E65E7D9F}</Project>
       <Name>OpenNLP</Name>

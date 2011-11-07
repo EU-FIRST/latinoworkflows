@@ -95,6 +95,15 @@ namespace Latino.Workflows.TextMining
             mAnnotations.Add(annotation); 
         }
 
+        public void AddAnnotations(IEnumerable<Annotation> annotationList)
+        {
+            Utils.ThrowException(annotationList == null ? new ArgumentNullException("annotationList") : null);
+            foreach (Annotation annotation in annotationList)
+            {
+                AddAnnotation(annotation); // throws ArgumentNullException, ArgumentValueException
+            }
+        }
+
         public void RemoveAnnotationAt(int idx)
         {
             mAnnotations.RemoveAt(idx); // throws ArgumentOutOfRangeException
@@ -416,20 +425,22 @@ namespace Latino.Workflows.TextMining
                     }
 
                     if (newNode)
-                    {                       
+                    {
+                        TreeNode<string> node = rootNode;
                         for (int k = 1; k < annSplit.Length; k++)
                         {
-                            rootNode.Children.Add(annSplit[k]);
+                            node.Children.Add(annSplit[k]);
 
-                            rootNode.Children[rootNode.Children.Count - 1].Elements += a.SpanStart + "," + a.SpanEnd + ",";
-                            
+                            node.Children[node.Children.Count - 1].Elements += a.SpanStart + "," + a.SpanEnd + ",";
+
                             foreach (KeyValuePair<string, string> f in a.Features)
                             {
-                                rootNode.Children[rootNode.Children.Count - 1].Elements += HttpUtility.HtmlEncode(f.Key + " = " + f.Value).Replace("'", "&#39;").Replace(":", "&#58;").Replace(",", "&#44;") + " <br/>";
+                                node.Children[node.Children.Count - 1].Elements += HttpUtility.HtmlEncode(f.Key + " = " + f.Value).Replace("'", "&#39;").Replace(":", "&#58;").Replace(",", "&#44;") + " <br/>";
                             }
-                        }
 
-                        rootNode.Children[rootNode.Children.Count - 1].Elements += ':';
+                            node.Children[node.Children.Count - 1].Elements += ':';
+                            node = node.Children[node.Children.Count - 1];
+                        }
 
                         result.Add(rootNode);
                     }

@@ -9,12 +9,12 @@
             body {font-family:helvetica;}
             #TextLayer {position:absolute;left:450px;top:60px;width:60%;height:auto;padding-left:3em;border-left:1px #3C64B6 solid;z-index:1;}
             #DocumentText {white-space:pre-wrap;padding-top:30px;}
-            #DocumentTitle {color:#3C64B6;background-color: #EEEEEE;font-weight:bold;font-size:1.5em;padding-bottom:1em;padding-top:1em;padding-left:0.3em}
+            #DocumentTitle {color:#3C64B6;background-color: #EEEEEE;font-weight:bold;font-size:1.5em;padding-bottom:1em;padding-top:1em;padding-left:0.3em;}
             #ListLayer {position:relative;left:50px;top:60px;width:30%;height:auto;z-index:1;}
-            #DocumentFeaturesLayer {position:absolute;left:50px;width:300px;height:auto;padding-left:2.1em;padding-top:1.5em;z-index:1;word-wrap:break-word;font-size:0.9em;}
+            #DocumentFeaturesLayer {position:absolute;left:50px;width:300px;height:auto;padding-left:2.1em;padding-top:1.5em;z-index:1;word-wrap:break-word;}
             ul, li, ul li a {list-style: none;width:100%;}
-            h2 {color: #004D99; font-weight:bold}
-            h3 {color: #004D99; font-weight:bold}
+            h3 {color: #3C64B6; font-weight:bold}
+            a:link, a:visited, a:active, a:hover { color: #3C64B6; outline: 0; }
 
             .tooltip {background-color:#26517E;border:1px solid #fff;padding:10px 15px;display:none;color:#fff;text-align:left;font-size:15px;font-weight:bolder;z-index: 8000;-moz-box-shadow:0 0 10px #000;-webkit-box-shadow:0 0 10px #000;}
 
@@ -187,7 +187,7 @@
     </head>
 
     <body>
-        <div style='text-align:right;width:95%;'><a href="Index.html"> &lt&lt Back to document list </a></div>
+        <div style='text-align:right;width:95%;'><!--back_button--><a href="Index.html">&lt&lt Back to document list</a><!--/back_button--></div>
         <div id="ListLayer">
             <h3 style="padding-left:4.5em">Annotation tree</h3>
             <ul>
@@ -195,8 +195,8 @@
             </ul>
         
             <div id="DocumentFeaturesLayer">
-                <h2>Features</h2>
-                {$document_features}                
+                <h3>Features</h3>
+                <span style="font-size:0.9em;">{$document_features}</span>
             </div>
         </div>
         

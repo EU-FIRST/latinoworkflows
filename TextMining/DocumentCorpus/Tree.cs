@@ -144,16 +144,12 @@ namespace Latino.Workflows.TextMining
 
         private int CountLeavesInSubTree(TreeNode<T> node)
         {
+            if (node.mChildren.Count == 0) { return 1; }
             int count = 0;
-
-            for (int i = 0; i < this.Children.Count; i++)
+            foreach (TreeNode<T> child in node.mChildren)
             {
-                if (this.Children[i].Children.Count == 0)
-                    count++;
-                else
-                    count += CountLeavesInSubTree(this.Children[i]);
+                count += CountLeavesInSubTree(child);
             }
-
             return count;
         }
 
