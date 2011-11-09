@@ -1,0 +1,133 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{EDE88AFF-1053-4175-B91C-4E683426706A}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>LatinoWorkflows</RootNamespace>
+    <AssemblyName>LatinoWorkflows</AssemblyName>
+    <StartupObject>
+    </StartupObject>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <OldToolsVersion>2.0</OldToolsVersion>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;THROW_EXCEPTIONS</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Apache.NMS, Version=1.5.0.2194, Culture=neutral, PublicKeyToken=82756feee3957618, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>ZeroMQ\Apache.NMS.dll</HintPath>
+    </Reference>
+    <Reference Include="Apache.NMS.ActiveMQ, Version=1.5.1.2341, Culture=neutral, PublicKeyToken=82756feee3957618, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>ZeroMQ\Apache.NMS.ActiveMQ.dll</HintPath>
+    </Reference>
+    <Reference Include="clrzmq, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>ZeroMQ\clrzmq.dll</HintPath>
+    </Reference>
+    <Reference Include="log4net, Version=1.2.10.0, Culture=neutral, PublicKeyToken=1b44e1d426115821, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>ZeroMQ\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.configuration" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Messenger.cs" />
+    <Compile Include="Semantics\SemanticAnnotationComponent.cs" />
+    <Compile Include="Semantics\SemanticAnnotator.cs" />
+    <Compile Include="StreamDataProducer.cs" />
+    <Compile Include="Persistance\DocumentCorpusWriterComponent.cs" />
+    <Compile Include="TextMining\BoilerplateRemoverComponent.cs" />
+    <Compile Include="TextMining\DocumentCorpus\Tree.cs" />
+    <None Include="TextMining\LnDocComponent.cs" />
+    <Compile Include="TextMining\EnglishTokenizerComponent.cs" />
+    <Compile Include="TextMining\LanguageDetectorComponent.cs" />
+    <Compile Include="TextMining\PosTaggerComponent.cs" />
+    <Compile Include="TextMining\RssFeedComponent.cs" />
+    <Compile Include="GenericStreamDataProducerPoll.cs" />
+    <Compile Include="TextMining\DocumentCorpus\Annotation.cs" />
+    <Compile Include="TextMining\DocumentConsumer.cs" />
+    <Compile Include="TextMining\DocumentCorpus\Document.cs" />
+    <Compile Include="TextMining\DocumentCorpus\DocumentCorpus.cs" />
+    <Compile Include="StreamDataConsumer.cs" />
+    <Compile Include="StreamDataProducerPoll.cs" />
+    <Compile Include="IDataConsumer.cs" />
+    <Compile Include="IDataProducer.cs" />
+    <Compile Include="StreamDataProcessor.cs" />
+    <Compile Include="GenericStreamDataConsumer.cs" />
+    <Compile Include="TextMining\DocumentProcessor.cs" />
+    <Compile Include="GenericStreamDataProcessor.cs" />
+    <Compile Include="TextMining\DocumentCorpus\Features.cs" />
+    <Compile Include="TextMining\RegexTokenizerComponent.cs" />
+    <Compile Include="TextMining\DocumentCorpus\TextBlock.cs" />
+    <Compile Include="IWorkflowComponent.cs" />
+    <Compile Include="TextMining\SentenceSplitterComponent.cs" />
+    <Compile Include="WorkflowUtils.cs" />
+    <Compile Include="ZeroMqEmitterComponent.cs" />
+    <EmbeddedResource Include="TextMining\DocumentCorpus\Resources\DocumentTemplate.htm" />
+    <EmbeddedResource Include="TextMining\DocumentCorpus\Resources\IndexTemplate.htm" />
+    <EmbeddedResource Include="TextMining\DocumentCorpus\Resources\Style.css" />
+    <Content Include="TODO.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\SemWeb\SemWeb2008.csproj">
+      <Project>{4570B82E-34F5-4630-A44A-A1E3D92FD18C}</Project>
+      <Name>SemWeb</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\SharpNLP\OpenNLP\OpenNLP\OpenNLP2008.csproj">
+      <Project>{B70185DF-81FD-4417-914F-7C90E65E7D9F}</Project>
+      <Name>OpenNLP</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Latino\Latino2008.csproj">
+      <Project>{FFA3AB32-D56A-4544-BCF2-CBC51B57550B}</Project>
+      <Name>Latino</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Persistance\CreateTables.sql" />
+    <EmbeddedResource Include="TextMining\Models\EnglishPOS.nbin" />
+    <EmbeddedResource Include="TextMining\Models\EnglishSD.nbin" />
+    <EmbeddedResource Include="TextMining\Models\EnglishTok.nbin" />
+    <EmbeddedResource Include="TextMining\DocumentCorpus\DocumentCorpusSchema.xsd">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
