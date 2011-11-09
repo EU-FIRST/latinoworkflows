@@ -183,6 +183,8 @@ namespace Latino.Workflows.Semantics
             = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
         private static Entity P_SUBCLASS_OF
             = "http://www.w3.org/2000/01/rdf-schema#subClassOf";
+        private static Entity P_LABEL
+            = "http://www.w3.org/2000/01/rdf-schema#label";
 
         private MemoryStore mRdfStore
             = new MemoryStore();
@@ -313,9 +315,16 @@ namespace Latino.Workflows.Semantics
             }
         }
 
-        public static string GetLabel(Entity entity)
+        public static string GetLabel(Entity entity, MemoryStore rdfStore)
         {
-            return new ArrayList<string>(entity.Uri.Split('/', '\\', '#')).Last;
+            string label = new ArrayList<string>(entity.Uri.Split('/', '#')).Last;
+            Resource[] labels = rdfStore.SelectObjects(entity, P_LABEL);
+            if (labels.Length > 0) 
+            { 
+                label = ((Literal)labels[0]).Value; // *** always take the first available label
+                label = label.Replace('/', '-');
+            } 
+            return label;
         }
 
         public ArrayList<Annotation> ExtractEntities(string text, int offset)
@@ -344,13 +353,19 @@ namespace Latino.Workflows.Semantics
                             GetPaths(0, new ArrayList<Entity>(new Entity[] { gazetteer.mUri }), allPaths);                           
                             foreach (ArrayList<Entity> path in allPaths)
                             {
-                                string pathStr = "Entity";
+                                string pathStr = "";
                                 for (int i = path.Count - 1; i > 1; i--)
                                 {
-                                    pathStr += "/" + GetLabel(path[i]);
+                                    pathStr += GetLabel(path[i], mRdfStore) + "/";
                                 }
+                                pathStr = pathStr.TrimEnd('/');
                                 annotations.Add(new Annotation(pos[startIdx] + offset, pos[startIdx + len - 1] + tokens[startIdx + len - 1].Length - 1 + offset, pathStr));
-                                annotations.Last.Features.SetFeatureValue("gaz", gazetteer.mUri);                                
+                                annotations.Last.Features.SetFeatureValue("gazUri", gazetteer.mUri);
+                                if (path.Count >= 2)
+                                {
+                                    annotations.Last.Features.SetFeatureValue("objUri", path[1].Uri);
+                                    annotations.Last.Features.SetFeatureValue("objLabel", GetLabel(path[1], mRdfStore));
+                                }
                             }
                         }
                     }
