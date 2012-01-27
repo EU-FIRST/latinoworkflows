@@ -109,6 +109,11 @@ namespace Latino.Workflows.TextMining
             mAnnotations.RemoveAt(idx); // throws ArgumentOutOfRangeException
         }
 
+        public void ClearAnnotations()
+        {
+            mAnnotations.Clear();
+        }
+
         public Annotation GetAnnotationAt(int idx)
         {
             return mAnnotations[idx]; // throws ArgumentOutOfRangeException
@@ -340,7 +345,7 @@ namespace Latino.Workflows.TextMining
 
         // *** Output HTML ***
 
-        public void MakeHtmlPage(TextWriter document, bool inlineCss, ArrayList<TreeNode<string>> annotationTreeList)
+        internal void MakeHtmlPage(TextWriter document, bool inlineCss, ArrayList<TreeNode<string>> annotationTreeList)
         {
             string templateString = Utils.GetManifestResourceString(GetType(), "Resources.DocumentTemplate.htm");
 
@@ -366,7 +371,7 @@ namespace Latino.Workflows.TextMining
 
         }
 
-        public string MakeHTMLAnnotationList(ArrayList<TreeNode<string>> annotationTreeList)
+        private string MakeHTMLAnnotationList(ArrayList<TreeNode<string>> annotationTreeList)
         {
             string annotationTypeList = "<ul>";
 
@@ -401,7 +406,7 @@ namespace Latino.Workflows.TextMining
             return annotationTypeList;
         }
 
-        public ArrayList<TreeNode<string>> MakeAnnotationTree()
+        internal ArrayList<TreeNode<string>> MakeAnnotationTree()
         {
             ArrayList<TreeNode<string>> result = new ArrayList<TreeNode<string>>();
 
