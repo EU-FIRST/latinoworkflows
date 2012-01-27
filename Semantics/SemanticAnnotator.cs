@@ -1,6 +1,6 @@
 /*
 
-TODO: customizable path root given as concept URI, sync tokenization, show immediate neighborhood
+TODO: sync tokenization, show immediate neighborhood
  
 */
 
@@ -49,7 +49,10 @@ namespace Latino.Workflows.Semantics
             {
                 int idx = startIdx;
                 len = 0;
-                if (string.Compare(words[idx++], mWords[0], gazetteer.mIgnoreCase) != 0) { return false; } // first word must match
+                if (string.Compare(words[idx], mWords[0], gazetteer.mIgnoreCase) != 0) { return false; } // first word must match
+                Utils.CaseType caseType = Utils.GetCaseType(words[idx]);
+                if (!(caseType == Utils.CaseType.ABC || caseType == Utils.CaseType.Abc || caseType == Utils.CaseType.AbC)) { return false; } // *** only for the demo 
+                idx++;
                 for (int i = 1; i < mWords.Count; i++)
                 {
                     while (idx < words.Length && gazetteer.IsStopWord(words[idx].ToLower())) { idx++; } // skip stop words

@@ -201,7 +201,7 @@ namespace Latino.Workflows.TextMining
                 itemAttr.TryGetValue("pubDate", out pubDate);
                 Guid guid = MakeGuid(name, desc, pubDate);
                 mLogger.Info("ProcessItem", "Found item \"{0}\".", Utils.ToOneLine(name, /*compact=*/true));
-                if (!mHistory.CheckHistory(guid, mSiteId, mHistoryDatabase))
+                if (!mHistory.CheckHistory(guid))
                 {
                     DateTime time = DateTime.Now;
                     string content = "";
@@ -216,12 +216,14 @@ namespace Latino.Workflows.TextMining
                         if (bytes == null) 
                         {
                             mLogger.Info("ProcessItem", "Item rejected because of its size.");
+                            mHistory.AddToHistory(guid, mSiteId, mHistoryDatabase);
                             return;                        
                         }
                         ContentType contentType = GetContentType(mimeType);
                         if ((contentType & mContentFilter) == 0) 
                         {
                             mLogger.Info("ProcessItem", "Item rejected because of its content type.");
+                            mHistory.AddToHistory(guid, mSiteId, mHistoryDatabase);
                             return;
                         }
                         itemAttr.Add("_responseUrl", responseUrl);
@@ -269,6 +271,7 @@ namespace Latino.Workflows.TextMining
                         corpora.Add(new DocumentCorpus());
                     }
                     corpora.Last.AddDocument(document);
+                    mHistory.AddToHistory(guid, mSiteId, mHistoryDatabase);
                 }
             }
             catch (Exception e)
@@ -444,7 +447,7 @@ namespace Latino.Workflows.TextMining
             private int mHistorySize
                 = 30000; // TODO: make this configurable
 
-            private void AddToHistory(Guid id, string siteId, DatabaseConnection historyDatabase)
+            public void AddToHistory(Guid id, string siteId, DatabaseConnection historyDatabase)
             {
                 if (mHistorySize == 0) { return; }
                 if (mHistory.First.Count + 1 > mHistorySize)
@@ -469,11 +472,9 @@ namespace Latino.Workflows.TextMining
                 }
             }
 
-            public bool CheckHistory(Guid id, string siteId, DatabaseConnection historyDatabase)
+            public bool CheckHistory(Guid id)
             {
-                if (mHistory.First.Contains(id)) { return true; }
-                AddToHistory(id, siteId, historyDatabase);
-                return false;
+                return mHistory.First.Contains(id);
             }
 
             public void Load(string siteId, DatabaseConnection historyDatabase)
