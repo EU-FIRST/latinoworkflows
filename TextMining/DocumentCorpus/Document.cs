@@ -338,9 +338,131 @@ namespace Latino.Workflows.TextMining
             if (writeTopElement) { writer.WriteEndElement(); }
         }
 
+        public void WriteGateXml(XmlWriter writer, bool writeTopElement)
+        {
+            Utils.ThrowException(writer == null ? new ArgumentNullException("writer") : null);
+
+            writer.WriteProcessingInstruction("xml", "version='1.0'");
+
+            if (writeTopElement) { writer.WriteStartElement("GateDocument"); }
+
+            //DOCUMENT FEATURES
+            writer.WriteStartElement("GateDocumentFeatures");
+
+            foreach (KeyValuePair<string, string> keyVal in mFeatures)
+            {
+                writer.WriteStartElement("Feature");
+
+                writer.WriteStartElement("Name");
+                writer.WriteAttributeString("className", "java.lang.String");
+                writer.WriteString(keyVal.Key);
+                writer.WriteEndElement(); //</Name>
+
+                writer.WriteStartElement("Value");
+                writer.WriteAttributeString("className", "java.lang.String");
+                writer.WriteString(keyVal.Value);
+                writer.WriteEndElement(); //</Value>
+
+                writer.WriteEndElement(); //</Feature>
+            }
+            writer.WriteEndElement();//</GateDocumentFeatures>
+
+            //TEXT WITH NODES
+            writer.WriteStartElement("TextWithNodes");           
+
+            List<int> spans = new List<int>();
+
+            foreach (Annotation annot in mAnnotations)
+            {
+                if(!spans.Contains(annot.SpanStart))
+                    spans.Add(annot.SpanStart);
+                if (!spans.Contains(annot.SpanEnd + 1))
+                    spans.Add(annot.SpanEnd + 1);
+            }
+
+            spans.Sort(); 
+
+            string textWithNodes="";
+            int k = 0;
+
+            for (int j = 0; j < mText.Val.Length;)
+            {
+                if (j == spans[k])
+                {
+                    textWithNodes +=  "<Node id=" + spans[k] + " />";
+                    k++;
+
+                }
+
+                if (k < spans.Count)
+                {
+                    while (j != spans[k])
+                    {
+                        textWithNodes += mText.Val[j];
+                        j++;
+                    }
+                }
+                else
+                {
+                    while (j < mText.Val.Length)
+                    {
+                        textWithNodes += mText.Val[j];
+                        j++;
+                    }
+                }
+            }
+
+            writer.WriteRaw(textWithNodes);
+
+            writer.WriteEndElement();//</TextWithNodes>
+            
+            //ANNOTATIONS
+            writer.WriteStartElement("AnnotationSet");
+            int i = 1;
+            foreach (Annotation annot in mAnnotations)
+            {
+                writer.WriteStartElement("Annotation");             
+                writer.WriteAttributeString("Id", i.ToString());
+                writer.WriteAttributeString("Type", annot.Type);
+                writer.WriteAttributeString("StartNode", annot.SpanStart.ToString());
+                writer.WriteAttributeString("EndNode", (annot.SpanEnd+1).ToString());
+
+                foreach (KeyValuePair<string, string> keyVal in annot.Features)
+                {
+                    writer.WriteStartElement("Feature");
+
+                    writer.WriteStartElement("Name");
+                    writer.WriteAttributeString("className", "java.lang.String");
+                    writer.WriteString(keyVal.Key);
+                    writer.WriteEndElement(); //</Name>
+
+                    writer.WriteStartElement("Value");
+                    writer.WriteAttributeString("className", "java.lang.String");
+                    writer.WriteString(keyVal.Value);
+                    writer.WriteEndElement();//</Value>
+
+                    writer.WriteEndElement(); //</Feature>
+                }
+
+                writer.WriteEndElement(); //</Annotation>
+
+                i++;
+            }
+
+           
+            writer.WriteEndElement(); //</AnnotationSet>
+
+            if (writeTopElement) { writer.WriteEndElement(); } //</GateDocument>
+        }
+
         public void WriteXml(XmlWriter writer)
         {
             WriteXml(writer, /*writeTopElement=*/false); // throws ArgumentNullException
+        }
+
+        public void WriteGateXml(XmlWriter writer)
+        {
+            WriteGateXml(writer, /*writeTopElement=*/false); // throws ArgumentNullException
         }
 
         // *** Output HTML ***
