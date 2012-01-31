@@ -387,7 +387,7 @@ namespace Latino.Workflows.TextMining
 
             for (int j = 0; j < mText.Val.Length;)
             {
-                if (j == spans[k])
+                if (spans.Count>0 && j == spans[k])
                 {
                     textWithNodes +=  "<Node id=" + spans[k] + " />";
                     k++;
