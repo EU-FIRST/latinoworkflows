@@ -389,7 +389,7 @@ namespace Latino.Workflows.TextMining
             {
                 if (spans.Count>0 && j == spans[k])
                 {
-                    textWithNodes +=  "<Node id=" + spans[k] + " />";
+                    textWithNodes +=  "<Node id=\"" + spans[k] + "\" />";
                     k++;
 
                 }
