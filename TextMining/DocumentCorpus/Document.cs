@@ -469,7 +469,7 @@ namespace Latino.Workflows.TextMining
 
         private static Set<string> dontTruncFeatures
             = new Set<string>(new string[] { "link", "_responseUrl", "pubDate", "_mimeType", "_contentType", 
-                "_charSet", "_contentLength", "_guid", "_time", "detectedLanguage" });
+                "_charSet", "_contentLength", "_guid", "_time", "detectedLanguage", "normalizedResponseUrl" });
 
         internal void MakeHtmlPage(TextWriter document, bool inlineCss, ArrayList<TreeNode<string>> annotationTreeList)
         {
