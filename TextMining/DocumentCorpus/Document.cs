@@ -467,6 +467,10 @@ namespace Latino.Workflows.TextMining
 
         // *** Output HTML ***
 
+        private static Set<string> dontTruncFeatures
+            = new Set<string>(new string[] { "link", "_responseUrl", "pubDate", "_mimeType", "_contentType", 
+                "_charSet", "_contentLength", "_guid", "_time", "detectedLanguage" });
+
         internal void MakeHtmlPage(TextWriter document, bool inlineCss, ArrayList<TreeNode<string>> annotationTreeList)
         {
             string templateString = Utils.GetManifestResourceString(GetType(), "Resources.DocumentTemplate.htm");
@@ -477,7 +481,12 @@ namespace Latino.Workflows.TextMining
 
             foreach (KeyValuePair<string, string> f in this.Features)
             {
-                documentFeatures += "<b>" + HttpUtility.HtmlEncode(f.Key) + "</b>" + " = " + HttpUtility.HtmlEncode(Utils.Truncate(f.Value, 100) + (f.Value.Length > 100?" ...":"")) + " <br/><br/>";
+                string val = f.Value;
+                if (!dontTruncFeatures.Contains(f.Key))
+                {
+                    val = Utils.Truncate(f.Value, 100) + (f.Value.Length > 100 ? " ..." : "");
+                }                
+                documentFeatures += "<b>" + HttpUtility.HtmlEncode(f.Key) + "</b>" + " = " + HttpUtility.HtmlEncode(val) + " <br/><br/>";
             }
 
             templateString = templateString.Replace("{$document_title}", HttpUtility.HtmlEncode(mName));
