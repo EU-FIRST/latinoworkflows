@@ -67,6 +67,7 @@
     <Compile Include="TextMining\BoilerplateRemoverComponent.cs" />
     <Compile Include="TextMining\DocumentCorpus\Tree.cs" />
     <None Include="TextMining\LnDocComponent.cs" />
+    <Compile Include="TextMining\EnglishLemmatizerComponent.cs" />
     <Compile Include="TextMining\EnglishTokenizerComponent.cs" />
     <Compile Include="TextMining\LanguageDetectorComponent.cs" />
     <Compile Include="TextMining\PosTaggerComponent.cs" />

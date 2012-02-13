@@ -21,11 +21,10 @@ namespace Latino.Workflows.TextMining
        |
        '-----------------------------------------------------------------------
     */
-    // TODO: [X] reduce beam size, [ ] add lexicon
     public class EnglishPosTaggerComponent : DocumentProcessor
     {
         private EnglishMaximumEntropyPosTagger mPosTagger
-            = new EnglishMaximumEntropyPosTagger(Utils.GetManifestResourceStream(typeof(EnglishTokenizerComponent), "EnglishPOS.nbin"), /*beamSize=*/1);
+            = new EnglishMaximumEntropyPosTagger(Utils.GetManifestResourceStream(typeof(EnglishTokenizerComponent), "EnglishPOS.nbin"), /*beamSize=*/3);
 
         private string mTokenGroupSelector 
             = "Sentence";

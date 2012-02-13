@@ -154,6 +154,7 @@ namespace Latino.Workflows.TextMining
             ArrayList<TextBlock> blocks = new ArrayList<TextBlock>();
             int idx = mAnnotationIndex.BinarySearch(key);
             if (idx < 0) { idx = ~idx; }
+            else { while (idx >= 0 && mAnnotationIndex[idx].Key == key.Key) { idx--; } idx++; }
             for (int i = idx; i < mAnnotationIndex.Count; i++)
             {
                 Annotation annotation = mAnnotationIndex[i].Dat;                
