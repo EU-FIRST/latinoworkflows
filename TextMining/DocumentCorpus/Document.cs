@@ -399,7 +399,7 @@ namespace Latino.Workflows.TextMining
                 {
                     while (j != spans[k])
                     {
-                        textWithNodes += mText.Val[j];
+                        textWithNodes += HttpUtility.HtmlEncode(mText.Val[j].ToString());
                         j++;
                     }
                 }
@@ -407,7 +407,7 @@ namespace Latino.Workflows.TextMining
                 {
                     while (j < mText.Val.Length)
                     {
-                        textWithNodes += mText.Val[j];
+                        textWithNodes += HttpUtility.HtmlEncode(mText.Val[j].ToString());
                         j++;
                     }
                 }
@@ -422,20 +422,53 @@ namespace Latino.Workflows.TextMining
             int i = 1;
             foreach (Annotation annot in mAnnotations)
             {
-                writer.WriteStartElement("Annotation");             
+                string annotType = annot.Type;
+                if (annot.Type.StartsWith("Sentiment object/"))
+                    annotType = "SO";
+
+                writer.WriteStartElement("Annotation");
                 writer.WriteAttributeString("Id", i.ToString());
-                writer.WriteAttributeString("Type", annot.Type);
+                writer.WriteAttributeString("Type", annotType);
                 writer.WriteAttributeString("StartNode", annot.SpanStart.ToString());
                 writer.WriteAttributeString("EndNode", (annot.SpanEnd+1).ToString());
 
+                if (annot.Type == "Token")
+                {
+                    string annotText;
+                    annotText = (annot.GetAnnotatedBlock(mText)).Text;
+                    annot.Features.SetFeatureValue("string", annotText);
+                }
                 foreach (KeyValuePair<string, string> keyVal in annot.Features)
                 {
                     writer.WriteStartElement("Feature");
 
+                    string replacement = keyVal.Key;
+                    bool writeInstanceName = false;
+
+                    if (annot.Type.StartsWith("Sentiment object/") && keyVal.Key == "objUri")
+                    {
+                        replacement = "Uri";
+                        writeInstanceName = true;         
+                    }
+
+                    if (annot.Type == "Token" && keyVal.Key == "posTag")
+                    {
+                        replacement = "category";
+                    }
+                    else if(annot.Type == "Token" && (keyVal.Key == "word" || keyVal.Key == "punctuation"))
+                    {
+                        replacement = "kind";
+                    }
+                    else if (annot.Type == "Token" && keyVal.Key == "lemma")
+                    {
+                        replacement = "root";
+                    }
+                    
                     writer.WriteStartElement("Name");
                     writer.WriteAttributeString("className", "java.lang.String");
-                    writer.WriteString(keyVal.Key);
+                    writer.WriteString(replacement);
                     writer.WriteEndElement(); //</Name>
+                    
 
                     writer.WriteStartElement("Value");
                     writer.WriteAttributeString("className", "java.lang.String");
@@ -443,7 +476,26 @@ namespace Latino.Workflows.TextMining
                     writer.WriteEndElement();//</Value>
 
                     writer.WriteEndElement(); //</Feature>
+
+                    if (writeInstanceName)
+                    {
+                        writer.WriteStartElement("Feature");
+
+                        writer.WriteStartElement("Name");
+                        writer.WriteAttributeString("className", "java.lang.String");
+                        writer.WriteString("instanceName");
+                        writer.WriteEndElement(); //</Name>
+
+                        writer.WriteStartElement("Value");
+                        writer.WriteAttributeString("className", "java.lang.String");
+                        writer.WriteString(keyVal.Value.Split('#')[1]);
+                        writer.WriteEndElement();//</Value>   
+  
+                        writer.WriteEndElement(); //</Feature>
+                    }
                 }
+
+               
 
                 writer.WriteEndElement(); //</Annotation>
 
