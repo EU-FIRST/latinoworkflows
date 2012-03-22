@@ -109,6 +109,14 @@ namespace Latino.Workflows.TextMining
             get { return mDocuments; }
         }
 
+        public void CopyFeaturesFrom(DocumentCorpus corpus)
+        {
+            foreach (KeyValuePair<string, string> item in corpus.mFeatures)
+            {
+                Features.SetFeatureValue(item.Key, item.Value);
+            }        
+        }
+
         // *** ICloneable<DocumentCorpus> interface implementation ***
 
         public DocumentCorpus Clone()

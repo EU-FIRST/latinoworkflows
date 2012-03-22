@@ -36,38 +36,11 @@ namespace Latino.Workflows
        |
        '-----------------------------------------------------------------------
     */
-    public static class WorkflowUtils
+    internal static class WorkflowUtils
     {
-        public static void SetProcessorAffinity(ulong mask)
-        {
-            Utils.ThrowException(mask == 0 ? new ArgumentOutOfRangeException("mask") : null);
-            Utils.ThrowException(mask > Math.Pow(2, Environment.ProcessorCount) - 1 ? new ArgumentOutOfRangeException("mask") : null);
-            Process.GetCurrentProcess().ProcessorAffinity = (IntPtr)mask;
-        }
-
-        public static void SetProcessorAffinity(string mask)
-        {
-            Utils.ThrowException(mask == null ? new ArgumentNullException("mask") : null);
-            SetProcessorAffinity(Convert.ToUInt64(mask, 2)); // throws ArgumentException, FormatException, OverflowException, ArgumentOutOfRangeException
-        }
-
-        //public static object InvokeStreamDataProcessor(Type processorType, object inData)
-        //{
-        //    object outData = null;
-        //    using (IDataProducer processor = (IDataProducer)processorType.GetConstructor(new Type[0]).Invoke(new object[0]))
-        //    {
-        //        using (GenericStreamDataConsumer consumer = new GenericStreamDataConsumer())
-        //        {
-        //            consumer.OnConsumeData
-        //                += new GenericStreamDataConsumer.ConsumeDataHandler(delegate(IDataProducer producer, object data) { outData = data; });
-        //            processor.Subscribe(consumer);
-        //            ((IDataConsumer)processor).ReceiveData(null, inData);
-        //            while (outData == null) { Thread.Sleep(100); }
-        //        }
-        //    }
-        //    return outData;
-        //}
-
+        private static Random mRandom
+            = new Random();
+        
         public static Logger CreateLogger(string loggerBaseName, string name)
         {
             if (loggerBaseName == null && name == null)
@@ -86,6 +59,96 @@ namespace Latino.Workflows
             {
                 return Logger.GetLogger(loggerBaseName + "." + name);
             }
+        }
+
+        public static int GetBranchLoadMax(IWorkflowComponent component)
+        {
+            if (component is StreamDataProcessor)
+            {
+                StreamDataProcessor processor = (StreamDataProcessor)component;
+                int load = processor.Load;
+                foreach (IWorkflowComponent subscriber in processor.SubscribedConsumers)
+                {
+                    int subscriberLoad = GetBranchLoadMax(subscriber);
+                    if (subscriberLoad > load) { load = subscriberLoad; }
+                }
+                return load;
+            }
+            else if (component is StreamDataConsumer)
+            {
+                StreamDataConsumer consumer = (StreamDataConsumer)component;
+                return consumer.Load;
+            }
+            return 0;
+        }
+
+        public static int GetBranchLoadSum(IWorkflowComponent component)
+        {
+            if (component is StreamDataProcessor)
+            {
+                StreamDataProcessor processor = (StreamDataProcessor)component;
+                int load = processor.Load;
+                foreach (IWorkflowComponent subscriber in processor.SubscribedConsumers)
+                {
+                    load += GetBranchLoadSum(subscriber);
+                }
+                return load;
+            }
+            else if (component is StreamDataConsumer)
+            {
+                StreamDataConsumer consumer = (StreamDataConsumer)component;
+                return consumer.Load;
+            }
+            return 0;
+        }
+
+        public static void DispatchData(IDataProducer producer, object data, bool cloneDataOnFork, DispatchPolicy dispatchPolicy, 
+            Set<IDataConsumer> dataConsumers, Logger logger)
+        {
+            if (data == null) { return; }
+            if (dataConsumers.Count == 0)
+            {
+                if (logger != null) { logger.Warn("DispatchData", "Data ready but nobody is listening."); }
+                return;
+            }
+            if (dispatchPolicy == DispatchPolicy.BalanceLoadSum || dispatchPolicy == DispatchPolicy.BalanceLoadMax)
+            {
+                if (logger != null) { logger.Trace("DispatchData", "Dispatching data of type {0} (load balancing) ...", data.GetType()); }
+                int minLoad = int.MaxValue;
+                IDataConsumer target = null;
+                foreach (IDataConsumer consumer in dataConsumers)
+                {
+                    int load = (dispatchPolicy == DispatchPolicy.BalanceLoadSum) ? GetBranchLoadSum(consumer) : GetBranchLoadMax(consumer);
+                    if (load < minLoad) { minLoad = load; target = consumer; }
+                }
+                target.ReceiveData(producer, data);
+            }
+            else if (dispatchPolicy == DispatchPolicy.Random)
+            {
+                if (logger != null) { logger.Trace("DispatchData", "Dispatching data of type {0} (random policy) ...", data.GetType()); }
+                ArrayList<IDataConsumer> tmp = new ArrayList<IDataConsumer>(dataConsumers.Count);
+                foreach (IDataConsumer dataConsumer in dataConsumers) { tmp.Add(dataConsumer); }
+                tmp[mRandom.Next(0, tmp.Count)].ReceiveData(producer, data);
+            }
+            else
+            {
+                if (logger != null) { logger.Trace("DispatchData", "Dispatching data of type {0} (to-all policy) ...", data.GetType()); }
+                if (dataConsumers.Count > 1 && cloneDataOnFork)
+                {
+                    foreach (IDataConsumer dataConsumer in dataConsumers)
+                    {
+                        dataConsumer.ReceiveData(producer, Utils.Clone(data, /*deepClone=*/true));
+                    }
+                }
+                else
+                {
+                    foreach (IDataConsumer dataConsumer in dataConsumers)
+                    {
+                        dataConsumer.ReceiveData(producer, data);
+                    }
+                }
+            }
+            if (logger != null) { logger.Trace("DispatchData", "Data dispatched."); }
         }
     }
 }

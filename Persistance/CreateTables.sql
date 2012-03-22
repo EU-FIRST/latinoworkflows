@@ -43,6 +43,7 @@ CREATE TABLE [dbo].[Documents](
 	[category] [nvarchar](400) NULL,
 	[link] [varchar](400) NULL,
 	[responseUrl] [varchar](400) NULL,
+	[urlKey] [varchar](400) NULL,
 	[time] [char](26) NULL,
 	[pubDate] [char](26) NULL,
 	[mimeType] [varchar](80) NULL,

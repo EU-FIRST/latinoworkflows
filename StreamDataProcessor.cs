@@ -6,7 +6,7 @@
  *  Desc:    Stream data processor base class
  *  Created: Dec-2010
  *
- *  Authors: Miha Grcar
+ *  Author:  Miha Grcar
  *
  ***************************************************************************/
 
@@ -28,11 +28,13 @@ namespace Latino.Workflows
             = true;
         private DispatchPolicy mDispatchPolicy
             = DispatchPolicy.ToAll;
-        private Random mRandom
-            = new Random();
 
         public StreamDataProcessor(string loggerName) : base(loggerName)
         { 
+        }
+
+        public StreamDataProcessor(Type loggerType) : this(loggerType.ToString())
+        {
         }
 
         public bool CloneDataOnFork
@@ -57,31 +59,7 @@ namespace Latino.Workflows
             // process data
             data = ProcessData(sender, data);
             // dispatch data
-            if (mDispatchPolicy == DispatchPolicy.Random)
-            {
-                mLogger.Trace("DispatchData", "Dispatching data of type {0} (random policy) ...", data.GetType());
-                ArrayList<IDataConsumer> tmp = new ArrayList<IDataConsumer>(mDataConsumers.Count);
-                foreach (IDataConsumer dataConsumer in mDataConsumers) { tmp.Add(dataConsumer); }
-                tmp[mRandom.Next(0, tmp.Count)].ReceiveData(this, data);
-            }
-            else
-            {
-                mLogger.Trace("DispatchData", "Dispatching data of type {0} (to-all policy) ...", data.GetType());
-                if (mDataConsumers.Count > 1 && mCloneDataOnFork)
-                {
-                    foreach (IDataConsumer dataConsumer in mDataConsumers)
-                    {
-                        dataConsumer.ReceiveData(this, Utils.Clone(data, /*deepClone=*/true));
-                    }
-                }
-                else
-                {
-                    foreach (IDataConsumer dataConsumer in mDataConsumers)
-                    {
-                        dataConsumer.ReceiveData(this, data);
-                    }
-                }
-            }
+            WorkflowUtils.DispatchData(this, data, mCloneDataOnFork, mDispatchPolicy, mDataConsumers, mLogger);
         }
 
         protected abstract object ProcessData(IDataProducer sender, object data);

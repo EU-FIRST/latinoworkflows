@@ -25,7 +25,7 @@ namespace Latino.Workflows
         public event ProcessDataHandler OnProcessData
             = null;
 
-        public GenericStreamDataProcessor() : base(typeof(GenericStreamDataProcessor).ToString())
+        public GenericStreamDataProcessor() : base(typeof(GenericStreamDataProcessor))
         {
         }
 

@@ -100,13 +100,13 @@ namespace Latino.Workflows.TextMining
             }
         }
 
-        public RssFeedComponent(string siteId) : base(typeof(RssFeedComponent).ToString())
+        public RssFeedComponent(string siteId) : base(typeof(RssFeedComponent))
         {
             mSiteId = siteId;
             mSources = new ArrayList<string>();
         }
 
-        public RssFeedComponent(string rssUrl, string siteId) : base(typeof(RssFeedComponent).ToString())
+        public RssFeedComponent(string rssUrl, string siteId) : base(typeof(RssFeedComponent))
         {            
             Utils.ThrowException(rssUrl == null ? new ArgumentNullException("rssUrl") : null);
             mSiteId = siteId;
@@ -114,7 +114,7 @@ namespace Latino.Workflows.TextMining
             TimeBetweenPolls = 300000; // poll every 5 minutes by default
         }
 
-        public RssFeedComponent(IEnumerable<string> rssList, string siteId) : base(typeof(RssFeedComponent).ToString())
+        public RssFeedComponent(IEnumerable<string> rssList, string siteId) : base(typeof(RssFeedComponent))
         {
             Utils.ThrowException(rssList == null ? new ArgumentNullException("rssList") : null);
             mSiteId = siteId;

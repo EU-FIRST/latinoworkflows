@@ -39,6 +39,10 @@ namespace Latino.Workflows
         {
         }
 
+        public StreamDataProducerPoll(Type loggerType) : this(loggerType.ToString())
+        {
+        }
+
         public int TimeBetweenPolls
         {
             get { return mTimeBetweenPolls; }
@@ -61,10 +65,7 @@ namespace Latino.Workflows
                 {
                     // produce and dispatch data
                     object data = ProduceData();                    
-                    if (data != null)
-                    {
-                        DispatchData(data);
-                    }
+                    DispatchData(data);
                 }
                 catch (Exception exc)
                 {
