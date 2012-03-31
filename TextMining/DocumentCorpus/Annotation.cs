@@ -44,6 +44,11 @@ namespace Latino.Workflows.TextMining
         public string Type
         {
             get { return mType; }
+            set 
+            {
+                Utils.ThrowException(string.IsNullOrEmpty(value) ? new ArgumentNullException("type") : null);
+                mType = value; 
+            }
         }
 
         public int SpanStart
@@ -63,7 +68,7 @@ namespace Latino.Workflows.TextMining
 
         internal TextBlock GetAnnotatedBlock(Ref<string> text)
         {
-            TextBlock block = new TextBlock(mSpanStart, mSpanEnd, mType, text.Val.Substring(mSpanStart, mSpanEnd - mSpanStart + 1), mFeatures);
+            TextBlock block = new TextBlock(mSpanStart, mSpanEnd, mType, text.Val.Substring(mSpanStart, mSpanEnd - mSpanStart + 1), this);
             return block;
         }
 

@@ -28,15 +28,15 @@ namespace Latino.Workflows.TextMining
         private int mSpanEnd;
         private string mType;
         private string mText;
-        private Features mFeatures;
+        private Annotation mAnnotation;
 
-        internal TextBlock(int spanStart, int spanEnd, string type, string text, Dictionary<string, string> features)
+        internal TextBlock(int spanStart, int spanEnd, string type, string text, Annotation annotation)
         {
             mSpanStart = spanStart;
             mSpanEnd = spanEnd;
             mType = type;
             mText = text;
-            mFeatures = new Features(features);
+            mAnnotation = annotation;
         }
 
         public int SpanStart
@@ -59,9 +59,9 @@ namespace Latino.Workflows.TextMining
             get { return mText; }
         }
 
-        public Features Features
+        public Annotation Annotation
         {
-            get { return mFeatures; }
+            get { return mAnnotation; }
         }
     }
 }

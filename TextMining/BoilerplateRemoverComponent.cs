@@ -15,8 +15,9 @@ using System.IO;
 using System.Text;
 using System.Collections.Generic;
 using Latino.WebMining;
+using Latino.Workflows.TextMining;
 
-namespace Latino.Workflows.TextMining
+namespace Latino.Workflows.WebMining
 {
     /* .-----------------------------------------------------------------------
        |

@@ -6,7 +6,7 @@
  *  Desc:    Document processor base class
  *  Created: Dec-2010
  *
- *  Authors: Miha Grcar
+ *  Author:  Miha Grcar
  *
  ***************************************************************************/
 
@@ -21,10 +21,10 @@ namespace Latino.Workflows.TextMining
        |
        '-----------------------------------------------------------------------
     */
-    public abstract class DocumentProcessor : StreamDataProcessor
+    public class DocumentProcessor : StreamDataProcessor
     {
         protected string mBlockSelector
-            = ".*";
+            = "";
 
         public DocumentProcessor(string loggerName) : base(loggerName)
         { 
@@ -55,6 +55,8 @@ namespace Latino.Workflows.TextMining
             return corpus;
         }
 
-        protected abstract void ProcessDocument(Document document);
+        protected virtual void ProcessDocument(Document document)
+        { 
+        }
     }
 }

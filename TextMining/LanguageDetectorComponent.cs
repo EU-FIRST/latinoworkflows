@@ -31,7 +31,7 @@ namespace Latino.Workflows.TextMining
 
         public LanguageDetectorComponent() : base(typeof(LanguageDetectorComponent))
         {
-            mBlockSelector = "TextBlock/";
+            mBlockSelector = "TextBlock";
         }
 
         protected override void ProcessDocument(Document document)

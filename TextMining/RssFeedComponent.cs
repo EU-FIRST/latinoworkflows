@@ -24,8 +24,9 @@ using System.Data;
 using System.Text.RegularExpressions;
 using Latino.Web;
 using Latino.Persistance;
+using Latino.Workflows.TextMining;
 
-namespace Latino.Workflows.TextMining
+namespace Latino.Workflows.WebMining
 {
     /* .-----------------------------------------------------------------------
        |
@@ -56,8 +57,6 @@ namespace Latino.Workflows.TextMining
         private int mPolitenessSleep
             = 1000;
                 
-        private DatabaseConnection mHistoryDatabase
-            = null;
         private RssHistory mHistory
             = new RssHistory();
         
@@ -166,21 +165,15 @@ namespace Latino.Workflows.TextMining
             }
         }
 
-        public DatabaseConnection HistoryDatabase
-        {
-            get { return mHistoryDatabase; }
-            set { mHistoryDatabase = value; }
-        }
-
         public string SiteId
         {
             get { return mSiteId; }
         }
 
-        public void LoadHistory()
+        public void Initialize(DatabaseConnection dbConnection)
         {
-            Utils.ThrowException(mHistoryDatabase == null ? new InvalidOperationException() : null);
-            mHistory.Load(mSiteId, mHistoryDatabase);
+            Utils.ThrowException(dbConnection == null ? new ArgumentNullException("dbConnection") : null);
+            mHistory.Load(mSiteId, dbConnection);
         }
 
         private static Guid MakeGuid(string title, string desc, string pubDate)
@@ -216,14 +209,14 @@ namespace Latino.Workflows.TextMining
                         if (bytes == null) 
                         {
                             mLogger.Info("ProcessItem", "Item rejected because of its size.");
-                            mHistory.AddToHistory(guid, mSiteId, mHistoryDatabase);
+                            mHistory.AddToHistory(guid, mSiteId);
                             return;                        
                         }
                         ContentType contentType = GetContentType(mimeType);
                         if ((contentType & mContentFilter) == 0) 
                         {
                             mLogger.Info("ProcessItem", "Item rejected because of its content type.");
-                            mHistory.AddToHistory(guid, mSiteId, mHistoryDatabase);
+                            mHistory.AddToHistory(guid, mSiteId);
                             return;
                         }
                         itemAttr.Add("_responseUrl", responseUrl);
@@ -271,7 +264,7 @@ namespace Latino.Workflows.TextMining
                         corpora.Add(new DocumentCorpus());
                     }
                     corpora.Last.AddDocument(document);
-                    mHistory.AddToHistory(guid, mSiteId, mHistoryDatabase);
+                    mHistory.AddToHistory(guid, mSiteId);
                 }
             }
             catch (Exception e)
@@ -440,14 +433,14 @@ namespace Latino.Workflows.TextMining
            |
            '-----------------------------------------------------------------------
         */
-        private class RssHistory // TODO: update time stamp!!!
+        private class RssHistory 
         {
             private Pair<Set<Guid>, Queue<Guid>> mHistory
                 = new Pair<Set<Guid>, Queue<Guid>>(new Set<Guid>(), new Queue<Guid>());
             private int mHistorySize
                 = 30000; // TODO: make this configurable
 
-            public void AddToHistory(Guid id, string siteId, DatabaseConnection historyDatabase)
+            public void AddToHistory(Guid id, string siteId)
             {
                 if (mHistorySize == 0) { return; }
                 if (mHistory.First.Count + 1 > mHistorySize)
@@ -456,20 +449,6 @@ namespace Latino.Workflows.TextMining
                 }
                 mHistory.First.Add(id);
                 mHistory.Second.Enqueue(id);
-                if (historyDatabase != null) // write through
-                {
-                    string timeStr = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                    if (siteId != null)
-                    {
-                        historyDatabase.ExecuteNonQuery("insert into History (SiteId, ItemId, Time) values (?, ?, ?)",
-                            Utils.Truncate(siteId, 400), id.ToString("N"), timeStr);
-                    }
-                    else
-                    {
-                        historyDatabase.ExecuteNonQuery("insert into History (ItemId, Time) values (?, ?)",
-                            id.ToString("N"), timeStr);
-                    }
-                }
             }
 
             public bool CheckHistory(Guid id)
@@ -477,26 +456,26 @@ namespace Latino.Workflows.TextMining
                 return mHistory.First.Contains(id);
             }
 
-            public void Load(string siteId, DatabaseConnection historyDatabase)
+            public void Load(string siteId, DatabaseConnection dbConnection)
             {
                 if (mHistorySize > 0)
                 {
                     DataTable table;
                     if (siteId == null)
                     {
-                        table = historyDatabase.ExecuteQuery(string.Format("select top {0} * from History where SiteId is null order by Time desc", mHistorySize));
+                        table = dbConnection.ExecuteQuery(string.Format("select top {0} c.siteId, d.id, d.time from Documents d, Corpora c where d.corpusId = c.id and c.SiteId is null order by time desc", mHistorySize));
                     }
                     else
                     {
-                        table = historyDatabase.ExecuteQuery(string.Format("select top {0} * from History where SiteId=? order by Time desc", mHistorySize),
-                            Utils.Truncate(siteId, 400));
+                        table = dbConnection.ExecuteQuery(string.Format("select top {0} c.siteId, d.id, d.time from Documents d, Corpora c where d.corpusId = c.id and c.SiteId = ? order by time desc", mHistorySize), Utils.Truncate(siteId, 400));
                     }
                     mHistory.First.Clear();
                     mHistory.Second.Clear();
                     for (int i = table.Rows.Count - 1; i >= 0; i--)
                     {
                         DataRow row = table.Rows[i];
-                        Guid itemId = new Guid((string)row["ItemId"]);
+                        Guid itemId = new Guid((string)row["id"]);
+                        Console.WriteLine(itemId);
                         mHistory.First.Add(itemId);
                         mHistory.Second.Enqueue(itemId);
                     }

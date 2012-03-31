@@ -53,11 +53,11 @@ namespace Latino.Workflows.TextMining
                 {
                     if (mType == Type.PorterStemmer || mType == Type.Both)
                     {
-                        textBlock.Features.SetFeatureValue("stem", mStemmer.GetStem(textBlock.Text));
+                        textBlock.Annotation.Features.SetFeatureValue("stem", mStemmer.GetStem(textBlock.Text));
                     }
                     if (mType == Type.RdrLemmatizer || mType == Type.Both)
                     {
-                        textBlock.Features.SetFeatureValue("lemma", mLemmatizer.GetStem(textBlock.Text));
+                        textBlock.Annotation.Features.SetFeatureValue("lemma", mLemmatizer.GetStem(textBlock.Text));
                     }
                 }
             }

@@ -51,7 +51,7 @@ namespace Latino.Workflows.TextMining
             int i = 0;
             foreach (TextBlock textBlock in textBlocks)
             {
-                textBlock.Features.SetFeatureValue("posTag", posTags[i++]);
+                textBlock.Annotation.Features.SetFeatureValue("posTag", posTags[i++]);
             }
         }
 

@@ -16,8 +16,9 @@ using System.Data;
 using System.Collections.Generic;
 using Latino.WebMining;
 using Latino.Persistance;
+using Latino.Workflows.TextMining;
 
-namespace Latino.Workflows.TextMining
+namespace Latino.Workflows.WebMining
 {
     /* .-----------------------------------------------------------------------
        |
@@ -53,10 +54,10 @@ namespace Latino.Workflows.TextMining
             mUrlNormalizer = new UrlNormalizer();
         }
 
-        public void Initialize(DatabaseConnection dbCn)
+        public void Initialize(DatabaseConnection dbConnection)
         {
-            Utils.ThrowException(dbCn == null ? new ArgumentNullException("dbCn") : null);
-            DataTable table = dbCn.ExecuteQuery(string.Format("select top {0} urlKey from Documents order by time desc", mMaxCacheSize));
+            Utils.ThrowException(dbConnection == null ? new ArgumentNullException("dbConnection") : null);
+            DataTable table = dbConnection.ExecuteQuery(string.Format("select top {0} urlKey from Documents where dump = 0 order by time desc", mMaxCacheSize));
             for (int i = table.Rows.Count - 1; i >= 0; i--)
             {
                 AddToCache((string)table.Rows[i]["urlKey"]);
@@ -112,7 +113,7 @@ namespace Latino.Workflows.TextMining
                     if (mUrlCache.Contains(nUrl) || onShitList)
                     {
                         dumpDocList.Add(doc);
-                        mLogger.Info("ProcessData", "Document rejected (urlKey={0}).", nUrl);
+                        mLogger.Info("ProcessData", "Document dumped (urlKey={0}).", nUrl);
                         continue;
                     }
                     else
@@ -133,7 +134,7 @@ namespace Latino.Workflows.TextMining
             }
             catch (Exception e)
             {
-                mLogger.Error("ProcessData", "URL filter malfunctioned.", e);
+                mLogger.Error("ProcessData", e);
                 return data;
             }
         }

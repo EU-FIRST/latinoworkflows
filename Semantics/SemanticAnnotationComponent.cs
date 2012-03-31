@@ -30,14 +30,14 @@ namespace Latino.Workflows.Semantics
 
         public SemanticAnnotationComponent(TextReader ontologyReader) : base(typeof(SemanticAnnotationComponent))
         {
-            mBlockSelector = "TextBlock/";
+            mBlockSelector = "TextBlock";
             mAnnotator.LoadOntologyN3(ontologyReader);
             mAnnotator.ReadGazetteers();
         }
 
         public SemanticAnnotationComponent(IEnumerable<string> ontologyUrls) : base(typeof(SemanticAnnotationComponent))
         {
-            mBlockSelector = "TextBlock/";
+            mBlockSelector = "TextBlock";
             foreach (string url in ontologyUrls)
             {
                 mAnnotator.LoadOntologyN3(url);

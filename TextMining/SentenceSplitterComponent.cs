@@ -29,7 +29,7 @@ namespace Latino.Workflows.TextMining
 
         public SentenceSplitterComponent() : base(typeof(SentenceSplitterComponent))
         {
-            mBlockSelector = "TextBlock/";
+            mBlockSelector = "TextBlock";
         }
 
         private void GetTrimOffsets(string str, out int startOffset, out int endOffset)

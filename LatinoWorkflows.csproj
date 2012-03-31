@@ -66,6 +66,7 @@
     <Compile Include="StreamDataProducer.cs" />
     <Compile Include="Persistance\DocumentCorpusWriterComponent.cs" />
     <Compile Include="TextMining\BoilerplateRemoverComponent.cs" />
+    <Compile Include="TextMining\HtmlTokenizerComponent.cs" />
     <Compile Include="TextMining\DocumentCorpus\Tree.cs" />
     <Compile Include="TextMining\EnglishLemmatizerComponent.cs" />
     <Compile Include="TextMining\EnglishTokenizerComponent.cs" />
@@ -91,6 +92,7 @@
     <Compile Include="IWorkflowComponent.cs" />
     <Compile Include="TextMining\SentenceSplitterComponent.cs" />
     <Compile Include="TextMining\UrlFilterComponent.cs" />
+    <Compile Include="TextMining\UrlTreeBoilerplateRemoverComponent.cs" />
     <Compile Include="WorkflowUtils.cs" />
     <Compile Include="ZeroMqEmitterComponent.cs" />
     <EmbeddedResource Include="TextMining\DocumentCorpus\Resources\DocumentTemplate.htm" />
