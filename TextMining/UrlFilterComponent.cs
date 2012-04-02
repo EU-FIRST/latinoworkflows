@@ -32,14 +32,14 @@ namespace Latino.Workflows.WebMining
             = new Set<string>();
         private Queue<string> mUrlQueue
             = new Queue<string>();
-        private int mMaxCacheSize                    // TODO: make configurable
+        private int mMaxCacheSize // TODO: make configurable
             = 400000;
         
         private UrlNormalizer mUrlNormalizer;
 
-        private bool mCloneDumpOnFork                // TODO: make configurable
+        private bool mCloneDumpOnFork // TODO: make configurable
             = false;
-        private DispatchPolicy mDumpDispatchPolicy   // TODO: make configurable
+        private DispatchPolicy mDumpDispatchPolicy // TODO: make configurable
             = DispatchPolicy.BalanceLoadMax;
         private Set<IDataConsumer> mDumpDataConsumers
             = new Set<IDataConsumer>();

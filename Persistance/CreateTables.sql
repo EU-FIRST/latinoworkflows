@@ -4,6 +4,25 @@ GO
 /****** Object:  Table [dbo].[Documents]    Script Date: 04/08/2011 19:46:53 ******/
 DROP TABLE [dbo].[Documents]
 GO
+/****** Object:  Table [dbo].[TextBlocks]    Script Date: 04/02/2012 19:39:36 ******/
+DROP TABLE [dbo].[TextBlocks]
+GO
+/****** Object:  Table [dbo].[TextBlocks]    Script Date: 04/02/2012 19:39:36 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[TextBlocks](
+	[id] [char](32) NOT NULL,
+	[hashCodes] [text] NOT NULL,
+	[queue] [tinyint] NOT NULL,
+	[time] [char](26) NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+SET ANSI_PADDING OFF
+GO
 /****** Object:  Table [dbo].[Documents]    Script Date: 04/08/2011 19:46:53 ******/
 SET ANSI_NULLS ON
 GO
