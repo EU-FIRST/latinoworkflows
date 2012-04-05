@@ -114,7 +114,7 @@ namespace Latino.Workflows.Persistance
                 foreach (Document document in corpus.Documents)
                 {
                     string documentId = new Guid(document.Features.GetFeatureValue("_guid")).ToString("N");
-                    success = mConnection.ExecuteNonQuery("insert into Documents (id, corpusId, name, description, category, link, responseUrl, urlKey, time, pubDate, mimeType, contentType, charSet, contentLength, detectedLanguage, dump) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    success = mConnection.ExecuteNonQuery("insert into Documents (id, corpusId, name, description, category, link, responseUrl, urlKey, time, pubDate, mimeType, contentType, charSet, contentLength, detectedLanguage, dump, domain) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         documentId,
                         corpusId,
                         Utils.Truncate(document.Name, 400),
@@ -130,7 +130,8 @@ namespace Latino.Workflows.Persistance
                         Utils.Truncate(document.Features.GetFeatureValue("_charSet"), 40),
                         Convert.ToInt64(document.Features.GetFeatureValue("_contentLength")),
                         Utils.Truncate(document.Features.GetFeatureValue("detectedLanguage"), 400),
-                        mDumpWriter
+                        mDumpWriter,
+                        Utils.Truncate(document.Features.GetFeatureValue("_domainName"), 80)
                     );
                     if (!success) { mLogger.Warn("ConsumeData", "Unable to write to database."); }
                 }

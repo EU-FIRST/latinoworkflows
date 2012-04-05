@@ -17,8 +17,7 @@ GO
 CREATE TABLE [dbo].[TextBlocks](
 	[id] [char](32) NOT NULL,
 	[hashCodes] [text] NOT NULL,
-	[queue] [tinyint] NOT NULL,
-	[time] [char](26) NULL
+	[time] [char](26) NOT NULL
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
 SET ANSI_PADDING OFF
@@ -46,7 +45,8 @@ CREATE TABLE [dbo].[Documents](
 	[charSet] [varchar](40) NULL,
 	[contentLength] [bigint] NULL,
 	[detectedLanguage] [nvarchar](400) NULL,
-	[dump] [bit] NOT NULL
+	[dump] [bit] NOT NULL,
+	[domain] [varchar](80) NULL
 ) ON [PRIMARY] 
 GO
 SET ANSI_PADDING OFF
