@@ -28,41 +28,84 @@ namespace Latino.Workflows.WebMining
     */
     public class UrlFilterComponent : StreamDataProcessor
     {
-        private Set<string> mUrlCache
-            = new Set<string>();
-        private Queue<string> mUrlQueue
-            = new Queue<string>();
-        private int mMaxCacheSize // TODO: make configurable
-            = 400000;
-        
-        private UrlNormalizer mUrlNormalizer;
+        /* .-----------------------------------------------------------------------
+           |
+           |  Class HistoryEntry
+           |
+           '-----------------------------------------------------------------------
+        */
+        private class HistoryEntry
+        {
+            public string mUrlKey;
+            public DateTime mTime;
+
+            public HistoryEntry(string urlKey, DateTime time)
+            {
+                mUrlKey = urlKey;
+                mTime = time;
+            }
+        }
+
+        private static Dictionary<string, Pair<Set<string>, Queue<HistoryEntry>>> mUrlInfo
+            = new Dictionary<string, Pair<Set<string>, Queue<HistoryEntry>>>();
+
+        private static int mMinQueueSize // TODO: make configurable
+            = 100;
+        private static int mMaxQueueSize // TODO: make configurable
+            = 10000;
+        private static int mHistoryAgeDays // TODO: make configurable
+            = 14;
+
+        private static UrlNormalizer mUrlNormalizer
+            = new UrlNormalizer();
 
         private bool mCloneDumpOnFork // TODO: make configurable
             = false;
         private DispatchPolicy mDumpDispatchPolicy // TODO: make configurable
-            = DispatchPolicy.BalanceLoadMax;
+            = DispatchPolicy.ToAll;
         private Set<IDataConsumer> mDumpDataConsumers
             = new Set<IDataConsumer>();
 
-        public UrlFilterComponent(string shitListConfigKey, string rulesConfigKey) : base(typeof(UrlFilterComponent))
-        {
-            mUrlNormalizer = new UrlNormalizer(shitListConfigKey, rulesConfigKey);
-        }
+        private DatabaseConnection mDbConnection
+            = null;
 
         public UrlFilterComponent() : base(typeof(UrlFilterComponent))
         {
-            mUrlNormalizer = new UrlNormalizer();
         }
 
-        public void Initialize(DatabaseConnection dbConnection)
+        public UrlFilterComponent(string dbConnectionString) : base(typeof(UrlFilterComponent))
+        {
+            Utils.ThrowException(dbConnectionString == null ? new ArgumentNullException("dbConnectionString") : null);
+            mDbConnection = new DatabaseConnection();
+            mDbConnection.ConnectionString = dbConnectionString;
+            mDbConnection.Connect();
+        }
+
+        public static void InitializeHistory(DatabaseConnection dbConnection)
         {
             Utils.ThrowException(dbConnection == null ? new ArgumentNullException("dbConnection") : null);
-            DataTable table = dbConnection.ExecuteQuery(string.Format("select top {0} urlKey from Documents where dump = 0 order by time desc", mMaxCacheSize));
-            for (int i = table.Rows.Count - 1; i >= 0; i--)
+            Logger logger = Logger.GetLogger(typeof(UrlFilterComponent));
+            logger.Info("InitializeHistory", "Loading history ...");
+            mUrlInfo.Clear();
+            DataTable domainsTbl = dbConnection.ExecuteQuery("select distinct domain from Documents where dump = 0");
+            int domainCount = 0;
+            DateTime then = DateTime.Now - new TimeSpan(mHistoryAgeDays, 0, 0, 0);
+            foreach (DataRow row in domainsTbl.Rows)
             {
-                AddToCache((string)table.Rows[i]["urlKey"]);
+                string domainName = (string)row["domain"];
+                DataTable urlInfoTbl = dbConnection.ExecuteQuery(string.Format("select top {0} h.time, d.urlKey from UrlHistory h, Documents d where d.id = h.id and d.domain = ? and h.time >= ? order by h.time desc", mMaxQueueSize), domainName, then.ToString(Utils.DATE_TIME_SIMPLE));
+                if (urlInfoTbl.Rows.Count == 0) { continue; }
+                domainCount++;
+                Pair<Set<string>, Queue<HistoryEntry>> urlInfo = GetUrlInfo(domainName);
+                for (int j = urlInfoTbl.Rows.Count - 1; j >= 0; j--)
+                {
+                    string urlKey = (string)urlInfoTbl.Rows[j]["urlKey"];
+                    string timeStr = (string)urlInfoTbl.Rows[j]["time"];
+                    urlInfo.First.Add(urlKey);
+                    urlInfo.Second.Enqueue(new HistoryEntry(urlKey, DateTime.Parse(timeStr)));
+                }
             }
-            mLogger.Info("Initialize", "Loaded {0} URL keys ({1} URL keys now cached).", table.Rows.Count, mUrlCache.Count);
+            logger.Info("InitializeHistory", "Loaded history for {0} distinct domains.", domainCount);            
         }
 
         public void SubscribeDumpConsumer(IDataConsumer dataConsumer)
@@ -82,15 +125,65 @@ namespace Latino.Workflows.WebMining
             get { return mDumpDataConsumers; }
         }
 
-        private void AddToCache(string url)
+        private static string GetDomainName(string urlKey)
         {
-            if (mUrlQueue.Count == mMaxCacheSize)
+            string domainName = urlKey.Split(':')[1].Trim('/');
+            string tld = UrlNormalizer.GetTldFromDomainName(domainName);
+            if (tld != null)
             {
-                string rmvUrl = mUrlQueue.Dequeue();
-                mUrlCache.Remove(rmvUrl);
+                int c = tld.Split('.').Length + 1;
+                string[] parts = domainName.Split('.');
+                domainName = "";
+                for (int i = parts.Length - 1; c > 0; c--, i--)
+                {
+                    domainName = parts[i] + "." + domainName;
+                }
+                domainName = domainName.TrimEnd('.');
             }
-            mUrlQueue.Enqueue(url);
-            mUrlCache.Add(url);
+            return domainName;
+        }
+
+        private static Pair<Set<string>, Queue<HistoryEntry>> GetUrlInfo(string domainName)
+        {
+            lock (mUrlInfo)
+            {
+                if (!mUrlInfo.ContainsKey(domainName))
+                {
+                    Pair<Set<string>, Queue<HistoryEntry>> urlInfo = new Pair<Set<string>, Queue<HistoryEntry>>(new Set<string>(), new Queue<HistoryEntry>());
+                    mUrlInfo.Add(domainName, urlInfo);
+                    return urlInfo;
+                }
+                return mUrlInfo[domainName];
+            }
+        }
+
+        private void AddUrlToCache(string documentId, string urlKey, Pair<Set<string>, Queue<HistoryEntry>> urlInfo)
+        {
+            DateTime time = DateTime.Now;
+            lock (urlInfo.First)
+            {
+                urlInfo.First.Add(urlKey);
+            }
+            lock (urlInfo.Second)
+            {                
+                urlInfo.Second.Enqueue(new HistoryEntry(urlKey, time));
+                if (urlInfo.Second.Count > mMinQueueSize)
+                {
+                    double ageDays = (time - urlInfo.Second.Peek().mTime).TotalDays;
+                    if (urlInfo.Second.Count > mMaxQueueSize || ageDays > (double)mHistoryAgeDays)
+                    {
+                        // dequeue and remove
+                        lock (urlInfo.First)
+                        {
+                            urlInfo.First.Remove(urlInfo.Second.Dequeue().mUrlKey);
+                        }
+                    }
+                }                
+            }
+            if (mDbConnection != null)
+            {
+                mDbConnection.ExecuteNonQuery("insert into UrlHistory (id, time) values (?, ?)", documentId, time.ToString(Utils.DATE_TIME_SIMPLE));
+            }
         }
 
         protected override object ProcessData(IDataProducer sender, object data)
@@ -102,26 +195,42 @@ namespace Latino.Workflows.WebMining
                 DocumentCorpus dumpCorpus = new DocumentCorpus();
                 filteredCorpus.CopyFeaturesFrom(corpus);
                 dumpCorpus.CopyFeaturesFrom(corpus);
-                ArrayList<Document> dumpDocList = new ArrayList<Document>();
-                foreach (Document doc in corpus.Documents)
+                ArrayList<Document> dumpDocumentList = new ArrayList<Document>();
+                foreach (Document document in corpus.Documents)
                 {
-                    string responseUrl = doc.Features.GetFeatureValue("_responseUrl");
-                    if (responseUrl == null) { dumpDocList.Add(doc); continue; }
-                    bool onShitList;
-                    string nUrl = mUrlNormalizer.NormalizeUrl(responseUrl, doc.Name, out onShitList, UrlNormalizer.NormalizationMode.Heuristics);
-                    doc.Features.SetFeatureValue("_urlKey", nUrl);
-                    if (mUrlCache.Contains(nUrl) || onShitList)
+                    try
                     {
-                        dumpDocList.Add(doc);
-                        mLogger.Info("ProcessData", "Document dumped (urlKey={0}).", nUrl);
-                        continue;
+                        string responseUrl = document.Features.GetFeatureValue("_responseUrl");
+                        if (responseUrl == null) { dumpDocumentList.Add(document); continue; }
+                        bool blacklisted;
+                        string urlKey = mUrlNormalizer.NormalizeUrl(responseUrl, document.Name, out blacklisted, UrlNormalizer.NormalizationMode.Heuristics);
+                        document.Features.SetFeatureValue("_urlKey", urlKey);
+                        string domainName = GetDomainName(urlKey);
+                        document.Features.SetFeatureValue("_domainName", domainName);
+                        Pair<Set<string>, Queue<HistoryEntry>> urlInfo = GetUrlInfo(domainName);
+                        bool cached;
+                        lock (urlInfo.First)
+                        {
+                            cached = urlInfo.First.Contains(urlKey);
+                        }
+                        if (cached || blacklisted)
+                        {
+                            dumpDocumentList.Add(document);
+                            mLogger.Info("ProcessDocument", "Document dumped (urlKey={0}).", urlKey);
+                            continue;
+                        }
+                        else
+                        {
+                            string documentId = new Guid(document.Features.GetFeatureValue("_guid")).ToString("N");
+                            AddUrlToCache(documentId, urlKey, urlInfo);
+                        }
                     }
-                    else
+                    catch (Exception exception)
                     {
-                        AddToCache(nUrl);
+                        mLogger.Error("ProcessDocument", exception);                    
                     }
                 }
-                foreach (Document doc in dumpDocList)
+                foreach (Document doc in dumpDocumentList)
                 {
                     corpus.Remove(doc);
                     dumpCorpus.AddDocument(doc);
@@ -132,10 +241,22 @@ namespace Latino.Workflows.WebMining
                 }
                 return corpus.Documents.Count > 0 ? corpus : null;
             }
-            catch (Exception e)
+            catch (Exception exception)
             {
-                mLogger.Error("ProcessData", e);
+                mLogger.Error("ProcessData", exception);
                 return data;
+            }
+        }
+
+        // *** IDisposable interface implementation ***
+
+        public new void Dispose()
+        {
+            base.Dispose();
+            if (mDbConnection != null)
+            {
+                try { mDbConnection.Disconnect(); }
+                catch { }
             }
         }
     }
