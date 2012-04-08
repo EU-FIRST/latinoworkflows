@@ -38,18 +38,23 @@ namespace Latino.Workflows.TextMining
         {
             string contentType = document.Features.GetFeatureValue("_contentType");
             if (contentType != "Text") { return; }
-            StringBuilder strBulder = new StringBuilder();
+            StringBuilder strBuilder = new StringBuilder();
             try
             {
                 TextBlock[] blocks = document.GetAnnotatedBlocks(mBlockSelector);
                 foreach (TextBlock block in blocks)
                 {
-                    strBulder.AppendLine(block.Text);
+                    strBuilder.AppendLine(block.Text);
                 }
-                if (strBulder.Length >= mMinTextLen) 
+                string text = strBuilder.ToString();
+                if (text.Length >= mMinTextLen) 
                 {
-                    LanguageProfile langProfile = mLanguageDetector.FindMatchingLanguage(strBulder.ToString());
+                    LanguageProfile langProfile = mLanguageDetector.FindMatchingLanguage(text);
                     document.Features.SetFeatureValue("detectedLanguage", langProfile.Language.ToString());
+                }
+                if (text.Length > 0)
+                {
+                    document.Features.SetFeatureValue("detectedCharRange", TextMiningUtils.GetCharRange(text));
                 }
             }
             catch (Exception exception)

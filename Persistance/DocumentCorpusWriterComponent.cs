@@ -34,7 +34,7 @@ namespace Latino.Workflows.Persistance
         private bool mWriteToDatabase;
         private string mXmlDataRoot;
         private string mHtmlDataRoot;
-        private bool mDumpWriter
+        private bool mIsDumpWriter
             = false;
 
         public DocumentCorpusWriterComponent(string dbConnectionString, string xmlDataRoot, string htmlDataRoot) : base(typeof(DocumentCorpusWriterComponent))
@@ -51,8 +51,8 @@ namespace Latino.Workflows.Persistance
 
         public bool DumpWriter
         {
-            get { return mDumpWriter; }
-            set { mDumpWriter = value; }
+            get { return mIsDumpWriter; }
+            set { mIsDumpWriter = value; }
         }
 
         protected override void ConsumeData(IDataProducer sender, object data)
@@ -103,18 +103,18 @@ namespace Latino.Workflows.Persistance
                 bool success = mConnection.ExecuteNonQuery("insert into Corpora (id, title, language, sourceUrl, timeStart, timeEnd, siteId, dump) values (?, ?, ?, ?, ?, ?, ?, ?)",
                     corpusId,
                     Utils.Truncate(corpus.Features.GetFeatureValue("title"), 400),
-                    Utils.Truncate(corpus.Features.GetFeatureValue("language"), 400),
+                    Utils.Truncate(corpus.Features.GetFeatureValue("language"), 100),
                     Utils.Truncate(corpus.Features.GetFeatureValue("_sourceUrl"), 400),
                     Utils.Truncate(corpus.Features.GetFeatureValue("_timeStart"), 26),
                     Utils.Truncate(corpus.Features.GetFeatureValue("_timeEnd"), 26),
-                    Utils.Truncate(corpus.Features.GetFeatureValue("siteId"), 400),
-                    mDumpWriter
+                    Utils.Truncate(corpus.Features.GetFeatureValue("siteId"), 100),
+                    mIsDumpWriter
                 );
                 if (!success) { mLogger.Warn("ConsumeData", "Unable to write to database."); }
                 foreach (Document document in corpus.Documents)
                 {
                     string documentId = new Guid(document.Features.GetFeatureValue("_guid")).ToString("N");
-                    success = mConnection.ExecuteNonQuery("insert into Documents (id, corpusId, name, description, category, link, responseUrl, urlKey, time, pubDate, mimeType, contentType, charSet, contentLength, detectedLanguage, dump, domain) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    success = mConnection.ExecuteNonQuery("insert into Documents (id, corpusId, name, description, category, link, responseUrl, urlKey, time, pubDate, mimeType, contentType, charSet, contentLength, detectedLanguage, detectedCharRange, domain, dump) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         documentId,
                         corpusId,
                         Utils.Truncate(document.Name, 400),
@@ -129,9 +129,10 @@ namespace Latino.Workflows.Persistance
                         Utils.Truncate(document.Features.GetFeatureValue("_contentType"), 40),
                         Utils.Truncate(document.Features.GetFeatureValue("_charSet"), 40),
                         Convert.ToInt64(document.Features.GetFeatureValue("_contentLength")),
-                        Utils.Truncate(document.Features.GetFeatureValue("detectedLanguage"), 400),
-                        mDumpWriter,
-                        Utils.Truncate(document.Features.GetFeatureValue("_domainName"), 80)
+                        Utils.Truncate(document.Features.GetFeatureValue("detectedLanguage"), 100),
+                        Utils.Truncate(document.Features.GetFeatureValue("detectedCharRange"), 100),                        
+                        Utils.Truncate(document.Features.GetFeatureValue("_domainName"), 100),
+                        mIsDumpWriter
                     );
                     if (!success) { mLogger.Warn("ConsumeData", "Unable to write to database."); }
                 }

@@ -116,9 +116,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Persistance\CreateTables.sql" />
-    <EmbeddedResource Include="TextMining\Models\EnglishPOS.nbin" />
-    <EmbeddedResource Include="TextMining\Models\EnglishSD.nbin" />
-    <EmbeddedResource Include="TextMining\Models\EnglishTok.nbin" />
+    <EmbeddedResource Include="TextMining\Resources\EnglishPOS.nbin" />
+    <EmbeddedResource Include="TextMining\Resources\EnglishSD.nbin" />
+    <EmbeddedResource Include="TextMining\Resources\EnglishTok.nbin" />
     <EmbeddedResource Include="TextMining\DocumentCorpus\DocumentCorpusSchema.xsd">
       <SubType>Designer</SubType>
     </EmbeddedResource>
