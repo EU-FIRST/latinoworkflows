@@ -23,6 +23,12 @@ namespace Latino.Workflows.TextMining
     */
     public class EnglishLemmatizerComponent : DocumentProcessor
     {
+        /* .-----------------------------------------------------------------------
+           |
+           |  Enum Type
+           |
+           '-----------------------------------------------------------------------
+        */
         public enum Type
         {
             RdrLemmatizer,
@@ -44,7 +50,7 @@ namespace Latino.Workflows.TextMining
 
         protected override void ProcessDocument(Document document)
         {
-            string contentType = document.Features.GetFeatureValue("_contentType");
+            string contentType = document.Features.GetFeatureValue("contentType");
             if (contentType != "Text") { return; }
             try
             {

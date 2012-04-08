@@ -200,13 +200,13 @@ namespace Latino.Workflows.WebMining
                 {
                     try
                     {
-                        string responseUrl = document.Features.GetFeatureValue("_responseUrl");
+                        string responseUrl = document.Features.GetFeatureValue("responseUrl");
                         if (responseUrl == null) { dumpDocumentList.Add(document); continue; }
                         bool blacklisted;
                         string urlKey = mUrlNormalizer.NormalizeUrl(responseUrl, document.Name, out blacklisted, UrlNormalizer.NormalizationMode.Heuristics);
-                        document.Features.SetFeatureValue("_urlKey", urlKey);
+                        document.Features.SetFeatureValue("urlKey", urlKey);
                         string domainName = GetDomainName(urlKey);
-                        document.Features.SetFeatureValue("_domainName", domainName);
+                        document.Features.SetFeatureValue("domainName", domainName);
                         Pair<Set<string>, Queue<HistoryEntry>> urlInfo = GetUrlInfo(domainName);
                         bool cached;
                         lock (urlInfo.First)
@@ -221,7 +221,7 @@ namespace Latino.Workflows.WebMining
                         }
                         else
                         {
-                            string documentId = new Guid(document.Features.GetFeatureValue("_guid")).ToString("N");
+                            string documentId = new Guid(document.Features.GetFeatureValue("guid")).ToString("N");
                             AddUrlToCache(documentId, urlKey, urlInfo);
                         }
                     }

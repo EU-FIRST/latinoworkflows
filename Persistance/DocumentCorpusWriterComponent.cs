@@ -6,7 +6,7 @@
  *  Desc:    Document-corpus database writer
  *  Created: Jan-2011
  *
- *  Authors: Miha Grcar
+ *  Author:  Miha Grcar
  *
  ***************************************************************************/
 
@@ -49,7 +49,7 @@ namespace Latino.Workflows.Persistance
             }
         }
 
-        public bool DumpWriter
+        public bool IsDumpWriter
         {
             get { return mIsDumpWriter; }
             set { mIsDumpWriter = value; }
@@ -104,16 +104,16 @@ namespace Latino.Workflows.Persistance
                     corpusId,
                     Utils.Truncate(corpus.Features.GetFeatureValue("title"), 400),
                     Utils.Truncate(corpus.Features.GetFeatureValue("language"), 100),
-                    Utils.Truncate(corpus.Features.GetFeatureValue("_sourceUrl"), 400),
-                    Utils.Truncate(corpus.Features.GetFeatureValue("_timeStart"), 26),
-                    Utils.Truncate(corpus.Features.GetFeatureValue("_timeEnd"), 26),
+                    Utils.Truncate(corpus.Features.GetFeatureValue("sourceUrl"), 400),
+                    Utils.Truncate(corpus.Features.GetFeatureValue("timeStart"), 26),
+                    Utils.Truncate(corpus.Features.GetFeatureValue("timeEnd"), 26),
                     Utils.Truncate(corpus.Features.GetFeatureValue("siteId"), 100),
                     mIsDumpWriter
                 );
                 if (!success) { mLogger.Warn("ConsumeData", "Unable to write to database."); }
                 foreach (Document document in corpus.Documents)
                 {
-                    string documentId = new Guid(document.Features.GetFeatureValue("_guid")).ToString("N");
+                    string documentId = new Guid(document.Features.GetFeatureValue("guid")).ToString("N");
                     success = mConnection.ExecuteNonQuery("insert into Documents (id, corpusId, name, description, category, link, responseUrl, urlKey, time, pubDate, mimeType, contentType, charSet, contentLength, detectedLanguage, detectedCharRange, domain, dump) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         documentId,
                         corpusId,
@@ -121,17 +121,17 @@ namespace Latino.Workflows.Persistance
                         Utils.Truncate(document.Features.GetFeatureValue("description"), 400),
                         Utils.Truncate(document.Features.GetFeatureValue("category"), 400),
                         Utils.Truncate(document.Features.GetFeatureValue("link"), 400),
-                        Utils.Truncate(document.Features.GetFeatureValue("_responseUrl"), 400),
-                        Utils.Truncate(document.Features.GetFeatureValue("_urlKey"), 400),
-                        Utils.Truncate(document.Features.GetFeatureValue("_time"), 26),
+                        Utils.Truncate(document.Features.GetFeatureValue("responseUrl"), 400),
+                        Utils.Truncate(document.Features.GetFeatureValue("urlKey"), 400),
+                        Utils.Truncate(document.Features.GetFeatureValue("time"), 26),
                         Utils.Truncate(document.Features.GetFeatureValue("pubDate"), 26),
-                        Utils.Truncate(document.Features.GetFeatureValue("_mimeType"), 80),
-                        Utils.Truncate(document.Features.GetFeatureValue("_contentType"), 40),
-                        Utils.Truncate(document.Features.GetFeatureValue("_charSet"), 40),
-                        Convert.ToInt64(document.Features.GetFeatureValue("_contentLength")),
+                        Utils.Truncate(document.Features.GetFeatureValue("mimeType"), 80),
+                        Utils.Truncate(document.Features.GetFeatureValue("contentType"), 40),
+                        Utils.Truncate(document.Features.GetFeatureValue("charSet"), 40),
+                        Convert.ToInt64(document.Features.GetFeatureValue("contentLength")),
                         Utils.Truncate(document.Features.GetFeatureValue("detectedLanguage"), 100),
                         Utils.Truncate(document.Features.GetFeatureValue("detectedCharRange"), 100),                        
-                        Utils.Truncate(document.Features.GetFeatureValue("_domainName"), 100),
+                        Utils.Truncate(document.Features.GetFeatureValue("domainName"), 100),
                         mIsDumpWriter
                     );
                     if (!success) { mLogger.Warn("ConsumeData", "Unable to write to database."); }

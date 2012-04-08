@@ -140,14 +140,14 @@ namespace Latino.Workflows.TextMining
             {
                 textBlock.Annotation.Type = "TextBlock/Content";
             }
-            textBlock.Annotation.Features.SetFeatureValue("BPR_nodeBlockCount", firstNode.TextBlockCounts[i].ToString());
-            textBlock.Annotation.Features.SetFeatureValue("BPR_nodeLocation", firstNode.NodeLocation.ToString());
-            textBlock.Annotation.Features.SetFeatureValue("BPR_nodeDocumentCount", firstNode.NodeDocumentCount.ToString());
-            textBlock.Annotation.Features.SetFeatureValue("BPR_urlPart", firstNode.UrlPart);
-            textBlock.Annotation.Features.SetFeatureValue("BPR_pathInfo", pathInfo);
+            textBlock.Annotation.Features.SetFeatureValue("bprNodeBlockCount", firstNode.TextBlockCounts[i].ToString());
+            textBlock.Annotation.Features.SetFeatureValue("bprNodeLocation", firstNode.NodeLocation.ToString());
+            textBlock.Annotation.Features.SetFeatureValue("bprNodeDocumentCount", firstNode.NodeDocumentCount.ToString());
+            textBlock.Annotation.Features.SetFeatureValue("bprUrlPart", firstNode.UrlPart);
+            textBlock.Annotation.Features.SetFeatureValue("bprPathInfo", pathInfo);
             if (hType != HeuristicsType.Simple)
             {
-                textBlock.Annotation.Features.SetFeatureValue("BPR_contentVsBoileplateVotes", heurResult.Second);
+                textBlock.Annotation.Features.SetFeatureValue("bprContentVsBoileplateVotes", heurResult.Second);
             }
         }
 
@@ -261,10 +261,10 @@ namespace Latino.Workflows.TextMining
                 {
                     try
                     {
-                        string contentType = document.Features.GetFeatureValue("_contentType");
+                        string contentType = document.Features.GetFeatureValue("contentType");
                         if (contentType != "Text") { continue; }
-                        string docUrl = document.Features.GetFeatureValue("_responseUrl");
-                        string urlKey = document.Features.GetFeatureValue("_urlKey");
+                        string docUrl = document.Features.GetFeatureValue("responseUrl");
+                        string urlKey = document.Features.GetFeatureValue("urlKey");
                         TextBlock[] blocks = document.GetAnnotatedBlocks(mBlockSelector);
                         ArrayList<ulong> hashCodes = new ArrayList<ulong>();
                         for (int i = 0; i < blocks.Length; i++)
@@ -272,9 +272,9 @@ namespace Latino.Workflows.TextMining
                             TextBlock block = blocks[i];
                             hashCodes.Add(UrlTree.ComputeHashCode(block.Text, /*alphaOnly=*/true));
                         }
-                        string domainName = document.Features.GetFeatureValue("_domainName");
+                        string domainName = document.Features.GetFeatureValue("domainName");
                         bool fullPath = urlKey.Contains("?");
-                        string documentId = new Guid(document.Features.GetFeatureValue("_guid")).ToString("N");
+                        string documentId = new Guid(document.Features.GetFeatureValue("guid")).ToString("N");
                         AddToUrlTree(docUrl, hashCodes, fullPath, documentId, domainName);
                         corpusHashCodes.Add(hashCodes);
                     }
@@ -288,13 +288,13 @@ namespace Latino.Workflows.TextMining
                 {
                     try
                     {
-                        string contentType = document.Features.GetFeatureValue("_contentType");
+                        string contentType = document.Features.GetFeatureValue("contentType");
                         if (contentType != "Text") { continue; }
-                        string docUrl = document.Features.GetFeatureValue("_responseUrl");
-                        string urlKey = document.Features.GetFeatureValue("_urlKey");
+                        string docUrl = document.Features.GetFeatureValue("responseUrl");
+                        string urlKey = document.Features.GetFeatureValue("urlKey");
                         TextBlock[] blocks = document.GetAnnotatedBlocks(mBlockSelector);
                         ArrayList<ulong> hashCodes = corpusHashCodes[docIdx++];
-                        string domainName = document.Features.GetFeatureValue("_domainName");
+                        string domainName = document.Features.GetFeatureValue("domainName");
                         UrlTree urlTree = GetDomainInfo(domainName).First;
                         UrlTree.NodeInfo[] result;
                         lock (urlTree)
@@ -307,7 +307,7 @@ namespace Latino.Workflows.TextMining
                             string pathInfo = GetPathInfo(result, i);
                             SetBlockAnnotation(document, result, mHeuristicsType, i, pathInfo, block);
                         }
-                        document.Features.SetFeatureValue("BPR_heuristicsType", mHeuristicsType.ToString());
+                        document.Features.SetFeatureValue("bprHeuristicsType", mHeuristicsType.ToString());
                     }
                     catch (Exception exception)
                     {

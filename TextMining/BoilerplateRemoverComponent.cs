@@ -36,7 +36,7 @@ namespace Latino.Workflows.WebMining
 
         protected override void ProcessDocument(Document document)
         {
-            string contentType = document.Features.GetFeatureValue("_contentType");
+            string contentType = document.Features.GetFeatureValue("contentType");
             if (contentType != "Html") { return; } 
             try
             {
@@ -54,7 +54,7 @@ namespace Latino.Workflows.WebMining
                     }
                 }
                 document.Text = text.ToString();
-                document.Features.SetFeatureValue("_contentType", "Text");
+                document.Features.SetFeatureValue("contentType", "Text");
             }
             catch (Exception exception)
             {

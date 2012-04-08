@@ -520,9 +520,8 @@ namespace Latino.Workflows.TextMining
 
         // *** Output HTML ***
 
-        private static Set<string> dontTruncFeatures
-            = new Set<string>(new string[] { "link", "_responseUrl", "pubDate", "_mimeType", "_contentType", 
-                "_charSet", "_contentLength", "_guid", "_time", "detectedLanguage", "normalizedResponseUrl" });
+        private static Set<string> uriFeatures
+            = new Set<string>(new string[] { "link", "responseUrl", "urlKey" });
 
         internal void MakeHtmlPage(TextWriter document, bool inlineCss, ArrayList<TreeNode<string>> annotationTreeList)
         {
@@ -535,7 +534,7 @@ namespace Latino.Workflows.TextMining
             foreach (KeyValuePair<string, string> f in this.Features)
             {
                 string val = f.Value;
-                if (!dontTruncFeatures.Contains(f.Key))
+                if (!uriFeatures.Contains(f.Key))
                 {
                     val = Utils.Truncate(f.Value, 100) + (f.Value.Length > 100 ? " ..." : "");
                 }                

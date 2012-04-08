@@ -219,12 +219,12 @@ namespace Latino.Workflows.WebMining
                             mHistory.AddToHistory(guid, mSiteId);
                             return;
                         }
-                        itemAttr.Add("_responseUrl", responseUrl);
-                        itemAttr.Add("_mimeType", mimeType);
-                        itemAttr.Add("_contentType", contentType.ToString());
+                        itemAttr.Add("responseUrl", responseUrl);
+                        itemAttr.Add("mimeType", mimeType);
+                        itemAttr.Add("contentType", contentType.ToString());
                         if (charSet == null) { charSet = "ISO-8859-1"; }
-                        itemAttr.Add("_charSet", charSet);
-                        itemAttr.Add("_contentLength", bytes.Length.ToString());
+                        itemAttr.Add("charSet", charSet);
+                        itemAttr.Add("contentLength", bytes.Length.ToString());
                         if (contentType == ContentType.Binary)
                         {
                             // save as base64-encoded binary data
@@ -252,8 +252,8 @@ namespace Latino.Workflows.WebMining
                             content = itemAttr["title"];
                         }
                     }
-                    itemAttr.Add("_guid", guid.ToString());
-                    itemAttr.Add("_time", time.ToString(Utils.DATE_TIME_SIMPLE));
+                    itemAttr.Add("guid", guid.ToString());
+                    itemAttr.Add("time", time.ToString(Utils.DATE_TIME_SIMPLE));
                     Document document = new Document(name, content);
                     foreach (KeyValuePair<string, string> attr in itemAttr)
                     {
@@ -390,12 +390,12 @@ namespace Latino.Workflows.WebMining
                         }
                         reader.Close();
                         channelAttr.Add("siteId", mSiteId);
-                        channelAttr.Add("_provider", GetType().ToString());
-                        channelAttr.Add("_sourceUrl", url);
-                        if (mIncludeRssXml) { channelAttr.Add("_source", xml); }
-                        channelAttr.Add("_timeBetweenPolls", TimeBetweenPolls.ToString());
-                        channelAttr.Add("_timeStart", timeStart.ToString(Utils.DATE_TIME_SIMPLE));
-                        channelAttr.Add("_timeEnd", DateTime.Now.ToString(Utils.DATE_TIME_SIMPLE));
+                        channelAttr.Add("provider", GetType().ToString());
+                        channelAttr.Add("sourceUrl", url);
+                        if (mIncludeRssXml) { channelAttr.Add("source", xml); }
+                        channelAttr.Add("timeBetweenPolls", TimeBetweenPolls.ToString());
+                        channelAttr.Add("timeStart", timeStart.ToString(Utils.DATE_TIME_SIMPLE));
+                        channelAttr.Add("timeEnd", DateTime.Now.ToString(Utils.DATE_TIME_SIMPLE));
                         int newItems = 0;
                         foreach (DocumentCorpus corpus in corpora)
                         {
