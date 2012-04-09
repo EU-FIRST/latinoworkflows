@@ -301,12 +301,17 @@ namespace Latino.Workflows.TextMining
                         {
                             result = urlTree.Query(docUrl, hashCodes, mMinNodeDocCount, /*fullPath=*/urlKey.Contains("?"));
                         }
+                        int bpCharCount = 0, contentCharCount = 0;
                         for (int i = 0; i < blocks.Length; i++)
                         {
                             TextBlock block = blocks[i];
-                            string pathInfo = GetPathInfo(result, i);
+                            string pathInfo = GetPathInfo(result, i);                            
                             SetBlockAnnotation(document, result, mHeuristicsType, i, pathInfo, block);
+                            if (block.Annotation.Type == "TextBlock/Boilerplate") { bpCharCount += block.Text.Length; }
+                            else { contentCharCount += block.Text.Length; }
                         }
+                        document.Features.SetFeatureValue("bprBoilerplateCharCount", bpCharCount.ToString());
+                        document.Features.SetFeatureValue("bprContentCharCount", contentCharCount.ToString());
                         document.Features.SetFeatureValue("bprHeuristicsType", mHeuristicsType.ToString());
                     }
                     catch (Exception exception)

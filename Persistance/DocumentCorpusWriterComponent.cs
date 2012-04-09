@@ -114,7 +114,9 @@ namespace Latino.Workflows.Persistance
                 foreach (Document document in corpus.Documents)
                 {
                     string documentId = new Guid(document.Features.GetFeatureValue("guid")).ToString("N");
-                    success = mConnection.ExecuteNonQuery("insert into Documents (id, corpusId, name, description, category, link, responseUrl, urlKey, time, pubDate, mimeType, contentType, charSet, contentLength, detectedLanguage, detectedCharRange, domain, dump) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    string bpCharCountStr = document.Features.GetFeatureValue("bprBoilerplateCharCount");
+                    string contentCharCountStr = document.Features.GetFeatureValue("bprContentCharCount");
+                    success = mConnection.ExecuteNonQuery("insert into Documents (id, corpusId, name, description, category, link, responseUrl, urlKey, time, pubDate, mimeType, contentType, charSet, contentLength, detectedLanguage, detectedCharRange, domain, bpCharCount, contentCharCount, dump) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         documentId,
                         corpusId,
                         Utils.Truncate(document.Name, 400),
@@ -128,10 +130,12 @@ namespace Latino.Workflows.Persistance
                         Utils.Truncate(document.Features.GetFeatureValue("mimeType"), 80),
                         Utils.Truncate(document.Features.GetFeatureValue("contentType"), 40),
                         Utils.Truncate(document.Features.GetFeatureValue("charSet"), 40),
-                        Convert.ToInt64(document.Features.GetFeatureValue("contentLength")),
+                        Convert.ToInt32(document.Features.GetFeatureValue("contentLength")),
                         Utils.Truncate(document.Features.GetFeatureValue("detectedLanguage"), 100),
                         Utils.Truncate(document.Features.GetFeatureValue("detectedCharRange"), 100),                        
                         Utils.Truncate(document.Features.GetFeatureValue("domainName"), 100),
+                        bpCharCountStr == null ? null : (object)Convert.ToInt32(bpCharCountStr),
+                        contentCharCountStr == null ? null : (object)Convert.ToInt32(contentCharCountStr),
                         mIsDumpWriter
                     );
                     if (!success) { mLogger.Warn("ConsumeData", "Unable to write to database."); }
