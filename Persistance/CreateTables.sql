@@ -1,30 +1,13 @@
-/****** Object:  Table [dbo].[Corpora]    Script Date: 04/08/2011 19:46:53 ******/
+/****** Object:  Table [dbo].[Corpora] ******/
 DROP TABLE [dbo].[Corpora]
 GO
-/****** Object:  Table [dbo].[Documents]    Script Date: 04/08/2011 19:46:53 ******/
+/****** Object:  Table [dbo].[Documents] ******/
 DROP TABLE [dbo].[Documents]
 GO
-/****** Object:  Table [dbo].[TextBlocks]    Script Date: 04/02/2012 19:39:36 ******/
+/****** Object:  Table [dbo].[TextBlocks] ******/
 DROP TABLE [dbo].[TextBlocks]
 GO
-/****** Object:  Table [dbo].[UrlHistory]    Script Date: 04/07/2012 15:47:12 ******/
-DROP TABLE [dbo].[UrlHistory]
-GO
-/****** Object:  Table [dbo].[UrlHistory]    Script Date: 04/07/2012 15:47:12 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-SET ANSI_PADDING ON
-GO
-CREATE TABLE [dbo].[UrlHistory](
-	[id] [char](32) NOT NULL,
-	[time] [char](26) NOT NULL
-) ON [PRIMARY]
-GO
-SET ANSI_PADDING OFF
-GO
-/****** Object:  Table [dbo].[TextBlocks]    Script Date: 04/02/2012 19:39:36 ******/
+/****** Object:  Table [dbo].[TextBlocks] ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -33,13 +16,12 @@ SET ANSI_PADDING ON
 GO
 CREATE TABLE [dbo].[TextBlocks](
 	[id] [char](32) NOT NULL,
-	[hashCodes] [text] NOT NULL,
-	[time] [char](26) NOT NULL
+	[hashCodes] [text] NOT NULL
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
 SET ANSI_PADDING OFF
 GO
-/****** Object:  Table [dbo].[Documents]    Script Date: 04/08/2011 19:46:53 ******/
+/****** Object:  Table [dbo].[Documents] ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -71,7 +53,7 @@ CREATE TABLE [dbo].[Documents](
 GO
 SET ANSI_PADDING OFF
 GO
-/****** Object:  Table [dbo].[Corpora]    Script Date: 04/08/2011 19:46:53 ******/
+/****** Object:  Table [dbo].[Corpora] ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON

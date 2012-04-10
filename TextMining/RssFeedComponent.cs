@@ -475,7 +475,7 @@ namespace Latino.Workflows.WebMining
                     {
                         DataRow row = table.Rows[i];
                         Guid itemId = new Guid((string)row["id"]);
-                        Console.WriteLine(itemId);
+                        //Console.WriteLine(itemId);
                         mHistory.First.Add(itemId);
                         mHistory.Second.Enqueue(itemId);
                     }

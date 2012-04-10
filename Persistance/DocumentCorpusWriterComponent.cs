@@ -68,12 +68,14 @@ namespace Latino.Workflows.Persistance
             XmlWriter writer = XmlWriter.Create(stringWriter = new StringWriter(), xmlSettings); 
             corpus.WriteXml(writer, /*writeTopElement=*/true);
             writer.Close();
-            DateTime now = DateTime.Now;
-            string recordId = now.ToString("HH_mm_ss_") + corpusId;
+            //DateTime now = DateTime.Now;
+            //string recordId = now.ToString("HH_mm_ss_") + corpusId;
+            DateTime timeEnd = DateTime.Parse(corpus.Features.GetFeatureValue("timeEnd"));
+            string recordId = timeEnd.ToString("HH_mm_ss_") + corpusId;
             // write to file
             if (mXmlDataRoot != null)
-            {                
-                string path = string.Format(@"{3}\{0}\{1}\{2}\", now.Year, now.Month, now.Day, mXmlDataRoot.TrimEnd('\\'));                
+            {
+                string path = string.Format(@"{3}\{0}\{1}\{2}\", timeEnd.Year, timeEnd.Month, timeEnd.Day, mXmlDataRoot.TrimEnd('\\'));                
                 if (!Directory.Exists(path))
                 {
                     lock (mLock)
@@ -87,7 +89,7 @@ namespace Latino.Workflows.Persistance
             }
             if (mHtmlDataRoot != null)
             {
-                string pathHtml = string.Format(@"{4}\{0}\{1}\{2}\{3}\", now.Year, now.Month, now.Day, recordId, mHtmlDataRoot.TrimEnd('\\'));
+                string pathHtml = string.Format(@"{4}\{0}\{1}\{2}\{3}\", timeEnd.Year, timeEnd.Month, timeEnd.Day, recordId, mHtmlDataRoot.TrimEnd('\\'));
                 if (!Directory.Exists(pathHtml))
                 {
                     lock (mLock)

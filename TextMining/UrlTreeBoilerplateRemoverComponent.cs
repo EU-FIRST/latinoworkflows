@@ -73,9 +73,9 @@ namespace Latino.Workflows.TextMining
         private static int mMinQueueSize // TODO: make configurable
             = 100;
         private static int mMaxQueueSize // TODO: make configurable
-            = 10000;
+            = 10000;//20000;
         private static int mHistoryAgeDays // TODO: make configurable
-            = 14;
+            = 14;//30;
 
         private DatabaseConnection mDbConnection
             = null;
@@ -102,27 +102,31 @@ namespace Latino.Workflows.TextMining
             mDomainInfo.Clear();            
             DataTable domainsTbl = dbConnection.ExecuteQuery("select distinct domain from Documents where dump = 0");
             int domainCount = 0;
-            DateTime then = DateTime.Now - new TimeSpan(mHistoryAgeDays, 0, 0, 0);
             foreach (DataRow row in domainsTbl.Rows)
             {
                 string domainName = (string)row["domain"];
-                DataTable domainInfoTbl = dbConnection.ExecuteQuery(string.Format("select top {0} tb.hashCodes, tb.time, d.responseUrl, d.urlKey from TextBlocks tb, Documents d where d.id = tb.id and d.domain = ? and tb.time >= ? order by tb.time desc", mMaxQueueSize), domainName, then.ToString(Utils.DATE_TIME_SIMPLE));
+                DataTable domainInfoTbl = dbConnection.ExecuteQuery(string.Format("select top {0} tb.hashCodes, d.time, d.responseUrl, d.urlKey from TextBlocks tb, Documents d where d.id = tb.id and d.domain = ? order by d.time desc", mMaxQueueSize), domainName);
                 if (domainInfoTbl.Rows.Count == 0) { continue; }
+                DateTime then = DateTime.Parse((string)domainInfoTbl.Rows[0]["time"]) - new TimeSpan(mHistoryAgeDays, 0, 0, 0); 
                 domainCount++;
                 Pair<UrlTree, Queue<HistoryEntry>> domainInfo = GetDomainInfo(domainName);
                 for (int j = domainInfoTbl.Rows.Count - 1; j >= 0; j--)
                 {
-                    string hashCodesBase64 = (string)domainInfoTbl.Rows[j]["hashCodes"];
-                    string responseUrl = (string)domainInfoTbl.Rows[j]["responseUrl"];
-                    string urlKey = (string)domainInfoTbl.Rows[j]["urlKey"];
                     string timeStr = (string)domainInfoTbl.Rows[j]["time"];
-                    bool fullPath = urlKey.Contains("?");
-                    byte[] buffer = Convert.FromBase64String(hashCodesBase64);
-                    BinarySerializer memSer = new BinarySerializer(new MemoryStream(buffer));
-                    ArrayList<ulong> hashCodes = new ArrayList<ulong>(memSer);
-                    HistoryEntry entry = new HistoryEntry(responseUrl, hashCodes, fullPath, DateTime.Parse(timeStr));                    
-                    domainInfo.First.Insert(responseUrl, hashCodes, mMinNodeDocCount, fullPath, /*insertUnique=*/true);
-                    domainInfo.Second.Enqueue(entry);
+                    DateTime time = DateTime.Parse(timeStr);
+                    if (time >= then)
+                    {
+                        string hashCodesBase64 = (string)domainInfoTbl.Rows[j]["hashCodes"];
+                        string responseUrl = (string)domainInfoTbl.Rows[j]["responseUrl"];
+                        string urlKey = (string)domainInfoTbl.Rows[j]["urlKey"];
+                        byte[] buffer = Convert.FromBase64String(hashCodesBase64);
+                        BinarySerializer memSer = new BinarySerializer(new MemoryStream(buffer));
+                        ArrayList<ulong> hashCodes = new ArrayList<ulong>(memSer);
+                        bool fullPath = urlKey.Contains("?");
+                        HistoryEntry entry = new HistoryEntry(responseUrl, hashCodes, fullPath, time);
+                        domainInfo.First.Insert(responseUrl, hashCodes, mMinNodeDocCount, fullPath, /*insertUnique=*/true);
+                        domainInfo.Second.Enqueue(entry);
+                    }
                 }
             }
             logger.Info("InitializeHistory", "Loaded history for {0} distinct domains.", domainCount);            
@@ -159,7 +163,7 @@ namespace Latino.Workflows.TextMining
             }
             else
             {
-                int voters = result.Length > 3 ? result.Length - 2 : 1;
+                int voters = result.Length > 3 ? result.Length - 2 : 1; // *** fix this (use effective top-level domain list)
                 int bp = 0;
                 int ct = 0;
                 for (int j = 0; j < voters; j++)
@@ -198,9 +202,8 @@ namespace Latino.Workflows.TextMining
             return pathInfo.TrimEnd(' ', ',');
         }
 
-        private void AddToUrlTree(string responseUrl, ArrayList<ulong> hashCodes, bool fullPath, string documentId, string domainName)
+        private void AddToUrlTree(string responseUrl, ArrayList<ulong> hashCodes, bool fullPath, string documentId, string domainName, DateTime time)
         {
-            DateTime time = DateTime.Now;
             Pair<UrlTree, Queue<HistoryEntry>> domainInfo = GetDomainInfo(domainName);
             UrlTree urlTree = domainInfo.First;
             Queue<HistoryEntry> queue = domainInfo.Second;
@@ -232,7 +235,7 @@ namespace Latino.Workflows.TextMining
                 historyEntry.mHashCodes.Save(memSer);
                 byte[] buffer = ((MemoryStream)memSer.Stream).GetBuffer();
                 string hashCodesBase64 = Convert.ToBase64String(buffer);
-                mDbConnection.ExecuteNonQuery("insert into TextBlocks (id, hashCodes, time) values (?, ?, ?)", documentId, hashCodesBase64, time.ToString(Utils.DATE_TIME_SIMPLE));
+                mDbConnection.ExecuteNonQuery("insert into TextBlocks (id, hashCodes) values (?, ?)", documentId, hashCodesBase64);
             }
         }
 
@@ -275,7 +278,7 @@ namespace Latino.Workflows.TextMining
                         string domainName = document.Features.GetFeatureValue("domainName");
                         bool fullPath = urlKey.Contains("?");
                         string documentId = new Guid(document.Features.GetFeatureValue("guid")).ToString("N");
-                        AddToUrlTree(docUrl, hashCodes, fullPath, documentId, domainName);
+                        AddToUrlTree(docUrl, hashCodes, fullPath, documentId, domainName, DateTime.Parse(document.Features.GetFeatureValue("time")));
                         corpusHashCodes.Add(hashCodes);
                     }
                     catch (Exception exception)

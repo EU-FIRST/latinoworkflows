@@ -52,9 +52,9 @@ namespace Latino.Workflows.WebMining
         private static int mMinQueueSize // TODO: make configurable
             = 100;
         private static int mMaxQueueSize // TODO: make configurable
-            = 10000;
+            = 10000;//20000;
         private static int mHistoryAgeDays // TODO: make configurable
-            = 14;
+            = 14;//30;
 
         private static UrlNormalizer mUrlNormalizer
             = new UrlNormalizer();
@@ -66,19 +66,8 @@ namespace Latino.Workflows.WebMining
         private Set<IDataConsumer> mDumpDataConsumers
             = new Set<IDataConsumer>();
 
-        private DatabaseConnection mDbConnection
-            = null;
-
         public UrlFilterComponent() : base(typeof(UrlFilterComponent))
         {
-        }
-
-        public UrlFilterComponent(string dbConnectionString) : base(typeof(UrlFilterComponent))
-        {
-            Utils.ThrowException(dbConnectionString == null ? new ArgumentNullException("dbConnectionString") : null);
-            mDbConnection = new DatabaseConnection();
-            mDbConnection.ConnectionString = dbConnectionString;
-            mDbConnection.Connect();
         }
 
         public static void InitializeHistory(DatabaseConnection dbConnection)
@@ -89,20 +78,24 @@ namespace Latino.Workflows.WebMining
             mUrlInfo.Clear();
             DataTable domainsTbl = dbConnection.ExecuteQuery("select distinct domain from Documents where dump = 0");
             int domainCount = 0;
-            DateTime then = DateTime.Now - new TimeSpan(mHistoryAgeDays, 0, 0, 0);
             foreach (DataRow row in domainsTbl.Rows)
             {
                 string domainName = (string)row["domain"];
-                DataTable urlInfoTbl = dbConnection.ExecuteQuery(string.Format("select top {0} h.time, d.urlKey from UrlHistory h, Documents d where d.id = h.id and d.domain = ? and h.time >= ? order by h.time desc", mMaxQueueSize), domainName, then.ToString(Utils.DATE_TIME_SIMPLE));
+                DataTable urlInfoTbl = dbConnection.ExecuteQuery(string.Format("select top {0} time, urlKey from Documents where dump = 0 and domain = ? order by time desc", mMaxQueueSize), domainName);
                 if (urlInfoTbl.Rows.Count == 0) { continue; }
+                DateTime then = DateTime.Parse((string)urlInfoTbl.Rows[0]["time"]) - new TimeSpan(mHistoryAgeDays, 0, 0, 0); 
                 domainCount++;
                 Pair<Set<string>, Queue<HistoryEntry>> urlInfo = GetUrlInfo(domainName);
                 for (int j = urlInfoTbl.Rows.Count - 1; j >= 0; j--)
                 {
                     string urlKey = (string)urlInfoTbl.Rows[j]["urlKey"];
                     string timeStr = (string)urlInfoTbl.Rows[j]["time"];
-                    urlInfo.First.Add(urlKey);
-                    urlInfo.Second.Enqueue(new HistoryEntry(urlKey, DateTime.Parse(timeStr)));
+                    DateTime time = DateTime.Parse(timeStr);
+                    if (time >= then)
+                    {
+                        urlInfo.First.Add(urlKey);
+                        urlInfo.Second.Enqueue(new HistoryEntry(urlKey, time));
+                    }
                 }
             }
             logger.Info("InitializeHistory", "Loaded history for {0} distinct domains.", domainCount);            
@@ -157,9 +150,8 @@ namespace Latino.Workflows.WebMining
             }
         }
 
-        private void AddUrlToCache(string documentId, string urlKey, Pair<Set<string>, Queue<HistoryEntry>> urlInfo)
+        private void AddUrlToCache(string documentId, string urlKey, DateTime time, Pair<Set<string>, Queue<HistoryEntry>> urlInfo)
         {
-            DateTime time = DateTime.Now;
             lock (urlInfo.First)
             {
                 urlInfo.First.Add(urlKey);
@@ -179,10 +171,6 @@ namespace Latino.Workflows.WebMining
                         }
                     }
                 }                
-            }
-            if (mDbConnection != null)
-            {
-                mDbConnection.ExecuteNonQuery("insert into UrlHistory (id, time) values (?, ?)", documentId, time.ToString(Utils.DATE_TIME_SIMPLE));
             }
         }
 
@@ -222,7 +210,7 @@ namespace Latino.Workflows.WebMining
                         else
                         {
                             string documentId = new Guid(document.Features.GetFeatureValue("guid")).ToString("N");
-                            AddUrlToCache(documentId, urlKey, urlInfo);
+                            AddUrlToCache(documentId, urlKey, DateTime.Parse(document.Features.GetFeatureValue("time")), urlInfo);
                         }
                     }
                     catch (Exception exception)
@@ -245,18 +233,6 @@ namespace Latino.Workflows.WebMining
             {
                 mLogger.Error("ProcessData", exception);
                 return data;
-            }
-        }
-
-        // *** IDisposable interface implementation ***
-
-        public new void Dispose()
-        {
-            base.Dispose();
-            if (mDbConnection != null)
-            {
-                try { mDbConnection.Disconnect(); }
-                catch { }
             }
         }
     }
