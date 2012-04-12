@@ -6,7 +6,7 @@
  *  Desc:    RSS feed polling component
  *  Created: Dec-2010
  *
- *  Authors: Miha Grcar
+ *  Author:  Miha Grcar
  *
  ***************************************************************************/
 
@@ -36,6 +36,12 @@ namespace Latino.Workflows.WebMining
     */
     public class RssFeedComponent : StreamDataProducerPoll
     {
+        /* .-----------------------------------------------------------------------
+           |
+           |  Enum ContentType
+           |
+           '-----------------------------------------------------------------------
+        */
         [Flags]
         private enum ContentType
         {
@@ -201,7 +207,7 @@ namespace Latino.Workflows.WebMining
                     if (itemAttr.ContainsKey("link") && itemAttr["link"].Trim() != "")
                     {
                         // get referenced Web page
-                        mLogger.Info("ProcessItem", "Getting HTML from {0} ...", itemAttr["link"]);
+                        mLogger.Info("ProcessItem", "Getting HTML from {0} ...", Utils.ToOneLine(itemAttr["link"], /*compact=*/true));
                         string mimeType, charSet;
                         string responseUrl;
                         CookieContainer cookies = null;
@@ -475,7 +481,6 @@ namespace Latino.Workflows.WebMining
                     {
                         DataRow row = table.Rows[i];
                         Guid itemId = new Guid((string)row["id"]);
-                        //Console.WriteLine(itemId);
                         mHistory.First.Add(itemId);
                         mHistory.Second.Enqueue(itemId);
                     }

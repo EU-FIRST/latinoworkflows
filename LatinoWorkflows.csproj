@@ -59,6 +59,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DocumentStreamReaderComponent.cs" />
+    <Compile Include="DocumentFilterComponent.cs" />
     <Compile Include="Messenger.cs" />
     <Compile Include="PassOnComponent.cs" />
     <Compile Include="Semantics\SemanticAnnotationComponent.cs" />
@@ -93,6 +95,7 @@
     <Compile Include="TextMining\SentenceSplitterComponent.cs" />
     <Compile Include="TextMining\UrlFilterComponent.cs" />
     <Compile Include="TextMining\UrlTreeBoilerplateRemoverComponent.cs" />
+    <Compile Include="WebSiteDispatcher.cs" />
     <Compile Include="WorkflowUtils.cs" />
     <Compile Include="ZeroMqEmitterComponent.cs" />
     <EmbeddedResource Include="TextMining\DocumentCorpus\Resources\DocumentTemplate.htm" />

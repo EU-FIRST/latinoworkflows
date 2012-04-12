@@ -163,7 +163,13 @@ namespace Latino.Workflows.TextMining
             }
             else
             {
-                int voters = result.Length > 3 ? result.Length - 2 : 1; // *** fix this (use effective top-level domain list)
+                int voters = 0;
+                foreach (UrlTree.NodeInfo nodeInfo in result)
+                {
+                    if ((nodeInfo.NodeLocation & UrlTree.NodeLocation.WithinTld) != 0 || (nodeInfo.NodeLocation & UrlTree.NodeLocation.Root) != 0) { break; }
+                    voters++;
+                }
+                if (voters == 0) { voters = 1; }
                 int bp = 0;
                 int ct = 0;
                 for (int j = 0; j < voters; j++)
@@ -234,7 +240,7 @@ namespace Latino.Workflows.TextMining
                 BinarySerializer memSer = new BinarySerializer();
                 historyEntry.mHashCodes.Save(memSer);
                 byte[] buffer = ((MemoryStream)memSer.Stream).GetBuffer();
-                string hashCodesBase64 = Convert.ToBase64String(buffer);
+                string hashCodesBase64 = Convert.ToBase64String(buffer, 0, (int)memSer.Stream.Position);
                 mDbConnection.ExecuteNonQuery("insert into TextBlocks (id, hashCodes) values (?, ?)", documentId, hashCodesBase64);
             }
         }
