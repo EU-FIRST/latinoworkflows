@@ -6,7 +6,7 @@
  *  Desc:    ZeroMQ emitter component
  *  Created: Sep-2011
  *
- *  Authors: Miha Grcar
+ *  Author:  Miha Grcar
  *
  ***************************************************************************/
 

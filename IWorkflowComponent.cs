@@ -6,7 +6,7 @@
  *  Desc:    LATINO workflow component interface
  *  Created: Apr-2011
  *
- *  Authors: Miha Grcar
+ *  Author:  Miha Grcar
  *
  ***************************************************************************/
 

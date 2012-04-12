@@ -6,7 +6,7 @@
  *  Desc:    Annotated text block data structure
  *  Created: Nov-2010
  *
- *  Authors: Miha Grcar
+ *  Author:  Miha Grcar
  *
  ***************************************************************************/
 

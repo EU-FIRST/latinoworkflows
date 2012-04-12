@@ -6,7 +6,7 @@
  *  Desc:    Regex-based tokenizer component
  *  Created: Dec-2010
  *
- *  Authors: Miha Grcar
+ *  Author:  Miha Grcar
  *
  ***************************************************************************/
 

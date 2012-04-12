@@ -6,7 +6,7 @@
  *  Desc:    Generic (customizable) stream data consumer
  *  Created: Dec-2010
  *
- *  Authors: Miha Grcar
+ *  Author:  Miha Grcar
  *
  ***************************************************************************/
 

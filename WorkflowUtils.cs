@@ -6,7 +6,7 @@
  *  Desc:    Common constants and utilities 
  *  Created: Dec-2010
  *
- *  Authors: Miha Grcar
+ *  Author:  Miha Grcar
  *
  ***************************************************************************/
 

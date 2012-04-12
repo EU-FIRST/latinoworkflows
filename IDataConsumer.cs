@@ -6,7 +6,7 @@
  *  Desc:    Data consumer interface
  *  Created: Dec-2010
  *
- *  Authors: Miha Grcar
+ *  Author:  Miha Grcar
  *
  ***************************************************************************/
 

@@ -6,7 +6,7 @@
  *  Desc:    Language detector component 
  *  Created: Oct-2011
  *
- *  Authors: Miha Grcar
+ *  Author:  Miha Grcar
  *
  ***************************************************************************/
 

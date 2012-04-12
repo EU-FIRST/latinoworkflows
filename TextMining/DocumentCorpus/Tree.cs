@@ -6,7 +6,7 @@
  *  Desc:    Auxiliary classes for Document/DocumentCorpus HTML output
  *  Created: Dec-2010
  *
- *  Authors: Jasmina Smailovic
+ *  Author:  Jasmina Smailovic
  *
  ***************************************************************************/
 

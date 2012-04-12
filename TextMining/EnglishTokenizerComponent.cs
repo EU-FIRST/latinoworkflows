@@ -6,7 +6,7 @@
  *  Desc:    English tokenizer component
  *  Created: Jul-2011
  *
- *  Authors: Miha Grcar
+ *  Author:  Miha Grcar
  *
  ***************************************************************************/
 

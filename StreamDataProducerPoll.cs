@@ -6,7 +6,7 @@
  *  Desc:    Stream data producer base class (polling)
  *  Created: Dec-2010
  *
- *  Authors: Miha Grcar
+ *  Author:  Miha Grcar
  *
  ***************************************************************************/
 

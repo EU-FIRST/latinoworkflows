@@ -6,7 +6,7 @@
  *  Desc:    Stream data producer base class
  *  Created: Dec-2010
  *
- *  Authors: Miha Grcar
+ *  Author:  Miha Grcar
  *
  ***************************************************************************/
 
