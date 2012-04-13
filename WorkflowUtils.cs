@@ -63,7 +63,18 @@ namespace Latino.Workflows
 
         public static int GetBranchLoadMax(IWorkflowComponent component)
         {
-            if (component is StreamDataProcessor)
+            if (component is StreamDataProducer)
+            {
+                StreamDataProducer producer = (StreamDataProducer)component;
+                int load = 0;
+                foreach (IWorkflowComponent subscriber in producer.SubscribedConsumers)
+                {
+                    int subscriberLoad = GetBranchLoadMax(subscriber);
+                    if (subscriberLoad > load) { load = subscriberLoad; }
+                }
+                return load;
+            }
+            else if (component is StreamDataProcessor)
             {
                 StreamDataProcessor processor = (StreamDataProcessor)component;
                 int load = processor.Load;
@@ -84,7 +95,17 @@ namespace Latino.Workflows
 
         public static int GetBranchLoadSum(IWorkflowComponent component)
         {
-            if (component is StreamDataProcessor)
+            if (component is StreamDataProducer)
+            {
+                StreamDataProducer producer = (StreamDataProducer)component;
+                int load = 0;
+                foreach (IWorkflowComponent subscriber in producer.SubscribedConsumers)
+                {
+                    load += GetBranchLoadSum(subscriber);
+                }
+                return load;
+            }
+            else if (component is StreamDataProcessor)
             {
                 StreamDataProcessor processor = (StreamDataProcessor)component;
                 int load = processor.Load;

@@ -13,6 +13,8 @@
 using System;
 using System.IO;
 using System.Xml;
+using System.Text;
+using System.Threading;
 using Latino.Workflows.TextMining;
 
 namespace Latino.Workflows.WebMining
@@ -35,7 +37,7 @@ namespace Latino.Workflows.WebMining
 
         public DocumentStreamReaderComponent(string rootPath) : base(typeof(DocumentStreamReaderComponent))
         {
-            TimeBetweenPolls = 0; // *** increase this to at least 1?
+            TimeBetweenPolls = 1;
             // collect data directories
             mDataDirs = Directory.GetDirectories(rootPath, "*.*", SearchOption.AllDirectories);
             Array.Sort(mDataDirs);
@@ -105,8 +107,19 @@ namespace Latino.Workflows.WebMining
                 {
                     doc.Features.RemoveFeature(featureName);
                 }
+                // if there's raw data available, reset the content
+                string raw = doc.Features.GetFeatureValue("raw");
+                if (raw != null)
+                {
+                    doc.Features.SetFeatureValue("contentType", "Html");
+                    doc.Text = Encoding.GetEncoding(doc.Features.GetFeatureValue("charSet")).GetString(Convert.FromBase64String(raw));
+                }
             }
             mCurrentFileIdx++;
+            while (WorkflowUtils.GetBranchLoadMax(this) > 10) // I'm giving it all she's got, Captain!
+            {
+                Thread.Sleep(1000);
+            }            
             return corpus;
         }
     }

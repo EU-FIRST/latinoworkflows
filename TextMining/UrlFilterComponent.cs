@@ -204,7 +204,7 @@ namespace Latino.Workflows.WebMining
                         if (cached || blacklisted)
                         {
                             dumpDocumentList.Add(document);
-                            mLogger.Info("ProcessDocument", "Document dumped (urlKey={0}).", urlKey);
+                            mLogger.Info("ProcessDocument", "Document rejected: already processed (id={0}).", document.Features.GetFeatureValue("guid"));
                             continue;
                         }
                         else

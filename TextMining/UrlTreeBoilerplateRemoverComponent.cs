@@ -321,7 +321,7 @@ namespace Latino.Workflows.TextMining
                         }
                         document.Features.SetFeatureValue("bprBoilerplateCharCount", bpCharCount.ToString());
                         document.Features.SetFeatureValue("bprContentCharCount", contentCharCount.ToString());
-                        document.Features.SetFeatureValue("bprHeuristicsType", mHeuristicsType.ToString());
+                        //document.Features.SetFeatureValue("bprHeuristicsType", mHeuristicsType.ToString());
                     }
                     catch (Exception exception)
                     {
