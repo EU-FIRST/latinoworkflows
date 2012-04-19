@@ -50,7 +50,7 @@ namespace Latino.Workflows.TextMining
             set { mTokenizer.TokenRegexOptions = value; }
         }
 
-        protected override void ProcessDocument(Document document)
+        public/*protected*/ override void ProcessDocument(Document document)
         {
             string contentType = document.Features.GetFeatureValue("contentType");
             if (contentType != "Text") { return; }

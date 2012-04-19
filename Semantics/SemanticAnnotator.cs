@@ -113,9 +113,9 @@ namespace Latino.Workflows.Semantics
                 }
             }
 
-            public void ReadTerms(MemoryStore mRdfStore)
+            public void ReadTerms(MemoryStore rdfStore)
             {
-                Resource[] terms = mRdfStore.SelectObjects(mUri, P_HAS_TERM);
+                Resource[] terms = rdfStore.SelectObjects(mUri, P_HAS_TERM);
                 Set<string> skipList = new Set<string>();
                 foreach (Literal term in terms)
                 {

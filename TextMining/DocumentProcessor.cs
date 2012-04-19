@@ -55,7 +55,7 @@ namespace Latino.Workflows.TextMining
             return corpus;
         }
 
-        protected virtual void ProcessDocument(Document document)
+        public/*protected*/ virtual void ProcessDocument(Document document)
         { 
         }
     }

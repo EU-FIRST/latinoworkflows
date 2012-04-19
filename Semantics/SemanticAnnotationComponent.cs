@@ -45,7 +45,7 @@ namespace Latino.Workflows.Semantics
             mAnnotator.ReadGazetteers();
         }
 
-        protected override void ProcessDocument(Document document)
+        public/*protected*/ override void ProcessDocument(Document document)
         {
             string contentType = document.Features.GetFeatureValue("contentType");
             if (contentType != "Text") { return; }
