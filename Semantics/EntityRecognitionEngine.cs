@@ -3,7 +3,7 @@
  *  This file is part of LATINO. See http://latino.sf.net
  *
  *  File:    EntityRecognitionEngine.cs
- *  Desc:    Simple ontology-based entity recognition
+ *  Desc:    Simple ontology-based entity recognition engine
  *  Created: Nov-2011
  *
  *  Author:  Miha Grcar
@@ -259,6 +259,7 @@ namespace Latino.Workflows.Semantics
 
             public void AddSentence(IEnumerable<string> tokens, IEnumerable<int> spanInfo, IEnumerable<string> posTags)
             {
+                if (mTextBlocks.Count == 0) { BeginNewTextBlock(); }
                 mTextBlocks.Last.AddSentence(tokens, spanInfo, posTags);
             }
 
@@ -606,7 +607,7 @@ namespace Latino.Workflows.Semantics
                 caseMatchingType = CaseMatchingType.IgnoreCase;
                 lemmatize = false;
                 ArrayList<string> crumbs = new ArrayList<string>(new string[] { mUri });
-                Entity[] objects = rdfStore.SelectSubjects(P_IDENTIFIED_BY, new Entity(mUri));                
+                Entity[] objects = rdfStore.SelectSubjects(P_IDENTIFIED_BY, new Entity(mUri));
                 if (objects.Length > 0)
                 {
                     Resource[] objTypes = rdfStore.SelectObjects(objects[0].Uri, P_TYPE);
@@ -663,10 +664,10 @@ namespace Latino.Workflows.Semantics
             }
         }
 
-        public void ImportRdfFromUri(string uri)
+        public void ImportRdfFromUrl(string url)
         {
             int statementCount = mRdfStore.StatementCount;
-            mRdfStore.Import(RdfXmlReader.LoadFromUri(new Uri(uri)));
+            mRdfStore.Import(RdfXmlReader.LoadFromUri(new Uri(url)));
             mLogger.Info("ImportRdfFromUri", "Imported {0} statements.", mRdfStore.StatementCount - statementCount);
         }
 
@@ -684,6 +685,34 @@ namespace Latino.Workflows.Semantics
                 mRdfStore.Import(new N3Reader(fileName));
             }
             mLogger.Info("ImportRdfFromFile", "Imported {0} statements.", mRdfStore.StatementCount - statementCount);
+        }
+
+        public string GetIdentifiedInstance(string gazetteerUri)
+        {
+            Entity[] objects = mRdfStore.SelectSubjects(P_IDENTIFIED_BY, new Entity(gazetteerUri));
+            if (objects.Length > 0) { return objects[0].Uri; }
+            return null;
+        }
+
+        public string GetInstanceClass(string instanceUri)
+        {
+            Resource[] objTypes = mRdfStore.SelectObjects(instanceUri, P_TYPE);
+            if (objTypes.Length > 0) { return objTypes[0].Uri; }
+            return null;
+        }
+
+        public ArrayList<string> GetInstanceClassPath(string instanceUri)
+        {
+            ArrayList<string> crumbs = new ArrayList<string>();
+            string instanceClass = GetInstanceClass(instanceUri);
+            crumbs.Add(instanceClass);
+            Resource[] superClass = mRdfStore.SelectObjects(instanceClass, P_SUBCLASS_OF);
+            while (superClass.Length > 0)
+            {
+                crumbs.Add(superClass[0].Uri);
+                superClass = mRdfStore.SelectObjects((Entity)superClass[0], P_SUBCLASS_OF);
+            }
+            return crumbs;
         }
 
         public void LoadGazetteers()
