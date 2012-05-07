@@ -32,6 +32,7 @@ namespace Latino.Workflows.TextMining
         public EnglishPosTaggerComponent() : base(typeof(EnglishPosTaggerComponent))
         {
             mBlockSelector = "Token";
+            mPosTagger.UnicodeMapping = true;
         }
 
         public string TokenGroupSelector

@@ -3,17 +3,17 @@
  *  This file is part of LATINO. See http://latino.sf.net
  *
  *  File:    UrlTreeBoilerplateRemoverComponent.cs
- *  Desc:    Boilerplate remover component
- *  Created: Mar-2012
+ *  Desc:    Boilerplate remover component 
+ *  Created: Apr-2012
  *
  *  Authors: Borut Sluban, Miha Grcar
  *
  ***************************************************************************/
 
 using System;
-using System.IO;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using Latino.WebMining;
 using Latino.Persistance;
 
@@ -29,18 +29,36 @@ namespace Latino.Workflows.TextMining
     {
         /* .-----------------------------------------------------------------------
            |
-           |  Class HistoryEntry
+           |  Class UrlHistoryEntry
            |
            '-----------------------------------------------------------------------
         */
-        private class HistoryEntry
+        private class UrlHistoryEntry
+        {
+            public string mUrlKey;
+            public DateTime mTime;
+
+            public UrlHistoryEntry(string urlKey, DateTime time)
+            {
+                mUrlKey = urlKey;
+                mTime = time;
+            }
+        }
+
+        /* .-----------------------------------------------------------------------
+           |
+           |  Class TextBlockHistoryEntry
+           |
+           '-----------------------------------------------------------------------
+        */
+        private class TextBlockHistoryEntry
         {
             public string mResponseUrl;
             public ArrayList<ulong> mHashCodes;
             public bool mFullPath;
             public DateTime mTime;
 
-            public HistoryEntry(string responseUrl, ArrayList<ulong> hashCodes, bool fullPath, DateTime time)
+            public TextBlockHistoryEntry(string responseUrl, ArrayList<ulong> hashCodes, bool fullPath, DateTime time)
             {
                 mResponseUrl = responseUrl;
                 mHashCodes = hashCodes;
@@ -62,13 +80,15 @@ namespace Latino.Workflows.TextMining
             Fast
         }
 
-        private static Dictionary<string, Pair<UrlTree, Queue<HistoryEntry>>> mDomainInfo
-            = new Dictionary<string, Pair<UrlTree, Queue<HistoryEntry>>>();
-        
-        private static int mMinNodeDocCount // TODO: make configurable
-            = 5;
-        private static HeuristicsType mHeuristicsType // TODO: make configurable
-            = HeuristicsType.Slow;
+        private static Dictionary<string, Pair<Set<string>, Queue<UrlHistoryEntry>>> mUrlInfo
+            = new Dictionary<string, Pair<Set<string>, Queue<UrlHistoryEntry>>>();
+        private static Dictionary<string, Pair<UrlTree, Queue<TextBlockHistoryEntry>>> mTextBlockInfo
+            = new Dictionary<string, Pair<UrlTree, Queue<TextBlockHistoryEntry>>>();
+
+        private static UrlNormalizer mUrlNormalizer
+            = new UrlNormalizer();
+        private static Dictionary<string, object> mLocks
+            = new Dictionary<string, object>();
 
         private static int mMinQueueSize // TODO: make configurable
             = 100;
@@ -76,6 +96,13 @@ namespace Latino.Workflows.TextMining
             = 10000;//20000;
         private static int mHistoryAgeDays // TODO: make configurable
             = 14;//30;
+
+        private static int mMinNodeDocCount // TODO: make configurable
+            = 5;
+        private static HeuristicsType mHeuristicsType // TODO: make configurable
+            = HeuristicsType.Slow;
+        private static int mExactDuplicateThreshold // TODO: make configurable
+            = 100 - 1;
 
         private DatabaseConnection mDbConnection
             = null;
@@ -87,72 +114,183 @@ namespace Latino.Workflows.TextMining
 
         public UrlTreeBoilerplateRemoverComponent(string dbConnectionString) : base(typeof(UrlTreeBoilerplateRemoverComponent))
         {
-            Utils.ThrowException(dbConnectionString == null ? new ArgumentNullException("dbConnectionString") : null);
             mDbConnection = new DatabaseConnection();
             mDbConnection.ConnectionString = dbConnectionString;
             mDbConnection.Connect();
             mBlockSelector = "TextBlock";
         }
 
+        private static object AcquireLock(string name)
+        {
+            lock (mLocks)
+            { 
+                object lockObj;
+                if (!mLocks.TryGetValue(name, out lockObj))
+                {
+                    mLocks.Add(name, lockObj = new object());
+                }
+                return lockObj;
+            }
+        }
+
+        private static string GetDomainName(string urlKey)
+        {
+            string domainName = urlKey.Split(':')[1].Trim('/');
+            string tld = UrlNormalizer.GetTldFromDomainName(domainName);
+            if (tld != null)
+            {
+                int c = tld.Split('.').Length + 1;
+                string[] parts = domainName.Split('.');
+                domainName = "";
+                for (int i = parts.Length - 1; c > 0; c--, i--)
+                {
+                    domainName = parts[i] + "." + domainName;
+                }
+                domainName = domainName.TrimEnd('.');
+            }
+            return domainName;
+        }
+
+        private static Pair<Set<string>, Queue<UrlHistoryEntry>> GetUrlInfo(string domainName)
+        {
+            lock (mUrlInfo)
+            {
+                if (!mUrlInfo.ContainsKey(domainName))
+                {
+                    Pair<Set<string>, Queue<UrlHistoryEntry>> urlInfo = new Pair<Set<string>, Queue<UrlHistoryEntry>>(new Set<string>(), new Queue<UrlHistoryEntry>());
+                    mUrlInfo.Add(domainName, urlInfo);
+                    return urlInfo;
+                }
+                return mUrlInfo[domainName];
+            }
+        }
+
         public static void InitializeHistory(DatabaseConnection dbConnection)
         {
-            Utils.ThrowException(dbConnection == null ? new ArgumentNullException("dbConnection") : null);
             Logger logger = Logger.GetLogger(typeof(UrlTreeBoilerplateRemoverComponent));
-            logger.Info("InitializeHistory", "Loading history ...");            
-            mDomainInfo.Clear();            
-            DataTable domainsTbl = dbConnection.ExecuteQuery("select distinct domain from Documents where dump = 0");
+            logger.Info("InitializeHistory", "Loading history ...");
+            mUrlInfo.Clear();
+            mTextBlockInfo.Clear();
+            DataTable domainsTbl = dbConnection.ExecuteQuery("select distinct domain from Documents where domain is not null");
             int domainCount = 0;
             foreach (DataRow row in domainsTbl.Rows)
             {
                 string domainName = (string)row["domain"];
-                DataTable domainInfoTbl = dbConnection.ExecuteQuery(string.Format("select top {0} tb.hashCodes, d.time, d.responseUrl, d.urlKey from TextBlocks tb, Documents d where d.id = tb.id and d.domain = ? order by d.time desc", mMaxQueueSize), domainName);
-                if (domainInfoTbl.Rows.Count == 0) { continue; }
-                DateTime then = DateTime.Parse((string)domainInfoTbl.Rows[0]["time"]) - new TimeSpan(mHistoryAgeDays, 0, 0, 0); 
+                // load URL history
+                DataTable urlInfoTbl = dbConnection.ExecuteQuery(string.Format("select top {0} time, urlKey from Documents where duplicate = 'No' and domain = ? order by time desc", mMaxQueueSize), domainName);
+                if (urlInfoTbl.Rows.Count == 0) { continue; }
+                DateTime then = DateTime.Parse((string)urlInfoTbl.Rows[0]["time"]) - new TimeSpan(mHistoryAgeDays, 0, 0, 0);
                 domainCount++;
-                Pair<UrlTree, Queue<HistoryEntry>> domainInfo = GetDomainInfo(domainName);
-                for (int j = domainInfoTbl.Rows.Count - 1; j >= 0; j--)
+                Pair<Set<string>, Queue<UrlHistoryEntry>> urlInfo = GetUrlInfo(domainName);
+                for (int j = urlInfoTbl.Rows.Count - 1; j >= 0; j--)
                 {
-                    string timeStr = (string)domainInfoTbl.Rows[j]["time"];
+                    string urlKey = (string)urlInfoTbl.Rows[j]["urlKey"];
+                    string timeStr = (string)urlInfoTbl.Rows[j]["time"];
                     DateTime time = DateTime.Parse(timeStr);
                     if (time >= then)
                     {
-                        string hashCodesBase64 = (string)domainInfoTbl.Rows[j]["hashCodes"];
-                        string responseUrl = (string)domainInfoTbl.Rows[j]["responseUrl"];
-                        string urlKey = (string)domainInfoTbl.Rows[j]["urlKey"];
+                        urlInfo.First.Add(urlKey);
+                        urlInfo.Second.Enqueue(new UrlHistoryEntry(urlKey, time));
+                    }
+                }
+                // load text block history
+                DataTable textBlockInfoTbl = dbConnection.ExecuteQuery(string.Format("select top {0} tb.hashCodes, d.time, d.responseUrl, d.urlKey from TextBlocks tb, Documents d where d.id = tb.id and d.domain = ? order by d.time desc", mMaxQueueSize), domainName);
+                if (textBlockInfoTbl.Rows.Count == 0) { continue; }
+                then = DateTime.Parse((string)textBlockInfoTbl.Rows[0]["time"]) - new TimeSpan(mHistoryAgeDays, 0, 0, 0); 
+                Pair<UrlTree, Queue<TextBlockHistoryEntry>> textBlockInfo = GetTextBlockInfo(domainName);
+                for (int j = textBlockInfoTbl.Rows.Count - 1; j >= 0; j--)
+                {
+                    string timeStr = (string)textBlockInfoTbl.Rows[j]["time"];
+                    DateTime time = DateTime.Parse(timeStr);
+                    if (time >= then)
+                    {
+                        string hashCodesBase64 = (string)textBlockInfoTbl.Rows[j]["hashCodes"];
+                        string responseUrl = (string)textBlockInfoTbl.Rows[j]["responseUrl"];
+                        string urlKey = (string)textBlockInfoTbl.Rows[j]["urlKey"];
                         byte[] buffer = Convert.FromBase64String(hashCodesBase64);
                         BinarySerializer memSer = new BinarySerializer(new MemoryStream(buffer));
                         ArrayList<ulong> hashCodes = new ArrayList<ulong>(memSer);
                         bool fullPath = urlKey.Contains("?");
-                        HistoryEntry entry = new HistoryEntry(responseUrl, hashCodes, fullPath, time);
-                        domainInfo.First.Insert(responseUrl, hashCodes, mMinNodeDocCount, fullPath, /*insertUnique=*/true);
-                        domainInfo.Second.Enqueue(entry);
+                        TextBlockHistoryEntry entry = new TextBlockHistoryEntry(responseUrl, hashCodes, fullPath, time);
+                        textBlockInfo.First.Insert(responseUrl, hashCodes, mMinNodeDocCount, fullPath, /*insertUnique=*/true);
+                        textBlockInfo.Second.Enqueue(entry);
                     }
                 }
             }
-            logger.Info("InitializeHistory", "Loaded history for {0} distinct domains.", domainCount);            
+            logger.Info("InitializeHistory", "Loaded history for {0} distinct domains.", domainCount);
         }
 
-        private static void SetBlockAnnotation(Document doc, UrlTree.NodeInfo[] result, HeuristicsType hType, int i, string pathInfo, TextBlock textBlock)
+        private void AddUrlToCache(string documentId, string urlKey, DateTime time, Pair<Set<string>, Queue<UrlHistoryEntry>> urlInfo)
         {
-            UrlTree.NodeInfo firstNode = result[0];
-            Pair<bool, string> heurResult = BpHeuristics(result, i, hType);
-            if (heurResult.First)
+            urlInfo.First.Add(urlKey);
+            urlInfo.Second.Enqueue(new UrlHistoryEntry(urlKey, time));
+            if (urlInfo.Second.Count > mMinQueueSize)
             {
-                textBlock.Annotation.Type = "TextBlock/Boilerplate";
+                double ageDays = (time - urlInfo.Second.Peek().mTime).TotalDays;
+                if (urlInfo.Second.Count > mMaxQueueSize || ageDays > (double)mHistoryAgeDays)
+                {
+                    // dequeue and remove
+                    lock (urlInfo.First)
+                    {
+                        urlInfo.First.Remove(urlInfo.Second.Dequeue().mUrlKey);
+                    }
+                }
             }
-            else
+        }
+
+        private static Pair<UrlTree, Queue<TextBlockHistoryEntry>> GetTextBlockInfo(string domainName)
+        {
+            lock (mTextBlockInfo)
             {
-                textBlock.Annotation.Type = "TextBlock/Content";
+                if (!mTextBlockInfo.ContainsKey(domainName))
+                {
+                    Pair<UrlTree, Queue<TextBlockHistoryEntry>> textBlockInfo = new Pair<UrlTree, Queue<TextBlockHistoryEntry>>(new UrlTree(), new Queue<TextBlockHistoryEntry>());
+                    mTextBlockInfo.Add(domainName, textBlockInfo);
+                    return textBlockInfo;
+                }
+                return mTextBlockInfo[domainName];
             }
-            textBlock.Annotation.Features.SetFeatureValue("bprNodeBlockCount", firstNode.TextBlockCounts[i].ToString());
-            textBlock.Annotation.Features.SetFeatureValue("bprNodeLocation", firstNode.NodeLocation.ToString());
-            textBlock.Annotation.Features.SetFeatureValue("bprNodeDocumentCount", firstNode.NodeDocumentCount.ToString());
-            textBlock.Annotation.Features.SetFeatureValue("bprUrlPart", firstNode.UrlPart);
-            textBlock.Annotation.Features.SetFeatureValue("bprPathInfo", pathInfo);
-            if (hType != HeuristicsType.Simple)
+        }
+
+        private void AddToUrlTree(string responseUrl, ArrayList<ulong> hashCodes, bool fullPath, string documentId, string domainName, DateTime time)
+        {
+            Pair<UrlTree, Queue<TextBlockHistoryEntry>> textBlockInfo = GetTextBlockInfo(domainName);
+            UrlTree urlTree = textBlockInfo.First;
+            Queue<TextBlockHistoryEntry> queue = textBlockInfo.Second;
+            TextBlockHistoryEntry historyEntry = new TextBlockHistoryEntry(responseUrl, hashCodes, fullPath, time);
+            urlTree.Insert(responseUrl, hashCodes, mMinNodeDocCount, fullPath, /*insertUnique=*/true);
+            queue.Enqueue(historyEntry);
+            if (queue.Count > mMinQueueSize)
             {
-                textBlock.Annotation.Features.SetFeatureValue("bprContentVsBoileplateVotes", heurResult.Second);
+                double ageDays = (time - queue.Peek().mTime).TotalDays;
+                if (queue.Count > mMaxQueueSize || ageDays > (double)mHistoryAgeDays)
+                {
+                    // dequeue and remove
+                    TextBlockHistoryEntry oldestEntry = queue.Dequeue();
+                    lock (urlTree)
+                    {
+                        urlTree.Remove(oldestEntry.mResponseUrl, oldestEntry.mHashCodes, oldestEntry.mFullPath, /*unique=*/true);
+                    }
+                }
             }
+            if (mDbConnection != null)
+            {
+                BinarySerializer memSer = new BinarySerializer();
+                historyEntry.mHashCodes.Save(memSer);
+                byte[] buffer = ((MemoryStream)memSer.Stream).GetBuffer();
+                string hashCodesBase64 = Convert.ToBase64String(buffer, 0, (int)memSer.Stream.Position);
+                mDbConnection.ExecuteNonQuery("insert into TextBlocks (id, hashCodes) values (?, ?)", documentId, hashCodesBase64);
+            }
+        }
+
+        private static string GetPathInfo(UrlTree.NodeInfo[] result, int i)
+        {
+            string pathInfo = "";
+            foreach (UrlTree.NodeInfo nodeInfo in result)
+            {
+                pathInfo += nodeInfo.UrlPart + ": " + nodeInfo.TextBlockCounts[i] + "/" + nodeInfo.NodeDocumentCount + ", ";
+            }
+            return pathInfo.TrimEnd(' ', ',');
         }
 
         private static Pair<bool, string> BpHeuristics(UrlTree.NodeInfo[] result, int i, HeuristicsType type)
@@ -198,135 +336,170 @@ namespace Latino.Workflows.TextMining
             }
         }
 
-        private static string GetPathInfo(UrlTree.NodeInfo[] result, int i)
+        private static void SetBlockAnnotation(Document doc, UrlTree.NodeInfo[] result, HeuristicsType hType, int i, string pathInfo, TextBlock textBlock)
         {
-            string pathInfo = "";
-            foreach (UrlTree.NodeInfo nodeInfo in result)
+            UrlTree.NodeInfo firstNode = result[0];
+            Pair<bool, string> heurResult = BpHeuristics(result, i, hType);
+            if (heurResult.First)
             {
-                pathInfo += nodeInfo.UrlPart + ": " + nodeInfo.TextBlockCounts[i] + "/" + nodeInfo.NodeDocumentCount + ", ";
+                textBlock.Annotation.Type = "TextBlock/Boilerplate";
             }
-            return pathInfo.TrimEnd(' ', ',');
-        }
-
-        private void AddToUrlTree(string responseUrl, ArrayList<ulong> hashCodes, bool fullPath, string documentId, string domainName, DateTime time)
-        {
-            Pair<UrlTree, Queue<HistoryEntry>> domainInfo = GetDomainInfo(domainName);
-            UrlTree urlTree = domainInfo.First;
-            Queue<HistoryEntry> queue = domainInfo.Second;
-            HistoryEntry historyEntry = new HistoryEntry(responseUrl, hashCodes, fullPath, time);
-            lock (urlTree)
+            else if (firstNode.TextBlockCounts[i] == 0)
             {
-                urlTree.Insert(responseUrl, hashCodes, mMinNodeDocCount, fullPath, /*insertUnique=*/true);
+                textBlock.Annotation.Type = "TextBlock/Content/Modified";
             }
-            lock (queue)
+            else
             {
-                queue.Enqueue(historyEntry);                
-                if (queue.Count > mMinQueueSize)
-                {
-                    double ageDays = (time - queue.Peek().mTime).TotalDays;
-                    if (queue.Count > mMaxQueueSize || ageDays > (double)mHistoryAgeDays)
-                    { 
-                        // dequeue and remove
-                        HistoryEntry oldestEntry = queue.Dequeue();
-                        lock (urlTree)
-                        {
-                            urlTree.Remove(oldestEntry.mResponseUrl, oldestEntry.mHashCodes, oldestEntry.mFullPath, /*unique=*/true);
-                        }
-                    }
-                }
-            }            
-            if (mDbConnection != null)
-            {
-                BinarySerializer memSer = new BinarySerializer();
-                historyEntry.mHashCodes.Save(memSer);
-                byte[] buffer = ((MemoryStream)memSer.Stream).GetBuffer();
-                string hashCodesBase64 = Convert.ToBase64String(buffer, 0, (int)memSer.Stream.Position);
-                mDbConnection.ExecuteNonQuery("insert into TextBlocks (id, hashCodes) values (?, ?)", documentId, hashCodesBase64);
+                textBlock.Annotation.Type = "TextBlock/Content";
             }
-        }
-
-        private static Pair<UrlTree, Queue<HistoryEntry>> GetDomainInfo(string domainName)
-        {
-            lock (mDomainInfo) 
+            textBlock.Annotation.Features.SetFeatureValue("bprNodeBlockCount", firstNode.TextBlockCounts[i].ToString());
+            textBlock.Annotation.Features.SetFeatureValue("bprNodeLocation", firstNode.NodeLocation.ToString());
+            textBlock.Annotation.Features.SetFeatureValue("bprNodeDocumentCount", firstNode.NodeDocumentCount.ToString());
+            textBlock.Annotation.Features.SetFeatureValue("bprUrlPart", firstNode.UrlPart);
+            textBlock.Annotation.Features.SetFeatureValue("bprPathInfo", pathInfo);
+            if (hType != HeuristicsType.Simple)
             {
-                if (!mDomainInfo.ContainsKey(domainName))
-                {
-                    Pair<UrlTree, Queue<HistoryEntry>> domainInfo = new Pair<UrlTree, Queue<HistoryEntry>>(new UrlTree(), new Queue<HistoryEntry>());
-                    mDomainInfo.Add(domainName, domainInfo);
-                    return domainInfo;
-                }
-                return mDomainInfo[domainName];
+                textBlock.Annotation.Features.SetFeatureValue("bprContentVsBoileplateVotes", heurResult.Second);
             }
         }
 
         protected override object ProcessData(IDataProducer sender, object data)
         {
-            Utils.ThrowException(!(data is DocumentCorpus) ? new ArgumentTypeException("data") : null);
             DocumentCorpus corpus = (DocumentCorpus)data;            
             try
             {
-                ArrayList<ArrayList<ulong>> corpusHashCodes = new ArrayList<ArrayList<ulong>>();
+                // split corpus according to document domain names
+                Dictionary<string, ArrayList<Document>> domainDocCollections = new Dictionary<string, ArrayList<Document>>();
                 foreach (Document document in corpus.Documents)
                 {
                     try
                     {
-                        string contentType = document.Features.GetFeatureValue("contentType");
-                        if (contentType != "Text") { continue; }
-                        string docUrl = document.Features.GetFeatureValue("responseUrl");
-                        string urlKey = document.Features.GetFeatureValue("urlKey");
-                        TextBlock[] blocks = document.GetAnnotatedBlocks(mBlockSelector);
-                        ArrayList<ulong> hashCodes = new ArrayList<ulong>();
-                        for (int i = 0; i < blocks.Length; i++)
+                        string responseUrl = document.Features.GetFeatureValue("responseUrl");
+                        if (responseUrl == null) { continue; }
+                        bool blacklisted;
+                        string urlKey = mUrlNormalizer.NormalizeUrl(responseUrl, document.Name, out blacklisted, UrlNormalizer.NormalizationMode.Heuristics);
+                        document.Features.SetFeatureValue("blacklisted", blacklisted.ToString());
+                        document.Features.SetFeatureValue("urlKey", urlKey);
+                        string domainName = GetDomainName(urlKey);
+                        document.Features.SetFeatureValue("domainName", domainName);
+                        ArrayList<Document> domainDocs;
+                        if (!domainDocCollections.TryGetValue(domainName, out domainDocs))
                         {
-                            TextBlock block = blocks[i];
-                            hashCodes.Add(UrlTree.ComputeHashCode(block.Text, /*alphaOnly=*/true));
+                            domainDocCollections.Add(domainName, domainDocs = new ArrayList<Document>());
                         }
-                        string domainName = document.Features.GetFeatureValue("domainName");
-                        bool fullPath = urlKey.Contains("?");
-                        string documentId = new Guid(document.Features.GetFeatureValue("guid")).ToString("N");
-                        AddToUrlTree(docUrl, hashCodes, fullPath, documentId, domainName, DateTime.Parse(document.Features.GetFeatureValue("time")));
-                        corpusHashCodes.Add(hashCodes);
+                        domainDocs.Add(document);
                     }
                     catch (Exception exception)
                     {
                         mLogger.Error("ProcessDocument", exception);
                     }
                 }
-                int docIdx = 0;
-                foreach (Document document in corpus.Documents)
+                // lock and process each domain separately 
+                foreach (KeyValuePair<string, ArrayList<Document>> domainInfo in domainDocCollections)
                 {
-                    try
-                    {
-                        string contentType = document.Features.GetFeatureValue("contentType");
-                        if (contentType != "Text") { continue; }
-                        string docUrl = document.Features.GetFeatureValue("responseUrl");
-                        string urlKey = document.Features.GetFeatureValue("urlKey");
-                        TextBlock[] blocks = document.GetAnnotatedBlocks(mBlockSelector);
-                        ArrayList<ulong> hashCodes = corpusHashCodes[docIdx++];
-                        string domainName = document.Features.GetFeatureValue("domainName");
-                        UrlTree urlTree = GetDomainInfo(domainName).First;
-                        UrlTree.NodeInfo[] result;
-                        lock (urlTree)
+                    string domainName = domainInfo.Key;
+                    lock (AcquireLock(domainName)) // domain lock acquired
+                    { 
+                        // detect duplicates
+                        foreach (Document document in domainInfo.Value)
                         {
-                            result = urlTree.Query(docUrl, hashCodes, mMinNodeDocCount, /*fullPath=*/urlKey.Contains("?"));
+                            try
+                            {                                
+                                Pair<Set<string>, Queue<UrlHistoryEntry>> urlInfo = GetUrlInfo(domainName);
+                                string urlKey = document.Features.GetFeatureValue("urlKey");
+                                bool cached = urlInfo.First.Contains(urlKey);
+                                document.Features.SetFeatureValue("duplicate", cached ? "Yes" : "No");
+                                if (cached) { continue; }
+                                string documentId = new Guid(document.Features.GetFeatureValue("guid")).ToString("N");
+                                AddUrlToCache(documentId, urlKey, DateTime.Parse(document.Features.GetFeatureValue("time")), urlInfo);
+                            }
+                            catch (Exception exception)
+                            {
+                                mLogger.Error("ProcessDocument", exception);
+                            }
                         }
-                        int bpCharCount = 0, contentCharCount = 0;
-                        for (int i = 0; i < blocks.Length; i++)
+                        // populate URL tree
+                        ArrayList<ArrayList<ulong>> corpusHashCodes = new ArrayList<ArrayList<ulong>>();
+                        foreach (Document document in domainInfo.Value)
                         {
-                            TextBlock block = blocks[i];
-                            string pathInfo = GetPathInfo(result, i);                            
-                            SetBlockAnnotation(document, result, mHeuristicsType, i, pathInfo, block);
-                            if (block.Annotation.Type == "TextBlock/Boilerplate") { bpCharCount += block.Text.Length; }
-                            else { contentCharCount += block.Text.Length; }
+                            try
+                            {
+                                string contentType = document.Features.GetFeatureValue("contentType");
+                                if (contentType != "Text") { continue; }
+                                string docUrl = document.Features.GetFeatureValue("responseUrl");
+                                string urlKey = document.Features.GetFeatureValue("urlKey");
+                                TextBlock[] blocks = document.GetAnnotatedBlocks(mBlockSelector);
+                                ArrayList<ulong> hashCodes = new ArrayList<ulong>();
+                                for (int i = 0; i < blocks.Length; i++)
+                                {
+                                    TextBlock block = blocks[i];
+                                    hashCodes.Add(UrlTree.ComputeHashCode(block.Text, /*alphaOnly=*/true));
+                                }
+                                if (document.Features.GetFeatureValue("duplicate") == "No")
+                                {
+                                    bool fullPath = urlKey.Contains("?");
+                                    string documentId = new Guid(document.Features.GetFeatureValue("guid")).ToString("N");
+                                    AddToUrlTree(docUrl, hashCodes, fullPath, documentId, domainName, DateTime.Parse(document.Features.GetFeatureValue("time")));
+                                }
+                                corpusHashCodes.Add(hashCodes);
+                            }
+                            catch (Exception exception)
+                            {
+                                mLogger.Error("ProcessDocument", exception);
+                            }
                         }
-                        document.Features.SetFeatureValue("bprBoilerplateCharCount", bpCharCount.ToString());
-                        document.Features.SetFeatureValue("bprContentCharCount", contentCharCount.ToString());
-                        //document.Features.SetFeatureValue("bprHeuristicsType", mHeuristicsType.ToString());
-                    }
-                    catch (Exception exception)
-                    {
-                        mLogger.Error("ProcessDocument", exception);
-                    }
+                        // annotate boilerplate
+                        int docIdx = 0;
+                        foreach (Document document in domainInfo.Value)
+                        {
+                            try
+                            {
+                                string contentType = document.Features.GetFeatureValue("contentType");
+                                if (contentType != "Text") { continue; }
+                                string docUrl = document.Features.GetFeatureValue("responseUrl");
+                                string urlKey = document.Features.GetFeatureValue("urlKey");
+                                TextBlock[] blocks = document.GetAnnotatedBlocks(mBlockSelector);
+                                ArrayList<ulong> hashCodes = corpusHashCodes[docIdx++];
+                                UrlTree urlTree = GetTextBlockInfo(domainName).First;
+                                UrlTree.NodeInfo[] result = urlTree.Query(docUrl, hashCodes, mMinNodeDocCount, /*fullPath=*/urlKey.Contains("?"));
+                                int bpCharCount = 0, contentCharCount = 0, modifiedContentCharCount = 0;
+                                ArrayList<ulong> modifiedContentHashCodes = new ArrayList<ulong>();
+                                for (int i = 0; i < blocks.Length; i++)
+                                {
+                                    TextBlock block = blocks[i];
+                                    string pathInfo = GetPathInfo(result, i);
+                                    SetBlockAnnotation(document, result, mHeuristicsType, i, pathInfo, block);
+                                    if (block.Annotation.Type == "TextBlock/Boilerplate") { bpCharCount += block.Text.Length; }
+                                    else { contentCharCount += block.Text.Length; }
+                                    if (block.Annotation.Type == "TextBlock/Content/Modified")
+                                    {
+                                        modifiedContentCharCount += block.Text.Length;
+                                        modifiedContentHashCodes.Add(hashCodes[i]);
+                                    }
+                                }
+                                document.Features.SetFeatureValue("bprBoilerplateCharCount", bpCharCount.ToString());
+                                document.Features.SetFeatureValue("bprContentCharCount", contentCharCount.ToString());
+                                if (document.Features.GetFeatureValue("duplicate") == "Yes")
+                                {
+                                    document.Features.SetFeatureValue("bprModifiedContentCharCount", modifiedContentCharCount.ToString());
+                                    if (modifiedContentCharCount > mExactDuplicateThreshold)
+                                    {
+                                        document.Features.SetFeatureValue("duplicate", "Modified");
+                                        string documentId = new Guid(document.Features.GetFeatureValue("guid")).ToString("N");
+                                        AddToUrlTree(docUrl, modifiedContentHashCodes, /*fullPath=*/urlKey.Contains("?"), documentId, domainName, DateTime.Parse(document.Features.GetFeatureValue("time")));                                        
+                                    }
+                                    else
+                                    {
+                                        document.Features.SetFeatureValue("duplicate", "Exact");
+                                    }
+                                }
+                            }
+                            catch (Exception exception)
+                            {
+                                mLogger.Error("ProcessDocument", exception);
+                            }
+                        }
+                    } // domain lock released
                 }
             }
             catch (Exception exception)

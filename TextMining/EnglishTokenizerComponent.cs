@@ -30,6 +30,7 @@ namespace Latino.Workflows.TextMining
         public EnglishTokenizerComponent() : base(typeof(EnglishTokenizerComponent))
         {
             mTokenizer.AlphaNumericOptimization = true;
+            mTokenizer.UnicodeMapping = true;            
             mBlockSelector = "Sentence";
         }
 

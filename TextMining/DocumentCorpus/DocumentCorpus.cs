@@ -203,8 +203,8 @@ namespace Latino.Workflows.TextMining
             foreach (KeyValuePair<string, string> keyVal in mFeatures)
             {
                 writer.WriteStartElement("Feature", ns);
-                writer.WriteElementString("Name", ns, keyVal.Key);
-                writer.WriteElementString("Value", ns, keyVal.Value);
+                writer.WriteElementString("Name", ns, Utils.ReplaceSurrogates(keyVal.Key));
+                writer.WriteElementString("Value", ns, Utils.ReplaceSurrogates(keyVal.Value));
                 writer.WriteEndElement();
             }
             writer.WriteEndElement();

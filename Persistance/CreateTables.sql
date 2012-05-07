@@ -45,10 +45,12 @@ CREATE TABLE [dbo].[Documents](
 	[contentLength] [int] NULL,
 	[detectedLanguage] [nvarchar](100) NULL,
 	[detectedCharRange] [nvarchar](100) NULL,
-	[dump] [bit] NOT NULL,
+	[rejected] [bit] NOT NULL,
+	[duplicate] [varchar](10) NULL,
 	[domain] [varchar](100) NULL,
 	[bpCharCount] [int] NULL,
-	[contentCharCount] [int] NULL
+	[contentCharCount] [int] NULL,
+	[modifiedContentCharCount] [int] NULL
 ) ON [PRIMARY] 
 GO
 SET ANSI_PADDING OFF
@@ -68,7 +70,7 @@ CREATE TABLE [dbo].[Corpora](
 	[timeStart] [char](26) NULL,
 	[timeEnd] [char](26) NULL,
 	[siteId] [nvarchar](100) NULL,
-	[dump] [bit] NOT NULL
+	[rejected] [bit] NOT NULL
 ) ON [PRIMARY] 
 GO
 SET ANSI_PADDING OFF

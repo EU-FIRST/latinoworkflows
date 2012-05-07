@@ -102,7 +102,7 @@ namespace Latino.Workflows.Persistance
             // write to database
             if (mWriteToDatabase)
             {
-                bool success = mConnection.ExecuteNonQuery("insert into Corpora (id, title, language, sourceUrl, timeStart, timeEnd, siteId, dump) values (?, ?, ?, ?, ?, ?, ?, ?)",
+                bool success = mConnection.ExecuteNonQuery("insert into Corpora (id, title, language, sourceUrl, timeStart, timeEnd, siteId, rejected) values (?, ?, ?, ?, ?, ?, ?, ?)",
                     corpusId,
                     Utils.Truncate(corpus.Features.GetFeatureValue("title"), 400),
                     Utils.Truncate(corpus.Features.GetFeatureValue("language"), 100),
@@ -110,7 +110,7 @@ namespace Latino.Workflows.Persistance
                     Utils.Truncate(corpus.Features.GetFeatureValue("timeStart"), 26),
                     Utils.Truncate(corpus.Features.GetFeatureValue("timeEnd"), 26),
                     Utils.Truncate(corpus.Features.GetFeatureValue("siteId"), 100),
-                    mIsDumpWriter
+                    mIsDumpWriter 
                 );
                 if (!success) { mLogger.Warn("ConsumeData", "Unable to write to database."); }
                 foreach (Document document in corpus.Documents)
@@ -118,7 +118,8 @@ namespace Latino.Workflows.Persistance
                     string documentId = new Guid(document.Features.GetFeatureValue("guid")).ToString("N");
                     string bpCharCountStr = document.Features.GetFeatureValue("bprBoilerplateCharCount");
                     string contentCharCountStr = document.Features.GetFeatureValue("bprContentCharCount");
-                    success = mConnection.ExecuteNonQuery("insert into Documents (id, corpusId, name, description, category, link, responseUrl, urlKey, time, pubDate, mimeType, contentType, charSet, contentLength, detectedLanguage, detectedCharRange, domain, bpCharCount, contentCharCount, dump) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    string modifiedContentCharCountStr = document.Features.GetFeatureValue("bprModifiedContentCharCount");
+                    success = mConnection.ExecuteNonQuery("insert into Documents (id, corpusId, name, description, category, link, responseUrl, urlKey, time, pubDate, mimeType, contentType, charSet, contentLength, detectedLanguage, detectedCharRange, domain, bpCharCount, contentCharCount, rejected, duplicate, modifiedContentCharCount) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         documentId,
                         corpusId,
                         Utils.Truncate(document.Name, 400),
@@ -137,8 +138,10 @@ namespace Latino.Workflows.Persistance
                         Utils.Truncate(document.Features.GetFeatureValue("detectedCharRange"), 100),                        
                         Utils.Truncate(document.Features.GetFeatureValue("domainName"), 100),
                         bpCharCountStr == null ? null : (object)Convert.ToInt32(bpCharCountStr),
-                        contentCharCountStr == null ? null : (object)Convert.ToInt32(contentCharCountStr),
-                        mIsDumpWriter
+                        contentCharCountStr == null ? null : (object)Convert.ToInt32(contentCharCountStr),                        
+                        mIsDumpWriter,
+                        Utils.Truncate(document.Features.GetFeatureValue("duplicate"), 10),
+                        modifiedContentCharCountStr == null ? null : (object)Convert.ToInt32(modifiedContentCharCountStr)
                     );
                     if (!success) { mLogger.Warn("ConsumeData", "Unable to write to database."); }
                 }

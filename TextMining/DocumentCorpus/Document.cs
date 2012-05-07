@@ -306,8 +306,8 @@ namespace Latino.Workflows.TextMining
             Utils.ThrowException(writer == null ? new ArgumentNullException("writer") : null);
             string ns = "http://freekoders.org/latino";
             if (writeTopElement) { writer.WriteStartElement("Document", ns); }
-            writer.WriteElementString("Name", ns, mName);
-            writer.WriteElementString("Text", ns, mText);            
+            writer.WriteElementString("Name", ns, Utils.ReplaceSurrogates(mName));
+            writer.WriteElementString("Text", ns, Utils.ReplaceSurrogates(mText));            
             writer.WriteStartElement("Annotations", ns);
             foreach (Annotation annot in mAnnotations)
             {
@@ -320,7 +320,7 @@ namespace Latino.Workflows.TextMining
                 {
                     writer.WriteStartElement("Feature", ns);
                     writer.WriteElementString("Name", ns, keyVal.Key);
-                    writer.WriteElementString("Value", ns, keyVal.Value);
+                    writer.WriteElementString("Value", ns, Utils.ReplaceSurrogates(keyVal.Value));
                     writer.WriteEndElement();
                 }
                 writer.WriteEndElement();

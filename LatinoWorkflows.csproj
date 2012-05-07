@@ -94,8 +94,9 @@
     <Compile Include="TextMining\DocumentCorpus\TextBlock.cs" />
     <Compile Include="IWorkflowComponent.cs" />
     <Compile Include="TextMining\SentenceSplitterComponent.cs" />
-    <Compile Include="TextMining\UrlFilterComponent.cs" />
-    <Compile Include="TextMining\UrlTreeBoilerplateRemoverComponent.cs" />
+    <Compile Include="TextMining\UrlTreeBoilerplateRemoverComponent.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="WebSiteDispatcher.cs" />
     <Compile Include="WorkflowUtils.cs" />
     <Compile Include="ZeroMqEmitterComponent.cs" />

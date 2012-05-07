@@ -81,15 +81,17 @@ namespace Latino.Workflows.Semantics
         {
             public string mTokenStr;
             public int mSpanStart;
+            public int mSpanEnd;
             public string mPosTag;
             public string mLemma;
 
-            public Token(string tokenStr, string posTag, string lemma, int spanStart)
+            public Token(string tokenStr, string posTag, string lemma, int spanStart, int spanEnd)
             {
                 mTokenStr = tokenStr;
                 mPosTag = posTag;
                 mLemma = lemma;
                 mSpanStart = spanStart;
+                mSpanEnd = spanEnd;
             }
         }
 
@@ -144,9 +146,10 @@ namespace Latino.Workflows.Semantics
                     {
                         // lemmatize micro-token, inherit POS tag
                         int spanStart = enumSpanInfo.Current + m.Index;
+                        int spanEnd = spanStart + m.Value.Length - 1;
                         string token = Normalize(m.Value);
                         string lemma = mLemmatizer.GetStem(token);
-                        Token microToken = new Token(token, enumPosTags.Current, lemma, spanStart);
+                        Token microToken = new Token(token, enumPosTags.Current, lemma, spanStart, spanEnd);
                         //Console.WriteLine("{0}\t{1}\t{2}", microToken.mTokenStr, microToken.mLemma, microToken.mPosTag);
                         mTokens.Add(microToken);
                         m = m.NextMatch();
@@ -211,7 +214,7 @@ namespace Latino.Workflows.Semantics
                         }
                         if (found) // gazetteer term found (starting at micro-token i, ending at micro-token j)
                         {
-                            spans.Add(new Pair<int, int>(mTokens[i].mSpanStart, mTokens[j].mSpanStart + mTokens[j].mTokenStr.Length - 1)); 
+                            spans.Add(new Pair<int, int>(mTokens[i].mSpanStart, mTokens[j].mSpanEnd)); 
                         }
                     }
                 }

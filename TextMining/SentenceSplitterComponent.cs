@@ -30,6 +30,7 @@ namespace Latino.Workflows.TextMining
         public SentenceSplitterComponent() : base(typeof(SentenceSplitterComponent))
         {
             mBlockSelector = "TextBlock";
+            mSentenceDetector.UnicodeMapping = true;
         }
 
         private void GetTrimOffsets(string str, out int startOffset, out int endOffset)
