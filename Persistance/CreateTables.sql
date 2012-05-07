@@ -15,7 +15,8 @@ GO
 SET ANSI_PADDING ON
 GO
 CREATE TABLE [dbo].[TextBlocks](
-	[id] [char](32) NOT NULL,
+	[corpusId] [char](32) NOT NULL,
+	[docId] [char](32) NOT NULL,
 	[hashCodes] [text] NOT NULL
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO

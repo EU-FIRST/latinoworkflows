@@ -194,7 +194,7 @@ namespace Latino.Workflows.TextMining
                     }
                 }
                 // load text block history
-                DataTable textBlockInfoTbl = dbConnection.ExecuteQuery(string.Format("select top {0} tb.hashCodes, d.time, d.responseUrl, d.urlKey from TextBlocks tb, Documents d where d.id = tb.id and d.domain = ? order by d.time desc", mMaxQueueSize), domainName);
+                DataTable textBlockInfoTbl = dbConnection.ExecuteQuery(string.Format("select top {0} tb.hashCodes, d.time, d.responseUrl, d.urlKey from TextBlocks tb, Documents d where d.corpusId = tb.corpusId and d.id = tb.docId and d.domain = ? order by d.time desc", mMaxQueueSize), domainName);
                 if (textBlockInfoTbl.Rows.Count == 0) { continue; }
                 then = DateTime.Parse((string)textBlockInfoTbl.Rows[0]["time"]) - new TimeSpan(mHistoryAgeDays, 0, 0, 0); 
                 Pair<UrlTree, Queue<TextBlockHistoryEntry>> textBlockInfo = GetTextBlockInfo(domainName);
@@ -220,7 +220,7 @@ namespace Latino.Workflows.TextMining
             logger.Info("InitializeHistory", "Loaded history for {0} distinct domains.", domainCount);
         }
 
-        private void AddUrlToCache(string documentId, string urlKey, DateTime time, Pair<Set<string>, Queue<UrlHistoryEntry>> urlInfo)
+        private void AddUrlToCache(string urlKey, DateTime time, Pair<Set<string>, Queue<UrlHistoryEntry>> urlInfo)
         {
             urlInfo.First.Add(urlKey);
             urlInfo.Second.Enqueue(new UrlHistoryEntry(urlKey, time));
@@ -252,7 +252,7 @@ namespace Latino.Workflows.TextMining
             }
         }
 
-        private void AddToUrlTree(string responseUrl, ArrayList<ulong> hashCodes, bool fullPath, string documentId, string domainName, DateTime time)
+        private void AddToUrlTree(string responseUrl, ArrayList<ulong> hashCodes, bool fullPath, string corpusId, string documentId, string domainName, DateTime time)
         {
             Pair<UrlTree, Queue<TextBlockHistoryEntry>> textBlockInfo = GetTextBlockInfo(domainName);
             UrlTree urlTree = textBlockInfo.First;
@@ -279,7 +279,7 @@ namespace Latino.Workflows.TextMining
                 historyEntry.mHashCodes.Save(memSer);
                 byte[] buffer = ((MemoryStream)memSer.Stream).GetBuffer();
                 string hashCodesBase64 = Convert.ToBase64String(buffer, 0, (int)memSer.Stream.Position);
-                mDbConnection.ExecuteNonQuery("insert into TextBlocks (id, hashCodes) values (?, ?)", documentId, hashCodesBase64);
+                mDbConnection.ExecuteNonQuery("insert into TextBlocks (corpusId, docId, hashCodes) values (?, ?, ?)", corpusId, documentId, hashCodesBase64);
             }
         }
 
@@ -410,8 +410,7 @@ namespace Latino.Workflows.TextMining
                                 bool cached = urlInfo.First.Contains(urlKey);
                                 document.Features.SetFeatureValue("duplicate", cached ? "Yes" : "No");
                                 if (cached) { continue; }
-                                string documentId = new Guid(document.Features.GetFeatureValue("guid")).ToString("N");
-                                AddUrlToCache(documentId, urlKey, DateTime.Parse(document.Features.GetFeatureValue("time")), urlInfo);
+                                AddUrlToCache(urlKey, DateTime.Parse(document.Features.GetFeatureValue("time")), urlInfo);
                             }
                             catch (Exception exception)
                             {
@@ -438,8 +437,9 @@ namespace Latino.Workflows.TextMining
                                 if (document.Features.GetFeatureValue("duplicate") == "No")
                                 {
                                     bool fullPath = urlKey.Contains("?");
-                                    string documentId = new Guid(document.Features.GetFeatureValue("guid")).ToString("N");
-                                    AddToUrlTree(docUrl, hashCodes, fullPath, documentId, domainName, DateTime.Parse(document.Features.GetFeatureValue("time")));
+                                    string documentId = document.Features.GetFeatureValue("guid").Replace("-", "");
+                                    string corpusId = corpus.Features.GetFeatureValue("guid").Replace("-", "");
+                                    AddToUrlTree(docUrl, hashCodes, fullPath, corpusId, documentId, domainName, DateTime.Parse(document.Features.GetFeatureValue("time")));
                                 }
                                 corpusHashCodes.Add(hashCodes);
                             }
@@ -485,8 +485,9 @@ namespace Latino.Workflows.TextMining
                                     if (modifiedContentCharCount > mExactDuplicateThreshold)
                                     {
                                         document.Features.SetFeatureValue("duplicate", "Modified");
-                                        string documentId = new Guid(document.Features.GetFeatureValue("guid")).ToString("N");
-                                        AddToUrlTree(docUrl, modifiedContentHashCodes, /*fullPath=*/urlKey.Contains("?"), documentId, domainName, DateTime.Parse(document.Features.GetFeatureValue("time")));                                        
+                                        string documentId = document.Features.GetFeatureValue("guid").Replace("-", "");
+                                        string corpusId = corpus.Features.GetFeatureValue("guid").Replace("-", "");
+                                        AddToUrlTree(docUrl, modifiedContentHashCodes, /*fullPath=*/urlKey.Contains("?"), corpusId, documentId, domainName, DateTime.Parse(document.Features.GetFeatureValue("time")));                                        
                                     }
                                     else
                                     {

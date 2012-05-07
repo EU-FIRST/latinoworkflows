@@ -59,7 +59,7 @@ namespace Latino.Workflows.Persistance
         {
             Utils.ThrowException(!(data is DocumentCorpus) ? new ArgumentTypeException("data") : null);
             DocumentCorpus corpus = (DocumentCorpus)data;
-            string corpusId = Guid.NewGuid().ToString("N");
+            string corpusId = corpus.Features.GetFeatureValue("guid").Replace("-", "");
             StringWriter stringWriter;
             XmlWriterSettings xmlSettings = new XmlWriterSettings();
             xmlSettings.Indent = true;

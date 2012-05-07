@@ -268,6 +268,7 @@ namespace Latino.Workflows.WebMining
                     if (mMaxDocsPerCorpus > 0 && corpora.Last.Documents.Count == mMaxDocsPerCorpus)
                     {
                         corpora.Add(new DocumentCorpus());
+                        corpora.Last.Features.SetFeatureValue("guid", Guid.NewGuid().ToString());
                     }
                     corpora.Last.AddDocument(document);
                     mHistory.AddToHistory(guid, mSiteId);
@@ -309,6 +310,7 @@ namespace Latino.Workflows.WebMining
                     }
                     Dictionary<string, string> channelAttr = new Dictionary<string, string>();
                     ArrayList<DocumentCorpus> corpora = new ArrayList<DocumentCorpus>(new DocumentCorpus[] { new DocumentCorpus() });
+                    corpora.Last.Features.SetFeatureValue("guid", Guid.NewGuid().ToString());
                     XmlTextReader reader = new XmlTextReader(new StringReader(xml));
                     // first pass: items
                     mLogger.Info("ProduceData", "Reading items ...");
