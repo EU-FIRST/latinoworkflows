@@ -51,7 +51,8 @@ CREATE TABLE [dbo].[Documents](
 	[domain] [varchar](100) NULL,
 	[bpCharCount] [int] NULL,
 	[contentCharCount] [int] NULL,
-	[modifiedContentCharCount] [int] NULL
+	[modifiedContentCharCount] [int] NULL,
+	[originalDocRef] [char](65) NULL
 ) ON [PRIMARY] 
 GO
 SET ANSI_PADDING OFF

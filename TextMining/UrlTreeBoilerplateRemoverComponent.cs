@@ -80,8 +80,8 @@ namespace Latino.Workflows.TextMining
             Fast
         }
 
-        private static Dictionary<string, Pair<Set<string>, Queue<UrlHistoryEntry>>> mUrlInfo
-            = new Dictionary<string, Pair<Set<string>, Queue<UrlHistoryEntry>>>();
+        private static Dictionary<string, Pair<Dictionary<string, string>, Queue<UrlHistoryEntry>>> mUrlInfo
+            = new Dictionary<string, Pair<Dictionary<string, string>, Queue<UrlHistoryEntry>>>();
         private static Dictionary<string, Pair<UrlTree, Queue<TextBlockHistoryEntry>>> mTextBlockInfo
             = new Dictionary<string, Pair<UrlTree, Queue<TextBlockHistoryEntry>>>();
 
@@ -151,13 +151,13 @@ namespace Latino.Workflows.TextMining
             return domainName;
         }
 
-        private static Pair<Set<string>, Queue<UrlHistoryEntry>> GetUrlInfo(string domainName)
+        private static Pair<Dictionary<string, string>, Queue<UrlHistoryEntry>> GetUrlInfo(string domainName)
         {
             lock (mUrlInfo)
             {
                 if (!mUrlInfo.ContainsKey(domainName))
                 {
-                    Pair<Set<string>, Queue<UrlHistoryEntry>> urlInfo = new Pair<Set<string>, Queue<UrlHistoryEntry>>(new Set<string>(), new Queue<UrlHistoryEntry>());
+                    Pair<Dictionary<string, string>, Queue<UrlHistoryEntry>> urlInfo = new Pair<Dictionary<string, string>, Queue<UrlHistoryEntry>>(new Dictionary<string, string>(), new Queue<UrlHistoryEntry>());
                     mUrlInfo.Add(domainName, urlInfo);
                     return urlInfo;
                 }
@@ -177,25 +177,28 @@ namespace Latino.Workflows.TextMining
             {
                 string domainName = (string)row["domain"];
                 // load URL history
-                DataTable urlInfoTbl = dbConnection.ExecuteQuery(string.Format("select top {0} time, urlKey from Documents where duplicate = 'No' and domain = ? order by time desc", mMaxQueueSize), domainName);
+                DataTable urlInfoTbl = dbConnection.ExecuteQuery(string.Format("select top {0} id, corpusId, time, urlKey from Documents where duplicate = 'No' and domain = ? order by time desc", mMaxQueueSize), domainName);
                 if (urlInfoTbl.Rows.Count == 0) { continue; }
                 DateTime then = DateTime.Parse((string)urlInfoTbl.Rows[0]["time"]) - new TimeSpan(mHistoryAgeDays, 0, 0, 0);
                 domainCount++;
-                Pair<Set<string>, Queue<UrlHistoryEntry>> urlInfo = GetUrlInfo(domainName);
+                Pair<Dictionary<string, string>, Queue<UrlHistoryEntry>> urlInfo = GetUrlInfo(domainName);
                 for (int j = urlInfoTbl.Rows.Count - 1; j >= 0; j--)
                 {
                     string urlKey = (string)urlInfoTbl.Rows[j]["urlKey"];
                     string timeStr = (string)urlInfoTbl.Rows[j]["time"];
+                    Guid corpusId = new Guid((string)urlInfoTbl.Rows[j]["corpusId"]);
+                    Guid docId = new Guid((string)urlInfoTbl.Rows[j]["id"]);
                     DateTime time = DateTime.Parse(timeStr);
                     if (time >= then)
                     {
-                        urlInfo.First.Add(urlKey);
+                        urlInfo.First.Add(urlKey, corpusId.ToString("N") + "-" + docId.ToString("N"));
                         urlInfo.Second.Enqueue(new UrlHistoryEntry(urlKey, time));
                     }
                 }
                 // load text block history
                 DataTable textBlockInfoTbl = dbConnection.ExecuteQuery(string.Format("select top {0} tb.hashCodes, d.time, d.responseUrl, d.urlKey from TextBlocks tb, Documents d where d.corpusId = tb.corpusId and d.id = tb.docId and d.domain = ? order by d.time desc", mMaxQueueSize), domainName);
                 if (textBlockInfoTbl.Rows.Count == 0) { continue; }
+                //Console.WriteLine(domainName + " " + textBlockInfoTbl.Rows.Count.ToString());
                 then = DateTime.Parse((string)textBlockInfoTbl.Rows[0]["time"]) - new TimeSpan(mHistoryAgeDays, 0, 0, 0); 
                 Pair<UrlTree, Queue<TextBlockHistoryEntry>> textBlockInfo = GetTextBlockInfo(domainName);
                 for (int j = textBlockInfoTbl.Rows.Count - 1; j >= 0; j--)
@@ -220,9 +223,9 @@ namespace Latino.Workflows.TextMining
             logger.Info("InitializeHistory", "Loaded history for {0} distinct domains.", domainCount);
         }
 
-        private void AddUrlToCache(string urlKey, DateTime time, Pair<Set<string>, Queue<UrlHistoryEntry>> urlInfo)
+        private void AddUrlToCache(Guid corpusId, Guid docId, string urlKey, DateTime time, Pair<Dictionary<string, string>, Queue<UrlHistoryEntry>> urlInfo)
         {
-            urlInfo.First.Add(urlKey);
+            urlInfo.First.Add(urlKey, corpusId.ToString("N") + "-" + docId.ToString("N"));
             urlInfo.Second.Enqueue(new UrlHistoryEntry(urlKey, time));
             if (urlInfo.Second.Count > mMinQueueSize)
             {
@@ -230,10 +233,7 @@ namespace Latino.Workflows.TextMining
                 if (urlInfo.Second.Count > mMaxQueueSize || ageDays > (double)mHistoryAgeDays)
                 {
                     // dequeue and remove
-                    lock (urlInfo.First)
-                    {
-                        urlInfo.First.Remove(urlInfo.Second.Dequeue().mUrlKey);
-                    }
+                    urlInfo.First.Remove(urlInfo.Second.Dequeue().mUrlKey);
                 }
             }
         }
@@ -267,10 +267,7 @@ namespace Latino.Workflows.TextMining
                 {
                     // dequeue and remove
                     TextBlockHistoryEntry oldestEntry = queue.Dequeue();
-                    lock (urlTree)
-                    {
-                        urlTree.Remove(oldestEntry.mResponseUrl, oldestEntry.mHashCodes, oldestEntry.mFullPath, /*unique=*/true);
-                    }
+                    urlTree.Remove(oldestEntry.mResponseUrl, oldestEntry.mHashCodes, oldestEntry.mFullPath, /*unique=*/true);
                 }
             }
             if (mDbConnection != null)
@@ -405,12 +402,18 @@ namespace Latino.Workflows.TextMining
                         {
                             try
                             {                                
-                                Pair<Set<string>, Queue<UrlHistoryEntry>> urlInfo = GetUrlInfo(domainName);
+                                Pair<Dictionary<string, string>, Queue<UrlHistoryEntry>> urlInfo = GetUrlInfo(domainName);
                                 string urlKey = document.Features.GetFeatureValue("urlKey");
-                                bool cached = urlInfo.First.Contains(urlKey);
+                                bool cached = urlInfo.First.ContainsKey(urlKey);
                                 document.Features.SetFeatureValue("duplicate", cached ? "Yes" : "No");
-                                if (cached) { continue; }
-                                AddUrlToCache(urlKey, DateTime.Parse(document.Features.GetFeatureValue("time")), urlInfo);
+                                if (cached) 
+                                {
+                                    document.Features.SetFeatureValue("originalDocRef", urlInfo.First[urlKey]);
+                                    continue; 
+                                }
+                                Guid docId = new Guid(document.Features.GetFeatureValue("guid"));
+                                Guid corpusId = new Guid(corpus.Features.GetFeatureValue("guid"));
+                                AddUrlToCache(corpusId, docId, urlKey, DateTime.Parse(document.Features.GetFeatureValue("time")), urlInfo);
                             }
                             catch (Exception exception)
                             {
