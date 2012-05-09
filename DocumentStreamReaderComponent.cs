@@ -70,7 +70,8 @@ namespace Latino.Workflows.WebMining
             DocumentCorpus corpus = new DocumentCorpus();
             StreamReader reader = new StreamReader(mFiles[mCurrentFileIdx]);
             corpus.ReadXml(new XmlTextReader(reader));
-            string corpusId = new Guid(mFiles[mCurrentFileIdx].Split('_', '.')[3]).ToString();
+            string fileName = new FileInfo(mFiles[mCurrentFileIdx]).Name;
+            string corpusId = new Guid(fileName.Split('_', '.')[3]).ToString();
             corpus.Features.SetFeatureValue("guid", corpusId);
             reader.Close();
             // remove underscores in feature names
