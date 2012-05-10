@@ -118,9 +118,9 @@ namespace Latino.Workflows.Persistance
                     string documentId = new Guid(document.Features.GetFeatureValue("guid")).ToString("N");
                     string bpCharCountStr = document.Features.GetFeatureValue("bprBoilerplateCharCount");
                     string contentCharCountStr = document.Features.GetFeatureValue("bprContentCharCount");
-                    string modifiedContentCharCountStr = document.Features.GetFeatureValue("bprModifiedContentCharCount");
-                    string duplicateType = document.Features.GetFeatureValue("duplicate");
-                    success = mConnection.ExecuteNonQuery("insert into Documents (id, corpusId, name, description, category, link, responseUrl, urlKey, time, pubDate, mimeType, contentType, charSet, contentLength, detectedLanguage, detectedCharRange, domain, bpCharCount, contentCharCount, rejected, duplicate, modifiedContentCharCount, originalDocRef) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    string unseenContentCharCountStr = document.Features.GetFeatureValue("bprUnseenContentCharCount");
+                    string unseenContent = document.Features.GetFeatureValue("unseenContent");
+                    success = mConnection.ExecuteNonQuery("insert into Documents (id, corpusId, name, description, category, link, responseUrl, urlKey, time, pubDate, mimeType, contentType, charSet, contentLength, detectedLanguage, detectedCharRange, domain, bpCharCount, contentCharCount, rejected, unseenContent, unseenContentCharCount, rev) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         documentId,
                         corpusId,
                         Utils.Truncate(document.Name, 400),
@@ -141,9 +141,9 @@ namespace Latino.Workflows.Persistance
                         bpCharCountStr == null ? null : (object)Convert.ToInt32(bpCharCountStr),
                         contentCharCountStr == null ? null : (object)Convert.ToInt32(contentCharCountStr),                        
                         mIsDumpWriter,
-                        Utils.Truncate(duplicateType, 10),
-                        modifiedContentCharCountStr == null ? null : (object)Convert.ToInt32(modifiedContentCharCountStr),
-                        duplicateType == "No" ? null : document.Features.GetFeatureValue("originalDocRef")
+                        Utils.Truncate(unseenContent, 20),
+                        unseenContentCharCountStr == null ? null : (object)Convert.ToInt32(unseenContentCharCountStr),
+                        Convert.ToInt32(document.Features.GetFeatureValue("rev"))
                     );
                     if (!success) { mLogger.Warn("ConsumeData", "Unable to write to database."); }
                 }
