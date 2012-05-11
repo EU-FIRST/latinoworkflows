@@ -118,7 +118,7 @@ namespace Latino.Workflows.Persistance
                     string documentId = new Guid(document.Features.GetFeatureValue("guid")).ToString("N");
                     string bpCharCountStr = document.Features.GetFeatureValue("bprBoilerplateCharCount");
                     string contentCharCountStr = document.Features.GetFeatureValue("bprContentCharCount");
-                    string unseenContentCharCountStr = document.Features.GetFeatureValue("bprUnseenContentCharCount");
+                    string unseenContentCharCountStr = document.Features.GetFeatureValue("unseenContentCharCount");
                     string unseenContent = document.Features.GetFeatureValue("unseenContent");
                     success = mConnection.ExecuteNonQuery("insert into Documents (id, corpusId, name, description, category, link, responseUrl, urlKey, time, pubDate, mimeType, contentType, charSet, contentLength, detectedLanguage, detectedCharRange, domain, bpCharCount, contentCharCount, rejected, unseenContent, unseenContentCharCount, rev) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         documentId,
