@@ -50,7 +50,10 @@ namespace Latino.Workflows.TextMining
                 if (text.Length >= mMinTextLen) 
                 {
                     LanguageProfile langProfile = mLanguageDetector.FindMatchingLanguage(text);
-                    document.Features.SetFeatureValue("detectedLanguage", langProfile.Language.ToString());
+                    if (langProfile != null)
+                    {
+                        document.Features.SetFeatureValue("detectedLanguage", langProfile.Language.ToString());
+                    }
                 }
                 if (text.Length > 0)
                 {

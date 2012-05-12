@@ -15,6 +15,8 @@ using System.IO;
 using System.Xml;
 using System.Text;
 using System.Threading;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using Latino.Workflows.TextMining;
 
 namespace Latino.Workflows.WebMining
@@ -27,6 +29,19 @@ namespace Latino.Workflows.WebMining
     */
     public class DocumentStreamReaderComponent : StreamDataProducerPoll
     {
+        private class FileNameComparer : IComparer<string>
+        {
+            private static Regex mDigitRegex
+                = new Regex(@"\\(\d)\\", RegexOptions.Compiled);
+
+            public int Compare(string x, string y)
+            {
+                x = mDigitRegex.Replace(x, @"\0$1\");
+                y = mDigitRegex.Replace(y, @"\0$1\");
+                return x.CompareTo(y);
+            }
+        }
+
         private string[] mDataDirs;
         private string[] mFiles
             = null;
@@ -40,7 +55,7 @@ namespace Latino.Workflows.WebMining
             TimeBetweenPolls = 1;
             // collect data directories
             mDataDirs = Directory.GetDirectories(rootPath, "*.*", SearchOption.AllDirectories);
-            Array.Sort(mDataDirs);
+            Array.Sort(mDataDirs, new FileNameComparer());
         }
 
         protected override object ProduceData()
@@ -55,7 +70,7 @@ namespace Latino.Workflows.WebMining
             if (mFiles == null)
             {
                 mFiles = Directory.GetFiles(mDataDirs[mCurrentDirIdx], "*.xml");
-                Array.Sort(mFiles);
+                Array.Sort(mFiles, new FileNameComparer());
             }
             // did we process all currently available files?
             if (mCurrentFileIdx >= mFiles.Length)
