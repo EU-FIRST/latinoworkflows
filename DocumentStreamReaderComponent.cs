@@ -32,12 +32,12 @@ namespace Latino.Workflows.WebMining
         private class FileNameComparer : IComparer<string>
         {
             private static Regex mDigitRegex
-                = new Regex(@"\\(\d)\\", RegexOptions.Compiled);
+                = new Regex(@"\\(\d(\\|$))", RegexOptions.Compiled);
 
             public int Compare(string x, string y)
             {
-                x = mDigitRegex.Replace(x, @"\0$1\");
-                y = mDigitRegex.Replace(y, @"\0$1\");
+                while (mDigitRegex.Match(x).Success) { x = mDigitRegex.Replace(x, @"\0$1"); }
+                while (mDigitRegex.Match(y).Success) { y = mDigitRegex.Replace(y, @"\0$1"); }
                 return x.CompareTo(y);
             }
         }
@@ -56,6 +56,7 @@ namespace Latino.Workflows.WebMining
             // collect data directories
             mDataDirs = Directory.GetDirectories(rootPath, "*.*", SearchOption.AllDirectories);
             Array.Sort(mDataDirs, new FileNameComparer());
+            //foreach (string dir in mDataDirs) { Console.WriteLine(dir); }
         }
 
         protected override object ProduceData()
@@ -70,7 +71,7 @@ namespace Latino.Workflows.WebMining
             if (mFiles == null)
             {
                 mFiles = Directory.GetFiles(mDataDirs[mCurrentDirIdx], "*.xml");
-                Array.Sort(mFiles, new FileNameComparer());
+                Array.Sort(mFiles);
             }
             // did we process all currently available files?
             if (mCurrentFileIdx >= mFiles.Length)
