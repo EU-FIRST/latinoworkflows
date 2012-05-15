@@ -232,15 +232,9 @@ namespace Latino.Workflows.TextMining
                 if (urlInfo.Second.Count > mMaxQueueSize || ageDays > (double)mHistoryAgeDays)
                 {
                     // dequeue and remove
-                    if (urlKey != null)
-                    {
-                        urlInfo.First.Remove(urlInfo.Second.Dequeue().mUrlKey);
-                    }
-                    else
-                    {
-                        urlInfo.Second.Dequeue();
-                    }
-                    mLogger.Info("AddToUrlCache", "Removed entry from URL cache. urlKey={0} Queue size={1} ageDays={2}", urlKey, urlInfo.Second.Count, ageDays);
+                    string rmvUrlKey = urlInfo.Second.Dequeue().mUrlKey;                    
+                    if (rmvUrlKey != null) { urlInfo.First.Remove(rmvUrlKey); }
+                    mLogger.Info("AddToUrlCache", "Removed entry from URL cache. urlKey={0} Queue size={1} ageDays={2}", rmvUrlKey, urlInfo.Second.Count, ageDays);
                 }
             }
         }
