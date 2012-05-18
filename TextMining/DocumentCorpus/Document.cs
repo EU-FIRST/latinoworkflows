@@ -339,7 +339,7 @@ namespace Latino.Workflows.TextMining
             if (writeTopElement) { writer.WriteEndElement(); }
         }
 
-        public void WriteGateXml(XmlWriter writer, bool writeTopElement)
+        public void WriteGateXml(XmlWriter writer, bool writeTopElement, bool removeBoilerplate)
         {
             Utils.ThrowException(writer == null ? new ArgumentNullException("writer") : null);
 
@@ -367,142 +367,254 @@ namespace Latino.Workflows.TextMining
                 writer.WriteEndElement(); //</Feature>
             }
             writer.WriteEndElement();//</GateDocumentFeatures>
-
-            //TEXT WITH NODES
-            writer.WriteStartElement("TextWithNodes");           
-
+            string textWithNodes = "";
             List<int> spans = new List<int>();
+            List<int> boilerplateSpans = new List<int>();
 
-            foreach (Annotation annot in mAnnotations)
+            if (removeBoilerplate)
             {
-                if(!spans.Contains(annot.SpanStart))
-                    spans.Add(annot.SpanStart);
-                if (!spans.Contains(annot.SpanEnd + 1))
-                    spans.Add(annot.SpanEnd + 1);
-            }
+                //TEXT WITH NODES
+                writer.WriteStartElement("TextWithNodes");                
 
-            spans.Sort(); 
-
-            string textWithNodes="";
-            int k = 0;
-
-            for (int j = 0; j < mText.Val.Length;)
-            {
-                if (spans.Count>0 && j == spans[k])
+                foreach (Annotation annot in mAnnotations)
                 {
-                    textWithNodes +=  "<Node id=\"" + spans[k] + "\" />";
-                    k++;
-
-                }
-
-                if (k < spans.Count)
-                {
-                    while (j != spans[k])
+                    if (!annot.Type.Contains("Boilerplate"))
                     {
-                        textWithNodes += HttpUtility.HtmlEncode(mText.Val[j].ToString());
-                        j++;
+                        if (!spans.Contains(annot.SpanStart))
+                            spans.Add(annot.SpanStart);
+                        if (!spans.Contains(annot.SpanEnd + 1))
+                            spans.Add(annot.SpanEnd + 1);
+                    }
+                    else
+                    {
+                        if (!boilerplateSpans.Contains(annot.SpanStart))
+                            boilerplateSpans.Add(annot.SpanStart);
+                        if (!boilerplateSpans.Contains(annot.SpanEnd + 1))
+                            boilerplateSpans.Add(annot.SpanEnd + 1);
                     }
                 }
-                else
+
+                spans.Sort();
+                boilerplateSpans.Sort();
+
+                
+                int k = 0;
+
+                for (int j = 0; j < mText.Val.Length; )
                 {
-                    while (j < mText.Val.Length)
+                    bool isBoilerplate = false;
+                    for (int d = 0; d < boilerplateSpans.Count; )
                     {
-                        textWithNodes += HttpUtility.HtmlEncode(mText.Val[j].ToString());
+                        if (j >= boilerplateSpans[d] && j <= boilerplateSpans[d + 1])
+                        {
+                            isBoilerplate = true;
+                            j++;
+                            break;
+                        }
+                        else if (mText.Val[j] == '\n' && boilerplateSpans.Contains(j + 1))
+                        {
+                            isBoilerplate = true;
+                            j++;
+                            break;
+                        }
+
+                        d = d + 2;
+                    }
+
+                    if (!isBoilerplate)
+                    {
+
+                        while (k < spans.Count && j > spans[k])
+                        {
+                            k++;
+                        }
+
+                        if (k < spans.Count && spans.Count > 0 && j == spans[k])
+                        {
+                            textWithNodes += "<Node id=\"" + spans[k] + "\" />";
+                            k++;
+
+                        }
+
+                        if (k < spans.Count && j < spans[k])
+                        {
+
+                            while (j != spans[k])
+                            {
+                                textWithNodes += HttpUtility.HtmlEncode(mText.Val[j].ToString());
+                                j++;
+                            }
+                        }
+                        else
+                        {
+                            while (j < mText.Val.Length)
+                            {
+                                textWithNodes += HttpUtility.HtmlEncode(mText.Val[j].ToString());
+                                j++;
+                            }
+                        }
+                    }
+                    else
+                    {
                         j++;
+                    }
+
+                }
+            }
+            else
+            {
+                //TEXT WITH NODES
+                writer.WriteStartElement("TextWithNodes");
+
+                spans = new List<int>();
+
+                foreach (Annotation annot in mAnnotations)
+                {
+                    if (!spans.Contains(annot.SpanStart))
+                        spans.Add(annot.SpanStart);
+                    if (!spans.Contains(annot.SpanEnd + 1))
+                        spans.Add(annot.SpanEnd + 1);
+                }
+
+                spans.Sort();
+
+                textWithNodes = "";
+                int k = 0;
+
+                for (int j = 0; j < mText.Val.Length; )
+                {
+                    if (spans.Count > 0 && j == spans[k])
+                    {
+                        textWithNodes += "<Node id=\"" + spans[k] + "\" />";
+                        k++;
+
+                    }
+
+                    if (k < spans.Count)
+                    {
+                        while (j != spans[k])
+                        {
+                            textWithNodes += HttpUtility.HtmlEncode(mText.Val[j].ToString());
+                            j++;
+                        }
+                    }
+                    else
+                    {
+                        while (j < mText.Val.Length)
+                        {
+                            textWithNodes += HttpUtility.HtmlEncode(mText.Val[j].ToString());
+                            j++;
+                        }
                     }
                 }
             }
-
             writer.WriteRaw(textWithNodes);
 
             writer.WriteEndElement();//</TextWithNodes>
-            
+
             //ANNOTATIONS
             writer.WriteStartElement("AnnotationSet");
             int i = 1;
             foreach (Annotation annot in mAnnotations)
             {
-                string annotType = annot.Type;
-                if (annot.Type.StartsWith("Sentiment object/"))
-                    annotType = "SO";
-
-                writer.WriteStartElement("Annotation");
-                writer.WriteAttributeString("Id", i.ToString());
-                writer.WriteAttributeString("Type", annotType);
-                writer.WriteAttributeString("StartNode", annot.SpanStart.ToString());
-                writer.WriteAttributeString("EndNode", (annot.SpanEnd+1).ToString());
-
-                if (annot.Type == "Token")
+                bool isBoilerplate = false;
+                for (int d = 0; d < boilerplateSpans.Count; )
                 {
-                    string annotText;
-                    annotText = (annot.GetAnnotatedBlock(mText)).Text;
-                    annot.Features.SetFeatureValue("string", annotText);
+                    if (annot.SpanStart >= boilerplateSpans[d] && annot.SpanEnd <= boilerplateSpans[d + 1])
+                    {
+                        isBoilerplate = true;                       
+                        break;
+                    }
+
+                    d = d + 2;
                 }
-                foreach (KeyValuePair<string, string> keyVal in annot.Features)
+
+                if (!removeBoilerplate 
+                    ||(!annot.Type.Contains("Boilerplate") && !isBoilerplate))
                 {
-                    writer.WriteStartElement("Feature");
+                    string annotType = annot.Type;
+                    if (annot.Type.StartsWith("Sentiment object/"))
+                        annotType = "SO";
 
-                    string replacement = keyVal.Key;
-                    bool writeInstanceName = false;
+                    writer.WriteStartElement("Annotation");
+                    writer.WriteAttributeString("Id", i.ToString());
+                    writer.WriteAttributeString("Type", annotType);
+                    writer.WriteAttributeString("StartNode", annot.SpanStart.ToString());
+                    writer.WriteAttributeString("EndNode", (annot.SpanEnd + 1).ToString());
 
-                    if (annot.Type.StartsWith("Sentiment object/") && keyVal.Key == "objUri")
+                    if (annot.Type == "Token")
                     {
-                        replacement = "Uri";
-                        writeInstanceName = true;         
+                        string annotText;
+                        annotText = (annot.GetAnnotatedBlock(mText)).Text;
+                        annot.Features.SetFeatureValue("string", annotText);
                     }
-
-                    if (annot.Type == "Token" && keyVal.Key == "posTag")
+                    foreach (KeyValuePair<string, string> keyVal in annot.Features)
                     {
-                        replacement = "category";
-                    }
-                    else if(annot.Type == "Token" && (keyVal.Key == "word" || keyVal.Key == "punctuation"))
-                    {
-                        replacement = "kind";
-                    }
-                    else if (annot.Type == "Token" && keyVal.Key == "lemma")
-                    {
-                        replacement = "root";
-                    }
-                    
-                    writer.WriteStartElement("Name");
-                    writer.WriteAttributeString("className", "java.lang.String");
-                    writer.WriteString(replacement);
-                    writer.WriteEndElement(); //</Name>
-                    
 
-                    writer.WriteStartElement("Value");
-                    writer.WriteAttributeString("className", "java.lang.String");
-                    writer.WriteString(keyVal.Value);
-                    writer.WriteEndElement();//</Value>
-
-                    writer.WriteEndElement(); //</Feature>
-
-                    if (writeInstanceName)
-                    {
                         writer.WriteStartElement("Feature");
+
+                        string replacement = keyVal.Key;
+                        bool writeInstanceName = false;
+
+                        if (annot.Type.StartsWith("Sentiment object/") && keyVal.Key == "objUri")
+                        {
+                            replacement = "Uri";
+                            writeInstanceName = true;
+                        }
+
+                        if (annot.Type == "Token" && keyVal.Key == "posTag")
+                        {
+                            replacement = "category";
+                        }
+                        else if (annot.Type == "Token" && (keyVal.Key == "word" || keyVal.Key == "punctuation"))
+                        {
+                            replacement = "kind";
+                        }
+                        else if (annot.Type == "Token" && keyVal.Key == "lemma")
+                        {
+                            replacement = "root";
+                        }
 
                         writer.WriteStartElement("Name");
                         writer.WriteAttributeString("className", "java.lang.String");
-                        writer.WriteString("instanceName");
+                        writer.WriteString(replacement);
                         writer.WriteEndElement(); //</Name>
+
 
                         writer.WriteStartElement("Value");
                         writer.WriteAttributeString("className", "java.lang.String");
-                        writer.WriteString(keyVal.Value.Split('#')[1]);
-                        writer.WriteEndElement();//</Value>   
-  
+                        writer.WriteString(keyVal.Value);
+                        writer.WriteEndElement();//</Value>
+
                         writer.WriteEndElement(); //</Feature>
+
+                        if (writeInstanceName)
+                        {
+                            writer.WriteStartElement("Feature");
+
+                            writer.WriteStartElement("Name");
+                            writer.WriteAttributeString("className", "java.lang.String");
+                            writer.WriteString("instanceName");
+                            writer.WriteEndElement(); //</Name>
+
+                            writer.WriteStartElement("Value");
+                            writer.WriteAttributeString("className", "java.lang.String");
+                            writer.WriteString(keyVal.Value.Split('#')[1]);
+                            writer.WriteEndElement();//</Value>   
+
+                            writer.WriteEndElement(); //</Feature>
+                        }
                     }
+
+
+
+                    writer.WriteEndElement(); //</Annotation>
+
+                    i++;
                 }
-
-               
-
-                writer.WriteEndElement(); //</Annotation>
-
-                i++;
             }
 
-           
+
             writer.WriteEndElement(); //</AnnotationSet>
 
             if (writeTopElement) { writer.WriteEndElement(); } //</GateDocument>
@@ -515,7 +627,7 @@ namespace Latino.Workflows.TextMining
 
         public void WriteGateXml(XmlWriter writer)
         {
-            WriteGateXml(writer, /*writeTopElement=*/false); // throws ArgumentNullException
+            WriteGateXml(writer, /*writeTopElement=*/false,false); // throws ArgumentNullException
         }
 
         // *** Output HTML ***
