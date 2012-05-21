@@ -249,7 +249,7 @@ namespace Latino.Workflows.TextMining
         private void RemoveItems(Pair<Dictionary<string, Ref<int>>, Queue<UrlHistoryEntry>> urlInfo, Pair<UrlTree, Queue<TextBlockHistoryEntry>> textBlockInfo, DateTime time)
         {
             double ageDays = 0;
-            while (urlInfo.Second.Count > mMinQueueSize && (urlInfo.Second.Count > mMaxQueueSize || (ageDays = (time - urlInfo.Second.Peek().mTime).TotalDays) > (double)mHistoryAgeDays))
+            while (urlInfo.Second.Count > mMinQueueSize && ((ageDays = (time - urlInfo.Second.Peek().mTime).TotalDays) > (double)mHistoryAgeDays || urlInfo.Second.Count > mMaxQueueSize))
             {
                 string rmvUrlKey = urlInfo.Second.Dequeue().mUrlKey;
                 if (rmvUrlKey != null) { urlInfo.First.Remove(rmvUrlKey); }                

@@ -29,14 +29,17 @@ namespace Latino.Workflows.Semantics
         private Logger mLogger
             = Logger.GetLogger(typeof(EntityRecognitionEngine));
 
-        private static IStemmer mLemmatizer // make configurable?
+        private string mDefaultInstanceClass
+            = "http://project-first.eu/ontology#SentimentObject"; // TODO: make configurable
+
+        private static IStemmer mLemmatizer // *** make configurable?
             = new Lemmatizer(Language.English);
 
         // see http://www.regular-expressions.info/unicode.html for Unicode character classes
         private static Regex mMicroTokenRegex
-            = new Regex(@"[\d\p{L}]+", RegexOptions.Compiled); // *** currency symbols?
+            = new Regex(@"[\d\p{L}]+", RegexOptions.Compiled); // *** currency symbols, punctuation marks?
         private static Regex mGazetteerMicroTokenRegex
-            = new Regex(@"[\d\p{L}]+(/\p{L}+)?", RegexOptions.Compiled); // *** currency symbols?
+            = new Regex(@"[\d\p{L}]+(/\p{L}+)?", RegexOptions.Compiled); // *** currency symbols, punctuation marks?
         private static Regex mConstraintRegex
             = new Regex(@"(/\p{L}+=\p{L}+)+", RegexOptions.Compiled);
 
@@ -50,11 +53,11 @@ namespace Latino.Workflows.Semantics
             = NAMESPACE + "stopWord";
         private static Entity P_IMPORTS
             = NAMESPACE + "imports";
-        private static Entity P_SENTENCE_LEVEL_CONDITION
+        private static Entity P_HAS_SENTENCE_LEVEL_CONDITION
             = NAMESPACE + "hasSentenceLevelCondition";
-        private static Entity P_TEXTBLOCK_LEVEL_CONDITION
-            = NAMESPACE + "hasTextBlockLevelCondition";
-        private static Entity P_DOCUMENT_LEVEL_CONDITION
+        private static Entity P_HAS_BLOCK_LEVEL_CONDITION
+            = NAMESPACE + "hasBlockLevelCondition";
+        private static Entity P_HAS_DOCUMENT_LEVEL_CONDITION
             = NAMESPACE + "hasDocumentLevelCondition";
         private static Entity P_IDENTIFIED_BY
             = NAMESPACE + "identifiedBy";
@@ -106,7 +109,7 @@ namespace Latino.Workflows.Semantics
             public enum Level
             { 
                 Sentence,
-                TextBlock,
+                Block,
                 Document
             }
 
@@ -157,38 +160,38 @@ namespace Latino.Workflows.Semantics
                 }
             }
 
-            private bool Match(GazetteerToken gToken, Token dToken, CaseMatchingType caseMatchingType, bool firstToken)
+            private bool Match(GazetteerToken gazToken, Token docToken, CaseMatchingType caseMatchingType, bool firstToken)
             {
                 // check POS tag
-                if (gToken.mPosConstraint != null && !dToken.mPosTag.StartsWith(gToken.mPosConstraint)) { return false; }
+                if (gazToken.mPosConstraint != null && !docToken.mPosTag.StartsWith(gazToken.mPosConstraint)) { return false; }
                 // check word or lemma
-                string gTokenStr;
-                string dTokenStr;
-                if (gToken.mLemma == null)
+                string gazTokenStr;
+                string docTokenStr;
+                if (gazToken.mLemma == null)
                 {
-                    gTokenStr = gToken.mTokenStr;
-                    dTokenStr = dToken.mTokenStr;
+                    gazTokenStr = gazToken.mTokenStr;
+                    docTokenStr = docToken.mTokenStr;
                 }
                 else
                 {
-                    gTokenStr = gToken.mLemma;
-                    dTokenStr = dToken.mLemma;
+                    gazTokenStr = gazToken.mLemma;
+                    docTokenStr = docToken.mLemma;
                 }
                 switch (caseMatchingType)
                 { 
                     case CaseMatchingType.IgnoreCase:
-                        return string.Compare(gTokenStr, dTokenStr, StringComparison.OrdinalIgnoreCase) == 0;
+                        return string.Compare(gazTokenStr, docTokenStr, StringComparison.OrdinalIgnoreCase) == 0;
                     case CaseMatchingType.ExactMatch:
                     case CaseMatchingType.AllLowercase:
                     case CaseMatchingType.AllUppercase:
                     case CaseMatchingType.AllCapsStrict:
                     case CaseMatchingType.InitCapStrict:
-                        return gTokenStr == dTokenStr;
+                        return gazTokenStr == docTokenStr;
                     case CaseMatchingType.InitCapLoose:
-                        return (!firstToken && string.Compare(gTokenStr, dTokenStr, StringComparison.OrdinalIgnoreCase) == 0)
-                            || (firstToken && char.IsUpper(dTokenStr[0]) && string.Compare(gTokenStr, dTokenStr, StringComparison.OrdinalIgnoreCase) == 0);
+                        return (!firstToken && string.Compare(gazTokenStr, docTokenStr, StringComparison.OrdinalIgnoreCase) == 0)
+                            || (firstToken && char.IsUpper(docTokenStr[0]) && string.Compare(gazTokenStr, docTokenStr, StringComparison.OrdinalIgnoreCase) == 0);
                     case CaseMatchingType.AllCapsLoose:
-                        return char.IsUpper(dTokenStr[0]) && string.Compare(gTokenStr, dTokenStr, StringComparison.OrdinalIgnoreCase) == 0;
+                        return char.IsUpper(docTokenStr[0]) && string.Compare(gazTokenStr, docTokenStr, StringComparison.OrdinalIgnoreCase) == 0;
                     default:
                         throw new ArgumentValueException("caseMatchingType");
                 }
@@ -198,7 +201,8 @@ namespace Latino.Workflows.Semantics
             {
                 spans = new ArrayList<Pair<int, int>>();
                 foreach (GazetteerTerm term in gazetteer.mTerms)
-                { 
+                {
+                    if (!term.mEnabled) { continue; }
                     int lastIdx = mTokens.Count - term.mTokens.Count;
                     for (int i = 0; i <= lastIdx; i++)
                     {
@@ -333,15 +337,15 @@ namespace Latino.Workflows.Semantics
                         {
                             if (condition.mLevel == Condition.Level.Document)
                             {
-                                if (!documentEntityInfo.Contains(condition.mGazetteer)) { /*Console.WriteLine("!");*/ valid = false; break; }
+                                if (!documentEntityInfo.Contains(condition.mGazetteer)) { valid = false; break; }
                             }
-                            else if (condition.mLevel == Condition.Level.TextBlock)
+                            else if (condition.mLevel == Condition.Level.Block)
                             {
-                                if (!textBlockGazetteers.Contains(condition.mGazetteer)) { /*Console.WriteLine("!!");*/ valid = false; break; }
+                                if (!textBlockGazetteers.Contains(condition.mGazetteer)) { valid = false; break; }
                             }
                             else if (condition.mLevel == Condition.Level.Sentence)
                             {
-                                if (!sentenceInfo.Value.ContainsKey(condition.mGazetteer)) { /*Console.WriteLine("!!!");*/ valid = false; break; }
+                                if (!sentenceInfo.Value.ContainsKey(condition.mGazetteer)) { valid = false; break; }
                             }
                         }
                         if (valid)
@@ -409,6 +413,7 @@ namespace Latino.Workflows.Semantics
             public ArrayList<GazetteerToken> mTokens
                 = new ArrayList<GazetteerToken>();
             public CaseMatchingType mCaseMatchingType;
+            public bool mEnabled;
 
             private void PrepareTokens(CaseMatchingType caseMatchingType, bool processLemmas)
             {
@@ -450,9 +455,10 @@ namespace Latino.Workflows.Semantics
                 }
             }
 
-            private void InitializeInstance(IEnumerable<string> tokens, IEnumerable<string> posConstraints, bool lemmatize, CaseMatchingType caseMatchingType, Gazetteer gazetteer)
+            private void InitializeInstance(IEnumerable<string> tokens, IEnumerable<string> posConstraints, bool lemmatize, CaseMatchingType caseMatchingType, bool enabled, Gazetteer gazetteer)
             {
                 mCaseMatchingType = caseMatchingType;
+                mEnabled = enabled;
                 IEnumerator<string> enumTokens = tokens.GetEnumerator();
                 IEnumerator<string> enumPosConstraints = posConstraints.GetEnumerator();
                 while (enumTokens.MoveNext() && enumPosConstraints.MoveNext())
@@ -477,19 +483,20 @@ namespace Latino.Workflows.Semantics
                 }
             }
 
-            public GazetteerTerm(IEnumerable<string> tokens, IEnumerable<string> posConstraints, bool lemmatize, CaseMatchingType caseMatchingType, Gazetteer gazetteer)
-            {
-                InitializeInstance(tokens, posConstraints, lemmatize, caseMatchingType, gazetteer);
-            }
+            //public GazetteerTerm(IEnumerable<string> tokens, IEnumerable<string> posConstraints, bool lemmatize, CaseMatchingType caseMatchingType, bool enabled, Gazetteer gazetteer)
+            //{
+            //    InitializeInstance(tokens, posConstraints, lemmatize, caseMatchingType, enabled, gazetteer);
+            //}
 
-            public GazetteerTerm(string termDef, Gazetteer gazetteer, CaseMatchingType defaultCaseMatchingType, bool defaultLemmatizeFlag)
+            public GazetteerTerm(string termDef, Gazetteer gazetteer, CaseMatchingType defaultCaseMatchingType, bool defaultLemmatizeFlag, bool defaultEnabledFlag)
             {
                 // default settings
                 CaseMatchingType caseMatchingType = defaultCaseMatchingType;
                 bool lemmatize = defaultLemmatizeFlag;
+                bool enabled = defaultEnabledFlag;
                 // parse term settings
                 termDef = mConstraintRegex.Replace(termDef, new MatchEvaluator(delegate(Match m) {
-                    ParseGazetteerSettings(m.Value, out caseMatchingType, out lemmatize);
+                    ParseGazetteerSettings(m.Value, ref caseMatchingType, ref lemmatize, ref enabled);
                     return "";
                 }));
                 ArrayList<string> tokens = new ArrayList<string>();
@@ -509,7 +516,7 @@ namespace Latino.Workflows.Semantics
                     posConstraints.Add(posConstraint);
                     match = match.NextMatch();
                 }
-                InitializeInstance(tokens, posConstraints, lemmatize, caseMatchingType, gazetteer);
+                InitializeInstance(tokens, posConstraints, lemmatize, caseMatchingType, enabled, gazetteer);
             }
 
             public string GetLemma()
@@ -551,6 +558,8 @@ namespace Latino.Workflows.Semantics
                 = new ArrayList<Gazetteer>();
             public ArrayList<Condition> mConditions
                 = new ArrayList<Condition>();
+            public bool mEnabled
+                = true;
 
             public Gazetteer(string uri)
             {
@@ -588,27 +597,48 @@ namespace Latino.Workflows.Semantics
 
             public void ReadConditions(MemoryStore rdfStore, Dictionary<string, Gazetteer> gazetteers)
             {
-                Resource[] conditionGazetteers = rdfStore.SelectObjects(mUri, P_SENTENCE_LEVEL_CONDITION);
-                foreach (Entity conditionGazetteer in conditionGazetteers)
+                ArrayList<string> crumbs = new ArrayList<string>(new string[] { mUri });
+                Entity[] objects = rdfStore.SelectSubjects(P_IDENTIFIED_BY, new Entity(mUri));
+                if (objects.Length > 0)
                 {
-                    mConditions.Add(new Condition(gazetteers[conditionGazetteer.Uri], Condition.Level.Sentence));
+                    Resource[] objTypes = rdfStore.SelectObjects(objects[0].Uri, P_TYPE);
+                    if (objTypes.Length > 0)
+                    {
+                        crumbs.Add(objTypes[0].Uri);
+                        Resource[] superClass = rdfStore.SelectObjects((Entity)objTypes[0], P_SUBCLASS_OF);
+                        while (superClass.Length > 0)
+                        {
+                            crumbs.Add(superClass[0].Uri);
+                            superClass = rdfStore.SelectObjects((Entity)superClass[0], P_SUBCLASS_OF);
+                        }
+                    }
                 }
-                conditionGazetteers = rdfStore.SelectObjects(mUri, P_TEXTBLOCK_LEVEL_CONDITION);
-                foreach (Entity conditionGazetteer in conditionGazetteers)
+                crumbs.Reverse();
+                foreach (string uri in crumbs)
                 {
-                    mConditions.Add(new Condition(gazetteers[conditionGazetteer.Uri], Condition.Level.TextBlock));
-                }
-                conditionGazetteers = rdfStore.SelectObjects(mUri, P_DOCUMENT_LEVEL_CONDITION);
-                foreach (Entity conditionGazetteer in conditionGazetteers)
-                {
-                    mConditions.Add(new Condition(gazetteers[conditionGazetteer.Uri], Condition.Level.Document));
+                    Resource[] conditionGazetteers = rdfStore.SelectObjects(uri, P_HAS_SENTENCE_LEVEL_CONDITION);
+                    foreach (Entity conditionGazetteer in conditionGazetteers)
+                    {
+                        mConditions.Add(new Condition(gazetteers[conditionGazetteer.Uri], Condition.Level.Sentence));
+                    }
+                    conditionGazetteers = rdfStore.SelectObjects(uri, P_HAS_BLOCK_LEVEL_CONDITION);
+                    foreach (Entity conditionGazetteer in conditionGazetteers)
+                    {
+                        mConditions.Add(new Condition(gazetteers[conditionGazetteer.Uri], Condition.Level.Block));
+                    }
+                    conditionGazetteers = rdfStore.SelectObjects(uri, P_HAS_DOCUMENT_LEVEL_CONDITION);
+                    foreach (Entity conditionGazetteer in conditionGazetteers)
+                    {
+                        mConditions.Add(new Condition(gazetteers[conditionGazetteer.Uri], Condition.Level.Document));
+                    }
                 }
             }
 
-            private void ReadGazetteerSettings(MemoryStore rdfStore, out CaseMatchingType caseMatchingType, out bool lemmatize)
+            private void ReadGazetteerSettings(MemoryStore rdfStore, out CaseMatchingType caseMatchingType, out bool lemmatize, out bool enabled)
             {
                 caseMatchingType = CaseMatchingType.IgnoreCase;
                 lemmatize = false;
+                enabled = true;
                 ArrayList<string> crumbs = new ArrayList<string>(new string[] { mUri });
                 Entity[] objects = rdfStore.SelectSubjects(P_IDENTIFIED_BY, new Entity(mUri));
                 if (objects.Length > 0)
@@ -633,7 +663,7 @@ namespace Latino.Workflows.Semantics
                     if (settings.Length > 0)
                     {
                         string settingsStr = ((Literal)settings[0]).Value;
-                        ParseGazetteerSettings(settingsStr, out caseMatchingType, out lemmatize);
+                        ParseGazetteerSettings(settingsStr, ref caseMatchingType, ref lemmatize, ref enabled);
                     }
                 }
             }
@@ -644,14 +674,14 @@ namespace Latino.Workflows.Semantics
                 //Console.WriteLine("*** " + mUri + " ***");
                 CaseMatchingType caseMatchingType;
                 bool lemmatize;
-                ReadGazetteerSettings(rdfStore, out caseMatchingType, out lemmatize);
+                ReadGazetteerSettings(rdfStore, out caseMatchingType, out lemmatize, out mEnabled);
                 // read terms
                 Resource[] terms = rdfStore.SelectObjects(mUri, P_TERM);
                 Set<string> skipList = new Set<string>();
                 foreach (Literal term in terms)
                 {
                     //Console.Write(term.Value + " -> ");
-                    GazetteerTerm termObj = new GazetteerTerm(term.Value, /*gazetteer=*/this, caseMatchingType, lemmatize);
+                    GazetteerTerm termObj = new GazetteerTerm(term.Value, /*gazetteer=*/this, caseMatchingType, lemmatize, mEnabled);
                     string termStr = termObj.ToString();
                     if (termObj.mTokens.Count > 0 && !skipList.Contains(termStr))
                     {
@@ -708,6 +738,7 @@ namespace Latino.Workflows.Semantics
         {
             ArrayList<string> crumbs = new ArrayList<string>();
             string instanceClass = GetInstanceClass(instanceUri);
+            if (instanceClass == null) { instanceClass = mDefaultInstanceClass; } 
             crumbs.Add(instanceClass);
             Resource[] superClass = mRdfStore.SelectObjects(instanceClass, P_SUBCLASS_OF);
             while (superClass.Length > 0)
@@ -780,21 +811,23 @@ namespace Latino.Workflows.Semantics
             return RemoveDiacritics(strNrm);
         }
 
-        private static void ParseGazetteerSettings(string settingsStr, out CaseMatchingType caseMatchingType, out bool lemmatize)
+        private static void ParseGazetteerSettings(string settingsStr, ref CaseMatchingType caseMatchingType, ref bool lemmatize, ref bool enabled)
         {
-            caseMatchingType = CaseMatchingType.IgnoreCase;
-            lemmatize = false;
             string[] settings = settingsStr.TrimStart('/').Split('/');
             foreach (string setting in settings)
             {
                 string[] keyVal = setting.Split('=');
                 if (keyVal.Length == 2)
                 {
-                    if (keyVal[0] == "l") // lemmatization setting
+                    if (keyVal[0] == "e") // enabled 
+                    {
+                        enabled = keyVal[1] != "n";
+                    }
+                    else if (keyVal[0] == "l") // lemmatize 
                     {
                         lemmatize = keyVal[1] == "y";
                     }
-                    else if (keyVal[0] == "c") // case-matching setting
+                    else if (keyVal[0] == "c") // case-matching type
                     {
                         if (keyVal[1] == "ic") { caseMatchingType = CaseMatchingType.IgnoreCase; }
                         else if (keyVal[1] == "em") { caseMatchingType = CaseMatchingType.ExactMatch; }
