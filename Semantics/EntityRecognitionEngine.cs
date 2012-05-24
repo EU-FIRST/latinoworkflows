@@ -29,8 +29,8 @@ namespace Latino.Workflows.Semantics
         private Logger mLogger
             = Logger.GetLogger(typeof(EntityRecognitionEngine));
 
-        private string mDefaultInstanceClass
-            = "http://project-first.eu/ontology#SentimentObject"; // TODO: make configurable
+        private string mDefaultClassUri
+            = "http://www.w3.org/2002/07/owl#Thing"; 
 
         private static IStemmer mLemmatizer // *** make configurable?
             = new Lemmatizer(Language.English);
@@ -613,7 +613,7 @@ namespace Latino.Workflows.Semantics
                         }
                     }
                 }
-                crumbs.Reverse();
+                //crumbs.Reverse(); // *** is this needed?
                 foreach (string uri in crumbs)
                 {
                     Resource[] conditionGazetteers = rdfStore.SelectObjects(uri, P_HAS_SENTENCE_LEVEL_CONDITION);
@@ -697,6 +697,12 @@ namespace Latino.Workflows.Semantics
             }
         }
 
+        public string DefaultClassUri
+        {
+            get { return mDefaultClassUri; }
+            set { mDefaultClassUri = value; }
+        }
+
         public void ImportRdfFromUrl(string url)
         {
             int statementCount = mRdfStore.StatementCount;
@@ -738,7 +744,7 @@ namespace Latino.Workflows.Semantics
         {
             ArrayList<string> crumbs = new ArrayList<string>();
             string instanceClass = GetInstanceClass(instanceUri);
-            if (instanceClass == null) { instanceClass = mDefaultInstanceClass; } 
+            if (instanceClass == null) { instanceClass = mDefaultClassUri; } 
             crumbs.Add(instanceClass);
             Resource[] superClass = mRdfStore.SelectObjects(instanceClass, P_SUBCLASS_OF);
             while (superClass.Length > 0)
