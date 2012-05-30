@@ -556,10 +556,15 @@ namespace Latino.Workflows.TextMining
                         string replacement = keyVal.Key;
                         bool writeInstanceName = false;
 
-                        if (annot.Type.StartsWith("Sentiment object/") && keyVal.Key == "objUri")
+                        if (annot.Type.StartsWith("Sentiment object/") && keyVal.Key == "instanceUri")
                         {
                             replacement = "Uri";
                             writeInstanceName = true;
+                        }
+
+                        if (annot.Type.StartsWith("Sentiment object/") && keyVal.Key == "classUri")
+                        {
+                            replacement = "class";                           
                         }
 
                         if (annot.Type == "Token" && keyVal.Key == "posTag")
