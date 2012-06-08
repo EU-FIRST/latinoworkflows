@@ -173,22 +173,23 @@ namespace Latino.Workflows.TextMining
             logger.Info("InitializeHistory", "Loading history ...");
             mUrlInfo.Clear();
             mTextBlockInfo.Clear();
-            DataTable domainsTbl = dbConnection.ExecuteQuery("select distinct domain from Documents where domain is not null");
+            // TODO: limit the following statement to domains with recent-enough activity (e.g. 3000 domains)
+            DataTable domainsTbl = dbConnection.ExecuteQuery("select distinct domain from Documents where domain is not null"); 
             int domainCount = 0;
             foreach (DataRow row in domainsTbl.Rows)
             {
                 string domainName = (string)row["domain"];
-                DataTable urlInfoTbl = dbConnection.ExecuteQuery(string.Format("select top {0} d.id, d.corpusId, d.time, d.responseUrl, d.urlKey, d.rev, r.maxRev, tb.hashCodes from TextBlocks tb, Documents d, (select urlKey, max(rev) as maxRev from Documents group by urlKey) r where d.corpusId = tb.corpusId and d.id = tb.docId and r.urlKey = d.urlKey and d.domain = ? order by time desc", mMaxQueueSize), domainName);                
+                DataTable urlInfoTbl = dbConnection.ExecuteQuery(string.Format("select top {0} d.id, d.corpusId, d.time, d.responseUrl, d.urlKey, d.rev, d.domain, (select top 1 dd.rev from Documents dd where dd.urlKey = d.urlKey order by dd.time desc, dd.rev desc) as maxRev, tb.hashCodes from Documents d inner join TextBlocks tb on d.corpusId = tb.corpusId and d.id = tb.docId where d.domain = ? order by d.time desc", mMaxQueueSize), domainName);
                 if (urlInfoTbl.Rows.Count == 0) { continue; }
-                //Console.WriteLine(domainName + " " + urlInfoTbl.Rows.Count.ToString());
                 Pair<UrlTree, Queue<TextBlockHistoryEntry>> textBlockInfo = GetTextBlockInfo(domainName);
                 DateTime then = DateTime.Parse((string)urlInfoTbl.Rows[0]["time"]) - new TimeSpan(mHistoryAgeDays, 0, 0, 0);
                 domainCount++;
+                Console.WriteLine("* " + domainName + string.Format(" ({0}/{1})", domainCount, domainsTbl.Rows.Count));
                 Pair<Dictionary<string, Ref<int>>, Queue<UrlHistoryEntry>> urlInfo = GetUrlInfo(domainName);
                 for (int j = urlInfoTbl.Rows.Count - 1; j >= 0; j--)
                 {
-                    int maxRev = (int)urlInfoTbl.Rows[j]["maxRev"];
                     int rev = (int)urlInfoTbl.Rows[j]["rev"];
+                    int maxRev = (int)urlInfoTbl.Rows[j]["maxRev"];
                     string urlKey = (string)urlInfoTbl.Rows[j]["urlKey"];
                     string timeStr = (string)urlInfoTbl.Rows[j]["time"];
                     Guid corpusId = new Guid((string)urlInfoTbl.Rows[j]["corpusId"]);
@@ -199,6 +200,7 @@ namespace Latino.Workflows.TextMining
                         // URL cache
                         if (rev == 1)
                         {
+                            //Console.WriteLine(maxRev);
                             urlInfo.First.Add(urlKey, new Ref<int>(maxRev));
                             urlInfo.Second.Enqueue(new UrlHistoryEntry(urlKey, time));
                         }

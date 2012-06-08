@@ -57,6 +57,10 @@ CREATE TABLE [dbo].[Documents](
 GO
 SET ANSI_PADDING OFF
 GO
+alter table Documents alter column domain varchar(100) collate sql_latin1_general_cp1_cs_as NULL
+go
+alter table Documents alter column urlKey varchar(400) collate sql_latin1_general_cp1_cs_as NULL
+go
 /****** Object:  Table [dbo].[Corpora] ******/
 SET ANSI_NULLS ON
 GO
