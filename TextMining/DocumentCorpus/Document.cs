@@ -640,8 +640,11 @@ namespace Latino.Workflows.TextMining
         private static Set<string> uriFeatures
             = new Set<string>(new string[] { "link", "responseUrl", "urlKey" });
 
-        internal void MakeHtmlPage(TextWriter document, bool inlineCss, ArrayList<TreeNode<string>> annotationTreeList)
+        public void MakeHtmlPage(TextWriter document, bool inlineCss)
         {
+            ArrayList<TreeNode<string>> annotationTreeList;
+            annotationTreeList = MakeAnnotationTree();
+
             string templateString = Utils.GetManifestResourceString(GetType(), "Resources.DocumentTemplate.htm");
 
             string annotationTypeList = MakeHTMLAnnotationList(annotationTreeList);

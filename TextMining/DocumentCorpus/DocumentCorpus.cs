@@ -194,6 +194,7 @@ namespace Latino.Workflows.TextMining
             }
         }
 
+       
         public void WriteXml(XmlWriter writer, bool writeTopElement)
         {
             Utils.ThrowException(writer == null ? new ArgumentNullException("writer") : null);
@@ -251,7 +252,7 @@ namespace Latino.Workflows.TextMining
 
                 documentList += "<p class='statistics'>Contains " + d.Annotations.Count + annotationsString + " of " + countBasicTypes + basicTypesString + ". Described with " + d.Features.Names.Count + featuresString + ".</p>";
 
-                d.MakeHtmlPage(document, inlineCss, annotationTreeList);                              
+                d.MakeHtmlPage(document, inlineCss);                              
                 i++;               
             }
 
