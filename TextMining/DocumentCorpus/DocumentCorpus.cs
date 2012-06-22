@@ -29,7 +29,7 @@ namespace Latino.Workflows.TextMining
        '-----------------------------------------------------------------------
     */
     [XmlSchemaProvider("ProvideSchema")]
-    public class DocumentCorpus : ICloneable<DocumentCorpus>, System.Xml.Serialization.IXmlSerializable
+    public class DocumentCorpus : ICloneable<DocumentCorpus>, IXmlSerializable
     {
         private ArrayList<Document> mDocuments
             = new ArrayList<Document>();

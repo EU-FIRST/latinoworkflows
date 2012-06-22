@@ -31,7 +31,7 @@ namespace Latino.Workflows.TextMining
        '-----------------------------------------------------------------------
     */
     [XmlSchemaProvider("ProvideSchema")]
-    public class Document : ICloneable<Document>, System.Xml.Serialization.IXmlSerializable
+    public class Document : ICloneable<Document>, IXmlSerializable
     {
         private Ref<string> mText;
         private string mName;
