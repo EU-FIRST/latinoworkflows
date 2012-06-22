@@ -68,8 +68,6 @@ namespace Latino.Workflows.Persistance
             XmlWriter writer = XmlWriter.Create(stringWriter = new StringWriter(), xmlSettings); 
             corpus.WriteXml(writer, /*writeTopElement=*/true);
             writer.Close();
-            //DateTime now = DateTime.Now;
-            //string recordId = now.ToString("HH_mm_ss_") + corpusId;
             DateTime timeEnd = DateTime.Parse(corpus.Features.GetFeatureValue("timeEnd"));
             string recordId = timeEnd.ToString("HH_mm_ss_") + corpusId;
             // write to file

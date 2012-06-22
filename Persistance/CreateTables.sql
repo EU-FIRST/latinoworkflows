@@ -1,3 +1,5 @@
+-- DROP TABLES
+
 /****** Object:  Table [dbo].[Corpora] ******/
 DROP TABLE [dbo].[Corpora]
 GO
@@ -7,6 +9,15 @@ GO
 /****** Object:  Table [dbo].[TextBlocks] ******/
 DROP TABLE [dbo].[TextBlocks]
 GO
+/****** Object:  Table [dbo].[Sources] ******/
+DROP TABLE [dbo].[Sources]
+GO
+/****** Object:  Table [dbo].[rssXml] ******/
+DROP TABLE [dbo].[rssXml]
+GO
+
+-- CREATE TABLES
+
 /****** Object:  Table [dbo].[TextBlocks] ******/
 SET ANSI_NULLS ON
 GO
@@ -21,6 +32,12 @@ CREATE TABLE [dbo].[TextBlocks](
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
 SET ANSI_PADDING OFF
+GO
+CREATE NONCLUSTERED INDEX [corpusId_docId] ON [dbo].[TextBlocks] 
+(
+	[corpusId] ASC,
+	[docId] ASC
+)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 GO
 /****** Object:  Table [dbo].[Documents] ******/
 SET ANSI_NULLS ON
@@ -37,7 +54,7 @@ CREATE TABLE [dbo].[Documents](
 	[category] [nvarchar](400) NULL,
 	[link] [varchar](400) NULL,
 	[responseUrl] [varchar](400) NULL,
-	[urlKey] [varchar](400) NULL,
+	[urlKey] [varchar](400) COLLATE SQL_Latin1_General_CP1_CS_AS NULL,
 	[time] [char](26) NULL,
 	[pubDate] [char](26) NULL,
 	[mimeType] [varchar](80) NULL,
@@ -48,7 +65,7 @@ CREATE TABLE [dbo].[Documents](
 	[detectedCharRange] [nvarchar](100) NULL,
 	[rejected] [bit] NOT NULL,
 	[unseenContent] [varchar](3) NULL,
-	[domain] [varchar](100) NULL,
+	[domain] [varchar](100) COLLATE SQL_Latin1_General_CP1_CS_AS NULL,
 	[bpCharCount] [int] NULL,
 	[contentCharCount] [int] NULL,
 	[unseenContentCharCount] [int] NULL,
@@ -57,10 +74,19 @@ CREATE TABLE [dbo].[Documents](
 GO
 SET ANSI_PADDING OFF
 GO
-alter table Documents alter column domain varchar(100) collate sql_latin1_general_cp1_cs_as NULL
-go
-alter table Documents alter column urlKey varchar(400) collate sql_latin1_general_cp1_cs_as NULL
-go
+CREATE NONCLUSTERED INDEX [domain_time] ON [dbo].[Documents] 
+(
+	[time] ASC,
+	[domain] DESC
+)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
+GO
+CREATE NONCLUSTERED INDEX [urlKey_time_rev] ON [dbo].[Documents] 
+(
+	[urlKey] ASC,
+	[time] DESC,
+	[rev] DESC
+)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
+GO
 /****** Object:  Table [dbo].[Corpora] ******/
 SET ANSI_NULLS ON
 GO
@@ -80,4 +106,48 @@ CREATE TABLE [dbo].[Corpora](
 ) ON [PRIMARY] 
 GO
 SET ANSI_PADDING OFF
+GO
+/****** Object:  Table [dbo].[Sources] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[Sources](
+	[siteId] [nvarchar](100) NOT NULL,
+	[docId] [char](32) NOT NULL,
+	[sourceUrl] [varchar](400) NOT NULL,
+	[category] [ntext] NULL,
+	[entities] [ntext] NULL,
+	[xmlHash] [char](32) NOT NULL
+) ON [PRIMARY]
+GO
+SET ANSI_PADDING OFF
+GO
+CREATE NONCLUSTERED INDEX [siteId_docId_sourceUrl] ON [dbo].[Sources] 
+(
+	[siteId] ASC,
+	[docId] ASC,
+	[sourceUrl] ASC
+)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[rssXml] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+CREATE TABLE [dbo].[rssXml](
+	[hash] [char](32) NOT NULL,
+	[xml] [ntext] NOT NULL
+) ON [PRIMARY]
+GO
+SET ANSI_PADDING OFF
+GO
+CREATE NONCLUSTERED INDEX [hash] ON [dbo].[rssXml] 
+(
+	[hash] ASC
+)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 GO

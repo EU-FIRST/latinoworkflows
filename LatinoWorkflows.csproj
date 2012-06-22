@@ -63,6 +63,8 @@
     <Compile Include="DocumentFilterComponent.cs" />
     <Compile Include="Messenger.cs" />
     <Compile Include="PassOnComponent.cs" />
+    <Compile Include="Semantics\DocumentCategorizerComponent.cs" />
+    <Compile Include="Semantics\EntityRecognitionComponent.cs" />
     <Compile Include="Semantics\EntityRecognitionEngine.cs" />
     <Compile Include="Semantics\SemanticAnnotationComponent.cs" />
     <Compile Include="Semantics\SemanticAnnotator.cs" />
@@ -74,7 +76,7 @@
     <Compile Include="TextMining\EnglishLemmatizerComponent.cs" />
     <Compile Include="TextMining\EnglishTokenizerComponent.cs" />
     <Compile Include="TextMining\LanguageDetectorComponent.cs" />
-    <Compile Include="TextMining\PosTaggerComponent.cs" />
+    <Compile Include="TextMining\EnglishPosTaggerComponent.cs" />
     <Compile Include="TextMining\RssFeedComponent.cs" />
     <Compile Include="GenericStreamDataProducerPoll.cs" />
     <Compile Include="TextMining\DocumentCorpus\Annotation.cs" />

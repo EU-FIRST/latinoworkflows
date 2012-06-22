@@ -339,6 +339,20 @@ namespace Latino.Workflows.TextMining
             if (writeTopElement) { writer.WriteEndElement(); }
         }
 
+        public void WriteGateXml(string fileName, bool writeTopElement, bool removeBoilerplate)
+        {
+            Utils.ThrowException(!Utils.VerifyFileNameCreate(fileName) ? new ArgumentValueException("fileName") : null);
+            XmlWriterSettings xmlSettings = new XmlWriterSettings();
+            xmlSettings.Indent = true;
+            xmlSettings.NewLineOnAttributes = true;
+            xmlSettings.CheckCharacters = false;
+            StreamWriter fileWriter = new StreamWriter(fileName, /*append=*/false, Encoding.UTF8);
+            XmlWriter xmlWriter = XmlWriter.Create(fileWriter, xmlSettings);
+            WriteGateXml(xmlWriter, writeTopElement, removeBoilerplate);
+            xmlWriter.Close();
+            fileWriter.Close();
+        }
+
         public void WriteGateXml(XmlWriter writer, bool writeTopElement, bool removeBoilerplate)
         {
             Utils.ThrowException(writer == null ? new ArgumentNullException("writer") : null);

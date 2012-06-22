@@ -62,6 +62,8 @@ namespace Latino.Workflows.WebMining
         
         private int mPolitenessSleep
             = 1000;
+        private static DatabaseConnection mDbConnection
+            = null;
                 
         private RssHistory mHistory
             = new RssHistory();
@@ -69,7 +71,7 @@ namespace Latino.Workflows.WebMining
         private static Set<string> mChannelElements
             = new Set<string>(new string[] { "title", "link", "description", "language", "copyright", "managingEditor", "pubDate", "category" });
         private static Set<string> mItemElements
-            = new Set<string>(new string[] { "title", "link", "description", "author", "category", "comments", "pubDate", "source" });
+            = new Set<string>(new string[] { "title", "link", "description", "author", "category", "comments", "pubDate", "source", "emm:entity" });
 
         private static Regex mHtmlMimeTypeRegex
             = new Regex(@"(text/html)|(application/xhtml\+xml)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -127,6 +129,12 @@ namespace Latino.Workflows.WebMining
             AddSources(rssList); // throws ArgumentNullException, ArgumentValueException
             //Utils.ThrowException(mSources.Count == 0 ? new ArgumentValueException("rssList") : null); // allow empty source list
             TimeBetweenPolls = 300000; // poll every 5 minutes by default
+        }
+
+        public static DatabaseConnection DatabaseConnection
+        {
+            get { return mDbConnection; }
+            set { mDbConnection = value; }
         }
 
         public ArrayList<string>.ReadOnly Sources
@@ -188,7 +196,7 @@ namespace Latino.Workflows.WebMining
             return new Guid(md5.ComputeHash(Encoding.UTF8.GetBytes(string.Format("{0} {1} {2}", title, desc, pubDate))));
         }
 
-        private void ProcessItem(Dictionary<string, string> itemAttr, ArrayList<DocumentCorpus> corpora, string rssXmlUrl)
+        private void ProcessItem(Dictionary<string, string> itemAttr, ArrayList<DocumentCorpus> corpora, string rssXmlUrl, string xml)
         {
             try
             {
@@ -200,6 +208,20 @@ namespace Latino.Workflows.WebMining
                 itemAttr.TryGetValue("pubDate", out pubDate);
                 Guid guid = MakeGuid(name, desc, pubDate);
                 mLogger.Info("ProcessItem", "Found item \"{0}\".", Utils.ToOneLine(name, /*compact=*/true));
+                if (mDbConnection != null)
+                {
+                    string xmlHash = Utils.GetStringHashCode128(xml).ToString("N");
+                    string category = null;
+                    itemAttr.TryGetValue("category", out category);
+                    string entities = null;
+                    itemAttr.TryGetValue("emm:entity", out entities);
+                    lock (mDbConnection)
+                    {
+                        mDbConnection.ExecuteNonQuery("if not exists (select * from Sources where siteId = ? and docId = ? and sourceUrl = ?) insert into Sources (siteId, docId, sourceUrl, category, entities, xmlHash) values (?, ?, ?, ?, ?, ?)",
+                            mSiteId, guid.ToString("N"), rssXmlUrl, mSiteId, guid.ToString("N"), rssXmlUrl, category, entities, xmlHash);
+                        mDbConnection.ExecuteNonQuery("if not exists (select * from rssXml where hash = ?) insert into rssXml (hash, xml) values (?, ?)", xmlHash, xmlHash, xml);
+                    }
+                }                
                 if (!mHistory.CheckHistory(guid))
                 {
                     DateTime time = DateTime.Now;
@@ -327,11 +349,24 @@ namespace Latino.Workflows.WebMining
                                     if (mItemElements.Contains(reader.Name))
                                     {
                                         string attrName = reader.Name;
+                                        string emmTrigger = attrName == "category" ? reader.GetAttribute("emm:trigger") : null;
+                                        string emmEntityId = attrName == "emm:entity" ? reader.GetAttribute("id") : null;
+                                        string emmEntityName = attrName == "emm:entity" ? reader.GetAttribute("name") : null;
                                         string value = Utils.XmlReadValue(reader, attrName);
                                         if (value.Trim() != "")
                                         {
                                             string oldValue;
                                             if (attrName == "pubDate") { string tmp = Utils.NormalizeDateTimeStr(value); if (tmp != null) { value = tmp; } }
+                                            if (emmTrigger != null)
+                                            {
+                                                value += " ; " + emmTrigger.Replace(';', ',').TrimEnd(' ', ',');
+                                                //Console.WriteLine(value);
+                                            }
+                                            if (emmEntityId != null && emmEntityName != null)
+                                            {
+                                                value = string.Format("{0} ; {1} ; {2}", emmEntityName, value, emmEntityId);
+                                                //Console.WriteLine(value);
+                                            }
                                             if (itemAttr.TryGetValue(attrName, out oldValue))
                                             {
                                                 itemAttr[attrName] = oldValue + " ;; " + value;
@@ -354,7 +389,7 @@ namespace Latino.Workflows.WebMining
                                 if (corpora[0].Documents.Count == 0) { return null; }
                                 break;
                             }
-                            ProcessItem(itemAttr, corpora, url); 
+                            ProcessItem(itemAttr, corpora, url, xml); 
                         }
                     }
                     reader.Close();

@@ -18,6 +18,7 @@ using System.Xml.Schema;
 using System.Reflection;
 using System.IO;
 using System.Web;
+using System.Text;
 
 namespace Latino.Workflows.TextMining
 {
@@ -221,6 +222,20 @@ namespace Latino.Workflows.TextMining
         public void WriteXml(XmlWriter writer)
         {
             WriteXml(writer, /*writeTopElement=*/false); // throws ArgumentNullException
+        }
+
+        public void WriteXml(string fileName, bool writeTopElement)
+        {
+            Utils.ThrowException(!Utils.VerifyFileNameCreate(fileName) ? new ArgumentValueException("fileName") : null);
+            XmlWriterSettings xmlSettings = new XmlWriterSettings();
+            xmlSettings.Indent = true;
+            xmlSettings.NewLineOnAttributes = true;
+            xmlSettings.CheckCharacters = false;
+            StreamWriter fileWriter = new StreamWriter(fileName, /*append=*/false, Encoding.UTF8);
+            XmlWriter xmlWriter = XmlWriter.Create(fileWriter, xmlSettings);
+            WriteXml(xmlWriter, writeTopElement);
+            xmlWriter.Close();
+            fileWriter.Close(); 
         }
 
         // *** output HTML ***

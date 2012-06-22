@@ -17,6 +17,7 @@ using System.Text;
 using System.Globalization;
 using Latino.TextMining;
 using SemWeb;
+using System.IO;
 
 namespace Latino.Workflows.Semantics
 {
@@ -724,6 +725,19 @@ namespace Latino.Workflows.Semantics
                 mRdfStore.Import(new N3Reader(fileName));
             }
             mLogger.Info("ImportRdfFromFile", "Imported {0} statements.", mRdfStore.StatementCount - statementCount);
+        }
+
+        public void ImportRdfFromFolder(string folderName)
+        {
+            ArrayList<string> fileNames = new ArrayList<string>();
+            foreach (string searchPattern in new string[] { "*.rdf", "*.xml", "*.n3" })
+            {
+                fileNames.AddRange(Directory.GetFiles(folderName, searchPattern, SearchOption.AllDirectories));
+            }
+            foreach (string fileName in fileNames)
+            {
+                ImportRdfFromFile(fileName);
+            }
         }
 
         public string GetIdentifiedInstance(string gazetteerUri)
