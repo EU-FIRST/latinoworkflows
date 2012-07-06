@@ -167,6 +167,17 @@ namespace Latino.Workflows.TextMining
             }
         }
 
+        private static void Remove(string urlKey, Pair<Dictionary<string, Ref<int>>, Queue<UrlHistoryEntry>> urlInfo)
+        {
+            UrlHistoryEntry entry;
+            do
+            {
+                entry = urlInfo.Second.Dequeue();
+                if (entry.mUrlKey != null) { urlInfo.First.Remove(entry.mUrlKey); }
+            } 
+            while (entry.mUrlKey != urlKey);
+        }
+
         public static void InitializeHistory(DatabaseConnection dbConnection)
         {
             Logger logger = Logger.GetLogger(typeof(UrlTreeBoilerplateRemoverComponent));
@@ -200,6 +211,7 @@ namespace Latino.Workflows.TextMining
                         // URL cache
                         if (rev == 1)
                         {
+                            if (urlInfo.First.ContainsKey(urlKey)) { Remove(urlKey, urlInfo); }
                             //Console.WriteLine(maxRev);
                             urlInfo.First.Add(urlKey, new Ref<int>(maxRev));
                             urlInfo.Second.Enqueue(new UrlHistoryEntry(urlKey, time));
