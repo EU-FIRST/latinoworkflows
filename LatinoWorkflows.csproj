@@ -66,8 +66,6 @@
     <Compile Include="Semantics\DocumentCategorizerComponent.cs" />
     <Compile Include="Semantics\EntityRecognitionComponent.cs" />
     <Compile Include="Semantics\EntityRecognitionEngine.cs" />
-    <Compile Include="Semantics\SemanticAnnotationComponent.cs" />
-    <Compile Include="Semantics\SemanticAnnotator.cs" />
     <Compile Include="StreamDataProducer.cs" />
     <Compile Include="Persistance\DocumentCorpusWriterComponent.cs" />
     <Compile Include="TextMining\BoilerplateRemoverComponent.cs" />

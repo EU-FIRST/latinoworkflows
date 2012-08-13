@@ -49,7 +49,7 @@ namespace Latino.Workflows.TextMining
                 string text = strBuilder.ToString();
                 if (text.Length >= mMinTextLen) 
                 {
-                    LanguageProfile langProfile = mLanguageDetector.FindMatchingLanguage(text);
+                    LanguageProfile langProfile = mLanguageDetector.DetectLanguage(text);
                     if (langProfile != null)
                     {
                         document.Features.SetFeatureValue("detectedLanguage", langProfile.Language.ToString());
