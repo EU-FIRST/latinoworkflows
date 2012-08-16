@@ -21,7 +21,7 @@ namespace Latino.Workflows.TextMining
        |
        '-----------------------------------------------------------------------
     */
-    public class Annotation : ICloneable<Annotation>
+    public class Annotation : ICloneable<Annotation>, ISerializable
     {
         private string mType;
         private int mSpanStart;
@@ -39,6 +39,10 @@ namespace Latino.Workflows.TextMining
             mSpanEnd = spanEnd;            
             mType = type;
             mFeaturesInterface = new Features(mFeatures);
+        }
+
+        public Annotation(BinarySerializer reader) {
+            Load(reader);
         }
 
         public string Type
@@ -87,6 +91,23 @@ namespace Latino.Workflows.TextMining
         object ICloneable.Clone()
         {
             return Clone();
+        }
+
+        public void Save(BinarySerializer writer) {
+            writer.WriteString(mType);
+            writer.WriteInt(mSpanStart);
+            writer.WriteInt(mSpanEnd);
+            
+            Utils.SaveDictionary(mFeatures, writer);
+        }
+        
+        public void Load(BinarySerializer reader) {
+            mType = reader.ReadString();
+            mSpanStart = reader.ReadInt();
+            mSpanEnd = reader.ReadInt();
+
+            mFeatures = Utils.LoadDictionary<string, string>(reader);
+            mFeaturesInterface = new Features(mFeatures);
         }
     }
 }

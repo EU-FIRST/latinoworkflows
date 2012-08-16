@@ -29,7 +29,7 @@ namespace Latino.Workflows.TextMining
        '-----------------------------------------------------------------------
     */
     [XmlSchemaProvider("ProvideSchema")]
-    public class DocumentCorpus : ICloneable<DocumentCorpus>, System.Xml.Serialization.IXmlSerializable
+    public class DocumentCorpus : ICloneable<DocumentCorpus>, System.Xml.Serialization.IXmlSerializable, ISerializable
     {
         private ArrayList<Document> mDocuments
             = new ArrayList<Document>();
@@ -40,6 +40,10 @@ namespace Latino.Workflows.TextMining
         public DocumentCorpus()
         {
             mFeaturesInterface = new Features(mFeatures);
+        }
+        
+        public DocumentCorpus(BinarySerializer reader) {
+            Load(reader);
         }
 
         public Features Features
@@ -299,7 +303,15 @@ namespace Latino.Workflows.TextMining
 
         }
 
-
+        public void Save(BinarySerializer writer) {
+            mDocuments.Save(writer);
+            Utils.SaveDictionary(mFeatures, writer);
+        }
         
+        public void Load(BinarySerializer reader) {
+            mDocuments = new ArrayList<Document>(reader);
+            mFeatures = Utils.LoadDictionary<string, string>(reader);
+            mFeaturesInterface = new Features(mFeatures);
+        }
     }
 }

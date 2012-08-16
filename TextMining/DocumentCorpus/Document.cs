@@ -31,7 +31,7 @@ namespace Latino.Workflows.TextMining
        '-----------------------------------------------------------------------
     */
     [XmlSchemaProvider("ProvideSchema")]
-    public class Document : ICloneable<Document>, System.Xml.Serialization.IXmlSerializable
+    public class Document : ICloneable<Document>, System.Xml.Serialization.IXmlSerializable, ISerializable
     {
         private Ref<string> mText;
         private string mName;
@@ -51,6 +51,10 @@ namespace Latino.Workflows.TextMining
             mName = name;
             mText = text;            
             mFeaturesInterface = new Features(mFeatures);
+        }
+
+        public Document(BinarySerializer reader) {
+            Load(reader);
         }
 
         internal Document() : this("", "") // required for serialization
@@ -939,6 +943,28 @@ namespace Latino.Workflows.TextMining
                 else { str.Append("\\u" + ((int)ch).ToString("X").PadLeft(4, '0')); } // encoded as Unicode
             }
             return str.ToString() + "\"";
+        }
+
+        public void Save(BinarySerializer writer) {
+            writer.WriteString(mText.Val);
+            writer.WriteString(mName);
+            mAnnotations.Save(writer);
+            
+            Utils.SaveDictionary(mFeatures, writer);
+            writer.WriteBool(mAnnotationIndex==null);
+        }
+        
+        public void Load(BinarySerializer reader) {
+            mText = reader.ReadString();
+            mName = reader.ReadString();
+            mAnnotations = new ArrayList<Annotation>(reader);
+
+            mFeatures = Utils.LoadDictionary<string, string>(reader);
+            mFeaturesInterface = new Features(mFeatures);
+            
+            mAnnotationIndex = null;
+            bool annotationIndexNull = reader.ReadBool();
+            if (!annotationIndexNull) CreateAnnotationIndex();
         }
     }
 }
