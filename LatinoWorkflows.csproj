@@ -69,6 +69,7 @@
     <Compile Include="StreamDataProducer.cs" />
     <Compile Include="Persistance\DocumentCorpusWriterComponent.cs" />
     <Compile Include="TextMining\BoilerplateRemoverComponent.cs" />
+    <Compile Include="TextMining\BowComponent.cs" />
     <Compile Include="TextMining\HtmlTokenizerComponent.cs" />
     <Compile Include="TextMining\DocumentCorpus\Tree.cs" />
     <Compile Include="TextMining\EnglishLemmatizerComponent.cs" />

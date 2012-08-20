@@ -395,7 +395,7 @@ namespace Latino.Workflows.TextMining
                     }
                     catch (Exception exception)
                     {
-                        mLogger.Error("ProcessDocument", exception);
+                        mLogger.Error("ProcessData (ProcessDocument)", exception);
                     }
                 }
                 // lock and process each domain separately 
@@ -428,7 +428,7 @@ namespace Latino.Workflows.TextMining
                             }
                             catch (Exception exception)
                             {
-                                mLogger.Error("ProcessDocument", exception);
+                                mLogger.Error("ProcessData (ProcessDocument)", exception);
                             }
                         }
                         // populate URL tree
@@ -459,7 +459,7 @@ namespace Latino.Workflows.TextMining
                             }
                             catch (Exception exception)
                             {
-                                mLogger.Error("ProcessDocument", exception);
+                                mLogger.Error("ProcessData (ProcessDocument)", exception);
                             }
                         }
                         // annotate boilerplate
@@ -514,7 +514,7 @@ namespace Latino.Workflows.TextMining
                             }
                             catch (Exception exception)
                             {
-                                mLogger.Error("ProcessDocument", exception);
+                                mLogger.Error("ProcessData (ProcessDocument)", exception);
                             }
                         }
                         if (maxTime != DateTime.MinValue)
