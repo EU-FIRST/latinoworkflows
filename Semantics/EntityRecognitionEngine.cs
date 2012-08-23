@@ -59,6 +59,8 @@ namespace Latino.Workflows.Semantics
             = NAMESPACE + "hasBlockLevelCondition";
         private static Entity P_HAS_DOCUMENT_LEVEL_CONDITION
             = NAMESPACE + "hasDocumentLevelCondition";
+        private static Entity P_HAS_FOLLOWED_BY_CONDITION
+            = NAMESPACE + "hasFollowedByCondition";
         private static Entity P_IDENTIFIED_BY
             = NAMESPACE + "identifiedBy";
         private static Entity P_SETTINGS
@@ -106,20 +108,21 @@ namespace Latino.Workflows.Semantics
         */
         private class Condition
         {
-            public enum Level
+            public enum Type
             { 
                 Sentence,
                 Block,
-                Document
+                Document,
+                FollowedBy
             }
 
             public Gazetteer mGazetteer;
-            public Level mLevel;
+            public Type mType;
 
-            public Condition(Gazetteer gazetteer, Level level)
+            public Condition(Gazetteer gazetteer, Type type)
             {
                 mGazetteer = gazetteer;
-                mLevel = level;
+                mType = type;
             }
         }
 
@@ -220,7 +223,8 @@ namespace Latino.Workflows.Semantics
                             int len = mTokens[j].mSpanEnd - mTokens[i].mSpanStart + 1; // *** this counts all chars in the annotation (incl. spaces and non-token chars)
                             if (len >= term.mMinLen)
                             {
-                                spans.Add(new Pair<int, int>(mTokens[i].mSpanStart, mTokens[j].mSpanEnd));
+                                //spans.Add(new Pair<int, int>(mTokens[i].mSpanStart, mTokens[j].mSpanEnd));
+                                spans.Add(new Pair<int, int>(i, j));
                             }
                         }
                     }
@@ -338,17 +342,41 @@ namespace Latino.Workflows.Semantics
                         bool valid = true; 
                         foreach (Condition condition in gazetteer.mConditions)
                         {
-                            if (condition.mLevel == Condition.Level.Document)
+                            if (condition.mType == Condition.Type.Document)
                             {
                                 if (!documentEntityInfo.Contains(condition.mGazetteer)) { valid = false; break; }
                             }
-                            else if (condition.mLevel == Condition.Level.Block)
+                            else if (condition.mType == Condition.Type.Block)
                             {
                                 if (!textBlockGazetteers.Contains(condition.mGazetteer)) { valid = false; break; }
                             }
-                            else if (condition.mLevel == Condition.Level.Sentence)
+                            else if (condition.mType == Condition.Type.Sentence)
                             {
                                 if (!sentenceInfo.Value.ContainsKey(condition.mGazetteer)) { valid = false; break; }
+                            }
+                            else if (condition.mType == Condition.Type.FollowedBy)
+                            {
+                                // fast check
+                                if (!sentenceInfo.Value.ContainsKey(condition.mGazetteer)) { valid = false; break; }
+                                // thorough check
+                                ArrayList<Pair<int, int>> tmp = new ArrayList<Pair<int, int>>();
+                                ArrayList<Pair<int, int>> condSpans = sentenceInfo.Value[condition.mGazetteer];
+                                foreach (Pair<int, int> span in gazetteerInfo.Value)
+                                {
+                                    //Console.WriteLine(span);
+                                    foreach (Pair<int, int> condSpan in condSpans)
+                                    {
+                                        //Console.WriteLine("  " + condSpan);
+                                        if (span.Second == condSpan.First - 1) // span is valid
+                                        {
+                                            tmp.Add(span);
+                                        }
+                                    }
+                                }
+                                if (tmp.Count == 0) { valid = false; break; }
+                                //Console.WriteLine(tmp);
+                                gazetteerInfo.Value.Clear();
+                                gazetteerInfo.Value.AddRange(tmp);
                             }
                         }
                         if (valid)
@@ -373,7 +401,8 @@ namespace Latino.Workflows.Semantics
                                 if (!skip)
                                 {
                                     discoveredEntities.Add(gazetteer.mUri);
-                                    spans.Add(span);
+                                    //spans.Add(span);
+                                    spans.Add(new Pair<int, int>(sentenceInfo.Key.mTokens[span.First].mSpanStart, sentenceInfo.Key.mTokens[span.Second].mSpanEnd));                                    
                                 }
                             }
                         }
@@ -640,17 +669,22 @@ namespace Latino.Workflows.Semantics
                     Resource[] conditionGazetteers = rdfStore.SelectObjects(uri, P_HAS_SENTENCE_LEVEL_CONDITION);
                     foreach (Entity conditionGazetteer in conditionGazetteers)
                     {
-                        mConditions.Add(new Condition(gazetteers[conditionGazetteer.Uri], Condition.Level.Sentence));
+                        mConditions.Add(new Condition(gazetteers[conditionGazetteer.Uri], Condition.Type.Sentence));
                     }
                     conditionGazetteers = rdfStore.SelectObjects(uri, P_HAS_BLOCK_LEVEL_CONDITION);
                     foreach (Entity conditionGazetteer in conditionGazetteers)
                     {
-                        mConditions.Add(new Condition(gazetteers[conditionGazetteer.Uri], Condition.Level.Block));
+                        mConditions.Add(new Condition(gazetteers[conditionGazetteer.Uri], Condition.Type.Block));
                     }
                     conditionGazetteers = rdfStore.SelectObjects(uri, P_HAS_DOCUMENT_LEVEL_CONDITION);
                     foreach (Entity conditionGazetteer in conditionGazetteers)
                     {
-                        mConditions.Add(new Condition(gazetteers[conditionGazetteer.Uri], Condition.Level.Document));
+                        mConditions.Add(new Condition(gazetteers[conditionGazetteer.Uri], Condition.Type.Document));
+                    }
+                    conditionGazetteers = rdfStore.SelectObjects(uri, P_HAS_FOLLOWED_BY_CONDITION);
+                    foreach (Entity conditionGazetteer in conditionGazetteers)
+                    {
+                        mConditions.Add(new Condition(gazetteers[conditionGazetteer.Uri], Condition.Type.FollowedBy));
                     }
                 }
             }
