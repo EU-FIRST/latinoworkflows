@@ -15,9 +15,9 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Text;
 using System.Globalization;
+using System.IO;
 using Latino.TextMining;
 using SemWeb;
-using System.IO;
 
 namespace Latino.Workflows.Semantics
 {
@@ -37,7 +37,7 @@ namespace Latino.Workflows.Semantics
             = new Lemmatizer(Language.English);
 
         private static Regex mMicroTokenRegex
-            = new Regex(@"([\d\p{L}]+|\p{Sc})", RegexOptions.Compiled); // *** punctuation marks?
+            = new Regex(@"[\d\p{L}]+|\p{Sc}", RegexOptions.Compiled); // *** punctuation marks?
         private static Regex mGazetteerMicroTokenRegex
             = new Regex(@"([\d\p{L}]+|\p{Sc})(/\p{L}+)?", RegexOptions.Compiled); // *** punctuation marks?
         private static Regex mConstraintRegex
