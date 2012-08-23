@@ -37,9 +37,9 @@ namespace Latino.Workflows.Semantics
             = new Lemmatizer(Language.English);
 
         private static Regex mMicroTokenRegex
-            = new Regex(@"[\d\p{L}]+", RegexOptions.Compiled); // *** currency symbols, punctuation marks?
+            = new Regex(@"([\d\p{L}]+|\p{Sc})", RegexOptions.Compiled); // *** punctuation marks?
         private static Regex mGazetteerMicroTokenRegex
-            = new Regex(@"[\d\p{L}]+(/\p{L}+)?", RegexOptions.Compiled); // *** currency symbols, punctuation marks?
+            = new Regex(@"([\d\p{L}]+|\p{Sc})(/\p{L}+)?", RegexOptions.Compiled); // *** punctuation marks?
         private static Regex mConstraintRegex
             = new Regex(@"(/\p{L}+=[\p{L}\d]+)+", RegexOptions.Compiled);
 
