@@ -370,11 +370,15 @@ namespace Latino.Workflows.TextMining
 
             foreach (KeyValuePair<string, string> keyVal in mFeatures)
             {
+                string keyReplacement = keyVal.Key;
+                if (keyReplacement == "fullId")
+                    keyReplacement = "JSI_WP3_ID";
+
                 writer.WriteStartElement("Feature");
 
                 writer.WriteStartElement("Name");
                 writer.WriteAttributeString("className", "java.lang.String");
-                writer.WriteString(keyVal.Key);
+                writer.WriteString(keyReplacement);
                 writer.WriteEndElement(); //</Name>
 
                 writer.WriteStartElement("Value");
