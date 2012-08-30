@@ -555,7 +555,7 @@ namespace Latino.Workflows.TextMining
                     ||(!annot.Type.Contains("Boilerplate") && !isBoilerplate))
                 {
                     string annotType = annot.Type;
-                    if (annot.Type.StartsWith("Sentiment object/"))
+                    if (annot.Type.StartsWith("SentimentObject/"))
                         annotType = "SO";
 
                     writer.WriteStartElement("Annotation");
@@ -578,13 +578,13 @@ namespace Latino.Workflows.TextMining
                         string replacement = keyVal.Key;
                         bool writeInstanceName = false;
 
-                        if (annot.Type.StartsWith("Sentiment object/") && keyVal.Key == "instanceUri")
+                        if (annot.Type.StartsWith("SentimentObject/") && keyVal.Key == "instanceUri")
                         {
                             replacement = "Uri";
                             writeInstanceName = true;
                         }
 
-                        if (annot.Type.StartsWith("Sentiment object/") && keyVal.Key == "classUri")
+                        if (annot.Type.StartsWith("SentimentObject/") && keyVal.Key == "instanceClassUri")
                         {
                             replacement = "class";                           
                         }
