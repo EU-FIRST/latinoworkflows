@@ -199,7 +199,6 @@ namespace Latino.Workflows.TextMining
             }
         }
 
-       
         public void WriteXml(XmlWriter writer, bool writeTopElement)
         {
             Utils.ThrowException(writer == null ? new ArgumentNullException("writer") : null);

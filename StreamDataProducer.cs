@@ -41,6 +41,12 @@ namespace Latino.Workflows
             mLogger = WorkflowUtils.CreateLogger(mLoggerBaseName, mName);
         }
 
+        public StreamDataProducer(Type loggerType)
+        {
+            mLoggerBaseName = loggerType.ToString();
+            mLogger = WorkflowUtils.CreateLogger(mLoggerBaseName, mName);
+        }
+
         public bool CloneDataOnFork
         {
             get { return mCloneDataOnFork; }

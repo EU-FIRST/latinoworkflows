@@ -39,7 +39,7 @@ namespace Latino.Workflows
         {
         }
 
-        public StreamDataProducerPoll(Type loggerType) : this(loggerType.ToString())
+        public StreamDataProducerPoll(Type loggerType) : base(loggerType)
         {
         }
 
