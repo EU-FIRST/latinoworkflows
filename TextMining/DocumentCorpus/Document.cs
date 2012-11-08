@@ -696,7 +696,7 @@ namespace Latino.Workflows.TextMining
 
         }
 
-        private string MakeHTMLAnnotationList(ArrayList<TreeNode<string>> annotationTreeList)
+        public string MakeHTMLAnnotationList(ArrayList<TreeNode<string>> annotationTreeList)
         {
             string annotationTypeList = "<ul>";
 
@@ -731,7 +731,7 @@ namespace Latino.Workflows.TextMining
             return annotationTypeList;
         }
 
-        internal ArrayList<TreeNode<string>> MakeAnnotationTree()
+        public ArrayList<TreeNode<string>> MakeAnnotationTree()
         {
             ArrayList<TreeNode<string>> result = new ArrayList<TreeNode<string>>();
 

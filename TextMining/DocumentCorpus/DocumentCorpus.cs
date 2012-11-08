@@ -289,7 +289,7 @@ namespace Latino.Workflows.TextMining
             index.Close();
         }
 
-        private int CountBasicTypes(ArrayList<TreeNode<string>> annotationTreeList)
+        public int CountBasicTypes(ArrayList<TreeNode<string>> annotationTreeList)
         {
             int count = 0;
 
