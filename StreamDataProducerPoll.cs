@@ -26,7 +26,7 @@ namespace Latino.Workflows
         private int mTimeBetweenPolls
             = 1;
         private bool mRandomDelayAtStart
-            = true; // TODO: make this configurable
+            = false;
         private Random mRng
             = new Random();
 
@@ -41,6 +41,12 @@ namespace Latino.Workflows
 
         public StreamDataProducerPoll(Type loggerType) : base(loggerType)
         {
+        }
+
+        public bool RandomDelayAtStart
+        {
+            get { return mRandomDelayAtStart; }
+            set { mRandomDelayAtStart = value; }
         }
 
         public int TimeBetweenPolls

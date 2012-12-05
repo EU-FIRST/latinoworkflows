@@ -12,8 +12,8 @@ GO
 /****** Object:  Table [dbo].[Sources] ******/
 DROP TABLE [dbo].[Sources]
 GO
-/****** Object:  Table [dbo].[rssXml] ******/
-DROP TABLE [dbo].[rssXml]
+/****** Object:  Table [dbo].[RssXml] ******/
+DROP TABLE [dbo].[RssXml]
 GO
 
 -- CREATE TABLES
@@ -132,21 +132,21 @@ CREATE NONCLUSTERED INDEX [siteId_docId_sourceUrl] ON [dbo].[Sources]
 	[sourceUrl] ASC
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[rssXml] ******/
+/****** Object:  Table [dbo].[RssXml] ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_PADDING ON
 GO
-CREATE TABLE [dbo].[rssXml](
+CREATE TABLE [dbo].[RssXml](
 	[hash] [char](32) NOT NULL,
 	[xml] [ntext] NOT NULL
 ) ON [PRIMARY]
 GO
 SET ANSI_PADDING OFF
 GO
-CREATE NONCLUSTERED INDEX [hash] ON [dbo].[rssXml] 
+CREATE NONCLUSTERED INDEX [hash] ON [dbo].[RssXml] 
 (
 	[hash] ASC
 )WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]

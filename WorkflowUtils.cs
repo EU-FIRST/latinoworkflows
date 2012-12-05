@@ -49,11 +49,11 @@ namespace Latino.Workflows
             }
             else if (loggerBaseName == null)
             {
-                return Logger.GetLogger(name);
+                return Logger.GetInstanceLogger(name);
             }
             else if (name == null)
             {
-                return Logger.GetLogger(loggerBaseName);
+                return Logger.GetInstanceLogger(loggerBaseName);
             }
             else
             {
