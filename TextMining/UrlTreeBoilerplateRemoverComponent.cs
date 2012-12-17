@@ -184,17 +184,18 @@ namespace Latino.Workflows.TextMining
             logger.Info("InitializeHistory", "Loading history ...");
             mUrlInfo.Clear();
             mTextBlockInfo.Clear();
-            // TODO: make the number of considered domains configurable
-            DataTable domainsTbl = dbConnection.ExecuteQuery(@"
-                SELECT DISTINCT Domain FROM 
-                (SELECT * FROM (SELECT TOP 3000 Domain, MAX(Time) AS Val FROM Documents WHERE Domain IS NOT NULL GROUP BY Domain ORDER BY MAX(Time) DESC) x 
+            DataTable domainsTbl = dbConnection.ExecuteQuery(string.Format(@"
+                SELECT DISTINCT domain FROM 
+                (SELECT * FROM (SELECT TOP {0} domain FROM Documents WHERE domain IS NOT NULL GROUP BY domain ORDER BY MAX(time) DESC) x 
                 UNION 
-                SELECT * FROM (SELECT TOP 3000 Domain, CAST(COUNT(*) AS VARCHAR) AS Val FROM Documents WHERE Domain IS NOT NULL GROUP BY Domain ORDER BY COUNT(*) DESC) y) z");
+                SELECT * FROM (SELECT TOP {0} domain FROM Documents WHERE domain IS NOT NULL GROUP BY domain ORDER BY COUNT(*) DESC) y) z", 3000/*make this configurable!!*/));
             int domainCount = 0;
             foreach (DataRow row in domainsTbl.Rows)
             {
                 string domainName = (string)row["domain"];
-                DataTable urlInfoTbl = dbConnection.ExecuteQuery(string.Format("select top {0} d.id, d.corpusId, d.time, d.responseUrl, d.urlKey, d.rev, d.domain, (select top 1 dd.rev from Documents dd where dd.urlKey = d.urlKey order by dd.time desc, dd.rev desc) as maxRev, tb.hashCodes from Documents d inner join TextBlocks tb on d.corpusId = tb.corpusId and d.id = tb.docId where d.domain = ? order by d.time desc", mMaxQueueSize), domainName);
+                DataTable urlInfoTbl = dbConnection.ExecuteQuery(string.Format(@"
+                    SELECT TOP {0} d.id, d.corpusId, d.time, d.responseUrl, d.urlKey, d.rev, d.domain, (SELECT TOP 1 dd.rev from Documents dd WHERE dd.urlKey = d.urlKey ORDER BY dd.time DESC, dd.rev DESC) AS maxRev, tb.hashCodes FROM Documents d 
+                    INNER JOIN TextBlocks tb ON d.corpusId = tb.corpusId AND d.id = tb.docId WHERE d.domain = ? ORDER BY d.time DESC", mMaxQueueSize), domainName);
                 if (urlInfoTbl.Rows.Count == 0) { continue; }
                 Pair<UrlTree, Queue<TextBlockHistoryEntry>> textBlockInfo = GetTextBlockInfo(domainName);
                 DateTime then = DateTime.Parse((string)urlInfoTbl.Rows[0]["time"]) - new TimeSpan(mHistoryAgeDays, 0, 0, 0);
@@ -371,7 +372,7 @@ namespace Latino.Workflows.TextMining
             }
         }
 
-        protected override object ProcessData(IDataProducer sender, object data)
+        public/*protected*/ override object ProcessData(IDataProducer sender, object data)
         {
             DocumentCorpus corpus = (DocumentCorpus)data;            
             try

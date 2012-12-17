@@ -56,7 +56,7 @@ namespace Latino.Workflows.WebMining
             get { return mDumpDataConsumers; }
         }
 
-        protected override object ProcessData(IDataProducer sender, object data)
+        public/*protected*/ override object ProcessData(IDataProducer sender, object data)
         {
             try
             {

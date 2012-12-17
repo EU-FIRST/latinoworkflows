@@ -62,7 +62,7 @@ namespace Latino.Workflows
             WorkflowUtils.DispatchData(this, data, mCloneDataOnFork, mDispatchPolicy, mDataConsumers, mLogger);
         }
 
-        protected abstract object ProcessData(IDataProducer sender, object data);
+        public/*protected*/ abstract object ProcessData(IDataProducer sender, object data);
 
         // *** IDataProducer interface implementation ***
 

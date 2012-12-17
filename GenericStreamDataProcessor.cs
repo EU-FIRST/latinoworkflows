@@ -29,7 +29,7 @@ namespace Latino.Workflows
         {
         }
 
-        protected override object ProcessData(IDataProducer sender, object data)
+        public/*protected*/ override object ProcessData(IDataProducer sender, object data)
         {
             if (OnProcessData != null)
             {

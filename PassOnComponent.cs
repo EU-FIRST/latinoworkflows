@@ -24,7 +24,7 @@ namespace Latino.Workflows.TextMining
         {
         }
 
-        protected override object ProcessData(IDataProducer sender, object data)
+        public/*protected*/ override object ProcessData(IDataProducer sender, object data)
         {
             return data;
         }
