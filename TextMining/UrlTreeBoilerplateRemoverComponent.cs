@@ -184,8 +184,12 @@ namespace Latino.Workflows.TextMining
             logger.Info("InitializeHistory", "Loading history ...");
             mUrlInfo.Clear();
             mTextBlockInfo.Clear();
-            // TODO: limit the following statement to domains with recent-enough activity (e.g. 3000 domains)
-            DataTable domainsTbl = dbConnection.ExecuteQuery("select distinct domain from Documents where domain is not null"); 
+            // TODO: make the number of considered domains configurable
+            DataTable domainsTbl = dbConnection.ExecuteQuery(@"
+                SELECT DISTINCT Domain FROM 
+                (SELECT * FROM (SELECT TOP 3000 Domain, MAX(Time) AS Val FROM Documents WHERE Domain IS NOT NULL GROUP BY Domain ORDER BY MAX(Time) DESC) x 
+                UNION 
+                SELECT * FROM (SELECT TOP 3000 Domain, CAST(COUNT(*) AS VARCHAR) AS Val FROM Documents WHERE Domain IS NOT NULL GROUP BY Domain ORDER BY COUNT(*) DESC) y) z");
             int domainCount = 0;
             foreach (DataRow row in domainsTbl.Rows)
             {
