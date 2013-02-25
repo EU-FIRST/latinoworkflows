@@ -72,6 +72,11 @@ namespace Latino.Workflows.TextMining
             return false;
         }
 
+        public void Clear()
+        {
+            mFeatures.Clear();
+        }
+
         // *** IEnumerable<KeyValuePair<string,string>> interface implementation ***
 
         public IEnumerator<KeyValuePair<string, string>> GetEnumerator()

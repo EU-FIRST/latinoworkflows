@@ -199,6 +199,14 @@ namespace Latino.Workflows.TextMining
             }
         }
 
+        public void ReadXml(string xml)
+        {
+            Utils.ThrowException(xml == null ? new ArgumentNullException("xml") : null);
+            XmlTextReader xmlReader = new XmlTextReader(new StringReader(xml));
+            ReadXml(xmlReader);
+            xmlReader.Close();
+        }
+
         public void WriteXml(XmlWriter writer, bool writeTopElement)
         {
             Utils.ThrowException(writer == null ? new ArgumentNullException("writer") : null);

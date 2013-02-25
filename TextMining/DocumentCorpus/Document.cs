@@ -240,7 +240,6 @@ namespace Latino.Workflows.TextMining
                     int spanStart = 0;
                     int spanEnd = 0;
                     string annotType = "not set";
-                    int annotId = -1;
                     ArrayList<Pair<string, string>> features = new ArrayList<Pair<string, string>>();
                     while (reader.Read() && !(reader.NodeType == XmlNodeType.EndElement && reader.Name == "Annotation"))
                     {
@@ -311,7 +310,7 @@ namespace Latino.Workflows.TextMining
             string ns = "http://freekoders.org/latino";
             if (writeTopElement) { writer.WriteStartElement("Document", ns); }
             writer.WriteElementString("Name", ns, Utils.ReplaceSurrogates(mName));
-            writer.WriteElementString("Text", ns, Utils.ReplaceSurrogates(mText));            
+            writer.WriteElementString("Text", ns, Utils.ReplaceSurrogates(mText));
             writer.WriteStartElement("Annotations", ns);
             foreach (Annotation annot in mAnnotations)
             {
@@ -389,7 +388,9 @@ namespace Latino.Workflows.TextMining
                 writer.WriteEndElement(); //</Feature>
             }
             writer.WriteEndElement();//</GateDocumentFeatures>
-            string textWithNodes = "";
+            StringBuilder textWithNodes = new StringBuilder();
+            Set<int> _spans = new Set<int>();
+            Set<int> _boilerplateSpans = new Set<int>();
             List<int> spans = new List<int>();
             List<int> boilerplateSpans = new List<int>();
 
@@ -402,21 +403,23 @@ namespace Latino.Workflows.TextMining
                 {
                     if (!annot.Type.Contains("Boilerplate"))
                     {
-                        if (!spans.Contains(annot.SpanStart))
-                            spans.Add(annot.SpanStart);
-                        if (!spans.Contains(annot.SpanEnd + 1))
-                            spans.Add(annot.SpanEnd + 1);
+                        //if (!_spans.Contains(annot.SpanStart))
+                            _spans.Add(annot.SpanStart);
+                        //if (!_spans.Contains(annot.SpanEnd + 1))
+                            _spans.Add(annot.SpanEnd + 1);
                     }
                     else
                     {
-                        if (!boilerplateSpans.Contains(annot.SpanStart))
-                            boilerplateSpans.Add(annot.SpanStart);
-                        if (!boilerplateSpans.Contains(annot.SpanEnd + 1))
-                            boilerplateSpans.Add(annot.SpanEnd + 1);
+                        //if (!_boilerplateSpans.Contains(annot.SpanStart))
+                            _boilerplateSpans.Add(annot.SpanStart);
+                        //if (!_boilerplateSpans.Contains(annot.SpanEnd + 1))
+                            _boilerplateSpans.Add(annot.SpanEnd + 1);
                     }
                 }
 
+                spans.AddRange(_spans);
                 spans.Sort();
+                boilerplateSpans.AddRange(_boilerplateSpans);
                 boilerplateSpans.Sort();
 
                 
@@ -433,7 +436,7 @@ namespace Latino.Workflows.TextMining
                             j++;
                             break;
                         }
-                        else if (mText.Val[j] == '\n' && boilerplateSpans.Contains(j + 1))
+                        else if (mText.Val[j] == '\n' && _boilerplateSpans.Contains(j + 1))
                         {
                             isBoilerplate = true;
                             j++;
@@ -453,7 +456,7 @@ namespace Latino.Workflows.TextMining
 
                         if (k < spans.Count && spans.Count > 0 && j == spans[k])
                         {
-                            textWithNodes += "<Node id=\"" + spans[k] + "\" />";
+                            textWithNodes.Append("<Node id=\"" + spans[k] + "\" />");
                             k++;
 
                         }
@@ -463,7 +466,7 @@ namespace Latino.Workflows.TextMining
 
                             while (j != spans[k])
                             {
-                                textWithNodes += HttpUtility.HtmlEncode(mText.Val[j].ToString());
+                                textWithNodes.Append(HttpUtility.HtmlEncode(mText.Val[j].ToString()));
                                 j++;
                             }
                         }
@@ -471,7 +474,7 @@ namespace Latino.Workflows.TextMining
                         {
                             while (j < mText.Val.Length)
                             {
-                                textWithNodes += HttpUtility.HtmlEncode(mText.Val[j].ToString());
+                                textWithNodes.Append(HttpUtility.HtmlEncode(mText.Val[j].ToString()));
                                 j++;
                             }
                         }
@@ -489,25 +492,27 @@ namespace Latino.Workflows.TextMining
                 writer.WriteStartElement("TextWithNodes");
 
                 spans = new List<int>();
+                _spans = new Set<int>();
 
                 foreach (Annotation annot in mAnnotations)
                 {
-                    if (!spans.Contains(annot.SpanStart))
-                        spans.Add(annot.SpanStart);
-                    if (!spans.Contains(annot.SpanEnd + 1))
-                        spans.Add(annot.SpanEnd + 1);
+                    //if (!_spans.Contains(annot.SpanStart))
+                        _spans.Add(annot.SpanStart);
+                    //if (!_spans.Contains(annot.SpanEnd + 1))
+                        _spans.Add(annot.SpanEnd + 1);
                 }
 
+                spans.AddRange(_spans);
                 spans.Sort();
 
-                textWithNodes = "";
+                textWithNodes = new StringBuilder();
                 int k = 0;
 
                 for (int j = 0; j < mText.Val.Length; )
                 {
                     if (spans.Count > 0 && j == spans[k])
                     {
-                        textWithNodes += "<Node id=\"" + spans[k] + "\" />";
+                        textWithNodes.Append("<Node id=\"" + spans[k] + "\" />");
                         k++;
 
                     }
@@ -516,7 +521,7 @@ namespace Latino.Workflows.TextMining
                     {
                         while (j != spans[k])
                         {
-                            textWithNodes += HttpUtility.HtmlEncode(mText.Val[j].ToString());
+                            textWithNodes.Append(HttpUtility.HtmlEncode(mText.Val[j].ToString()));
                             j++;
                         }
                     }
@@ -524,13 +529,13 @@ namespace Latino.Workflows.TextMining
                     {
                         while (j < mText.Val.Length)
                         {
-                            textWithNodes += HttpUtility.HtmlEncode(mText.Val[j].ToString());
+                            textWithNodes.Append(HttpUtility.HtmlEncode(mText.Val[j].ToString()));
                             j++;
                         }
                     }
                 }
             }
-            writer.WriteRaw(textWithNodes);
+            writer.WriteRaw(textWithNodes.ToString());
 
             writer.WriteEndElement();//</TextWithNodes>
 
@@ -654,7 +659,7 @@ namespace Latino.Workflows.TextMining
 
         public void WriteGateXml(XmlWriter writer)
         {
-            WriteGateXml(writer, /*writeTopElement=*/false,false); // throws ArgumentNullException
+            WriteGateXml(writer, /*writeTopElement=*/false, /*removeBoilerplate*/false); // throws ArgumentNullException
         }
 
         // *** Output HTML ***
@@ -662,7 +667,7 @@ namespace Latino.Workflows.TextMining
         private static Set<string> uriFeatures
             = new Set<string>(new string[] { "link", "responseUrl", "urlKey" });
 
-        public void MakeHtmlPage(TextWriter document, bool inlineCss)
+        public void MakeHtmlPage(TextWriter writer, bool inlineCss)
         {
             ArrayList<TreeNode<string>> annotationTreeList;
             annotationTreeList = MakeAnnotationTree();
@@ -691,8 +696,8 @@ namespace Latino.Workflows.TextMining
             templateString = templateString.Replace("{$annotation_name}", "annotation");
             templateString = templateString.Replace("{$inline_css}", inlineCss.ToString());
 
-            document.Write(templateString);
-            document.Close();
+            writer.Write(templateString);
+            writer.Close();
 
         }
 
