@@ -539,25 +539,38 @@ namespace Latino.Workflows.TextMining
 
             writer.WriteEndElement();//</TextWithNodes>
 
+            // collect boilerplate blocks and text blocks inside boilerplate blocks
+            CreateAnnotationIndex();
+            Set<Annotation> bpAnnotations = new Set<Annotation>();
+            //Set<Annotation> test = new Set<Annotation>();
+            TextBlock[] bpBlocks = GetAnnotatedBlocks("TextBlock/Boilerplate");
+            foreach (TextBlock tb in bpBlocks)
+            {
+                bpAnnotations.Add(tb.Annotation);
+                TextBlock[] innerBlocks = GetAnnotatedBlocks("", tb.Annotation.SpanStart, tb.Annotation.SpanEnd);
+                foreach (TextBlock innerBlock in innerBlocks) { bpAnnotations.Add(innerBlock.Annotation); }
+            }
+
             //ANNOTATIONS
             writer.WriteStartElement("AnnotationSet");
             int i = 1;
             foreach (Annotation annot in mAnnotations)
             {
-                bool isBoilerplate = false;
-                for (int d = 0; d < boilerplateSpans.Count; )
-                {
-                    if (annot.SpanStart >= boilerplateSpans[d] && annot.SpanEnd <= boilerplateSpans[d + 1])
-                    {
-                        isBoilerplate = true;                       
-                        break;
-                    }
+                //bool isBoilerplate = false;
+                //for (int d = 0; d < boilerplateSpans.Count; )
+                //{
+                //    if (annot.SpanStart >= boilerplateSpans[d] && annot.SpanEnd <= boilerplateSpans[d + 1])
+                //    {
+                //        isBoilerplate = true;                       
+                //        break;
+                //    }
 
-                    d = d + 2;
-                }
+                //    d = d + 2;
+                //}
 
-                if (!removeBoilerplate 
-                    ||(!annot.Type.Contains("Boilerplate") && !isBoilerplate))
+                //if (!removeBoilerplate
+                //    || (!annot.Type.Contains("Boilerplate") && !isBoilerplate))
+                if (!removeBoilerplate || !bpAnnotations.Contains(annot))
                 {
                     string annotType = annot.Type;
                     if (annot.Type.StartsWith("SentimentObject/"))
@@ -591,7 +604,7 @@ namespace Latino.Workflows.TextMining
 
                         if (annot.Type.StartsWith("SentimentObject/") && keyVal.Key == "instanceClassUri")
                         {
-                            replacement = "class";                           
+                            replacement = "class";
                         }
 
                         if (annot.Type == "Token" && keyVal.Key == "posTag")
@@ -644,12 +657,16 @@ namespace Latino.Workflows.TextMining
 
                     i++;
                 }
+                //else { test.Add(annot); }
             }
 
 
             writer.WriteEndElement(); //</AnnotationSet>
 
             if (writeTopElement) { writer.WriteEndElement(); } //</GateDocument>
+
+            //Console.WriteLine("*** Content equals: " + test.ContentEquals(bpAnnotations));
+            //Console.WriteLine("*** Counts: " + test.Count + " " + bpAnnotations.Count);
         }
 
         public void WriteXml(XmlWriter writer)
