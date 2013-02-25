@@ -542,7 +542,6 @@ namespace Latino.Workflows.TextMining
             // collect boilerplate blocks and text blocks inside boilerplate blocks
             CreateAnnotationIndex();
             Set<Annotation> bpAnnotations = new Set<Annotation>();
-            //Set<Annotation> test = new Set<Annotation>();
             TextBlock[] bpBlocks = GetAnnotatedBlocks("TextBlock/Boilerplate");
             foreach (TextBlock tb in bpBlocks)
             {
@@ -556,20 +555,6 @@ namespace Latino.Workflows.TextMining
             int i = 1;
             foreach (Annotation annot in mAnnotations)
             {
-                //bool isBoilerplate = false;
-                //for (int d = 0; d < boilerplateSpans.Count; )
-                //{
-                //    if (annot.SpanStart >= boilerplateSpans[d] && annot.SpanEnd <= boilerplateSpans[d + 1])
-                //    {
-                //        isBoilerplate = true;                       
-                //        break;
-                //    }
-
-                //    d = d + 2;
-                //}
-
-                //if (!removeBoilerplate
-                //    || (!annot.Type.Contains("Boilerplate") && !isBoilerplate))
                 if (!removeBoilerplate || !bpAnnotations.Contains(annot))
                 {
                     string annotType = annot.Type;
@@ -657,16 +642,12 @@ namespace Latino.Workflows.TextMining
 
                     i++;
                 }
-                //else { test.Add(annot); }
             }
 
 
             writer.WriteEndElement(); //</AnnotationSet>
 
             if (writeTopElement) { writer.WriteEndElement(); } //</GateDocument>
-
-            //Console.WriteLine("*** Content equals: " + test.ContentEquals(bpAnnotations));
-            //Console.WriteLine("*** Counts: " + test.Count + " " + bpAnnotations.Count);
         }
 
         public void WriteXml(XmlWriter writer)
