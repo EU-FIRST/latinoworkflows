@@ -21,6 +21,7 @@ using System.Drawing;
 using System.Text.RegularExpressions;
 using System.Web;
 using System.Text;
+using System.IO.Compression;
 
 namespace Latino.Workflows.TextMining
 {
@@ -648,6 +649,42 @@ namespace Latino.Workflows.TextMining
             writer.WriteEndElement(); //</AnnotationSet>
 
             if (writeTopElement) { writer.WriteEndElement(); } //</GateDocument>
+        }
+
+        public void WriteXmlCompressed(string fileName)
+        {
+            Utils.ThrowException(!Utils.VerifyFileNameCreate(fileName) ? new ArgumentValueException("fileName") : null);
+            XmlWriterSettings xmlSettings = new XmlWriterSettings();
+            xmlSettings.Indent = true;
+            xmlSettings.IndentChars = "\t";
+            xmlSettings.CheckCharacters = false;
+            using (FileStream stream = new FileStream(fileName, FileMode.Create))
+            {
+                using (GZipStream gzStream = new GZipStream(stream, CompressionMode.Compress))
+                {
+                    using (XmlWriter xmlWriter = XmlWriter.Create(gzStream, xmlSettings))
+                    {
+                        WriteXml(xmlWriter, /*writeTopElement=*/true);
+                    }
+                }
+            }
+        }
+
+        public void ReadXmlCompressed(string fileName)
+        {
+            Utils.ThrowException(!Utils.VerifyFileNameOpen(fileName) ? new ArgumentValueException("fileName") : null);
+            XmlReaderSettings xmlSettings = new XmlReaderSettings();
+            xmlSettings.CheckCharacters = false;
+            using (FileStream stream = new FileStream(fileName, FileMode.Open))
+            {
+                using (GZipStream gzStream = new GZipStream(stream, CompressionMode.Decompress))
+                {
+                    using (XmlTextReader xmlReader = new XmlTextReader(gzStream))
+                    {
+                        ReadXml(xmlReader);
+                    }
+                }
+            }
         }
 
         public void WriteXml(XmlWriter writer)

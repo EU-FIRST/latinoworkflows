@@ -310,12 +310,14 @@ namespace Latino.Workflows.TextMining
 
         }
 
-        public void Save(BinarySerializer writer) {
+        public void Save(BinarySerializer writer) 
+        {
             mDocuments.Save(writer);
             Utils.SaveDictionary(mFeatures, writer);
         }
         
-        public void Load(BinarySerializer reader) {
+        public void Load(BinarySerializer reader) 
+        {
             mDocuments = new ArrayList<Document>(reader);
             mFeatures = Utils.LoadDictionary<string, string>(reader);
             mFeaturesInterface = new Features(mFeatures);
