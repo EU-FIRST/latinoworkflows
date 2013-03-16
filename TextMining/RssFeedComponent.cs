@@ -247,11 +247,28 @@ namespace Latino.Workflows.WebMining
                     if (itemAttr.ContainsKey("link") && itemAttr["link"].Trim() != "")
                     {
                         // get referenced Web page
-                        mLogger.Info("ProcessItem", "Getting HTML from {0} ...", Utils.ToOneLine(itemAttr["link"], /*compact=*/true));
+                        string url = itemAttr["link"];
+                        if (url.StartsWith("http://www.times.si"))
+                        {
+                            // times.si pages are special case: parse and extract real URL
+                            string html = WebUtils.GetWebPageDetectEncoding(url, Encoding.UTF8);
+                            string regex = @"\<iframe id=""if"" src=""(?<link>[^""]*?)""\>";
+                            Match m = Regex.Match(html, regex);
+                            if (m.Success)
+                            {
+                                mLogger.Info("ProcessItem", "Mapped Times.si link: {0} -> {1}", url, m.Result("${link}"));
+                                url = itemAttr["link"] = m.Result("${link}");
+                            }
+                            else
+                            {
+                                mLogger.Warn("ProcessItem", "Unable to parse Times.si page.");
+                            }
+                        }
+                        mLogger.Info("ProcessItem", "Getting HTML from {0} ...", Utils.ToOneLine(url, /*compact=*/true));
                         string mimeType, charSet;
                         string responseUrl;
                         CookieContainer cookies = null;
-                        byte[] bytes = WebUtils.GetWebResource(itemAttr["link"], /*refUrl=*/null, ref cookies, WebUtils.DefaultTimeout, out mimeType, out charSet, mSizeLimit, out responseUrl);
+                        byte[] bytes = WebUtils.GetWebResource(url, /*refUrl=*/null, ref cookies, WebUtils.DefaultTimeout, out mimeType, out charSet, mSizeLimit, out responseUrl);
                         if (bytes == null) 
                         {
                             mLogger.Info("ProcessItem", "Item rejected because of its size.");
@@ -268,7 +285,7 @@ namespace Latino.Workflows.WebMining
                         itemAttr.Add("responseUrl", responseUrl);
                         itemAttr.Add("mimeType", mimeType);
                         itemAttr.Add("contentType", contentType.ToString());
-                        if (charSet == null) { charSet = "ISO-8859-1"; }
+                        if (charSet == null) { charSet = "UTF-8"; }
                         itemAttr.Add("charSet", charSet);
                         itemAttr.Add("contentLength", bytes.Length.ToString());
                         if (contentType == ContentType.Binary)
@@ -382,7 +399,7 @@ namespace Latino.Workflows.WebMining
                     try
                     {
                         mLogger.Info("ProduceData", "Getting RSS XML from {0} ...", url);
-                        xml = WebUtils.GetWebPageDetectEncoding(url);
+                        xml = WebUtils.GetWebPageDetectEncoding(url, Encoding.UTF8);
                         xml = FixXml(xml);
                     }
                     catch (Exception e)
