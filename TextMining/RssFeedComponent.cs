@@ -215,12 +215,12 @@ namespace Latino.Workflows.WebMining
                     itemAttr.TryGetValue("category", out category);
                     string entities = null;
                     itemAttr.TryGetValue("emm:entity", out entities);
-                    lock (mDbConnection)
-                    {
-                        mDbConnection.ExecuteNonQuery("if not exists (select * from Sources where siteId = ? and docId = ? and sourceUrl = ?) insert into Sources (siteId, docId, sourceUrl, category, entities, xmlHash) values (?, ?, ?, ?, ?, ?)",
-                            mSiteId, guid.ToString("N"), rssXmlUrl, mSiteId, guid.ToString("N"), rssXmlUrl, category, entities, xmlHash);
-                        mDbConnection.ExecuteNonQuery("if not exists (select * from rssXml where hash = ?) insert into rssXml (hash, xml) values (?, ?)", xmlHash, xmlHash, xml);
-                    }
+                    //lock (mDbConnection)
+                    //{
+                    //    mDbConnection.ExecuteNonQuery("if not exists (select * from Sources where siteId = ? and docId = ? and sourceUrl = ?) insert into Sources (siteId, docId, sourceUrl, category, entities, xmlHash) values (?, ?, ?, ?, ?, ?)",
+                    //        mSiteId, guid.ToString("N"), rssXmlUrl, mSiteId, guid.ToString("N"), rssXmlUrl, category, entities, xmlHash);
+                    //    mDbConnection.ExecuteNonQuery("if not exists (select * from rssXml where hash = ?) insert into rssXml (hash, xml) values (?, ?)", xmlHash, xmlHash, xml);
+                    //}
                 }                
                 if (!mHistory.CheckHistory(guid))
                 {
