@@ -63,7 +63,7 @@ namespace Latino.Workflows.WebMining
         
         private int mPolitenessSleep
             = 1000;
-        private static DatabaseConnection mDbConnection
+        private static string mDbConnectionString
             = null;
                 
         private RssHistory mHistory
@@ -83,12 +83,12 @@ namespace Latino.Workflows.WebMining
 
         private int mSizeLimit // *** make this adjustable
             = 10485760;
-        private ContentType mContentFilter // *** make this adjustable
+        private ContentType mContentFilter // *** make this adjustable?
             = ContentType.Html | ContentType.Text;
         private int mMaxDocsPerCorpus
-            = -1;//50;//-1; // *** make this adjustable
+            = -1;
 
-        private ContentType GetContentType(string mimeType)
+        private static ContentType GetContentType(string mimeType)
         {
             if (mHtmlMimeTypeRegex.Match(mimeType).Success)
             {
@@ -132,10 +132,10 @@ namespace Latino.Workflows.WebMining
             TimeBetweenPolls = 300000; // poll every 5 minutes by default
         }
 
-        public static DatabaseConnection DatabaseConnection
+        public static string DatabaseConnectionString
         {
-            get { return mDbConnection; }
-            set { mDbConnection = value; }
+            get { return mDbConnectionString; }
+            set { mDbConnectionString = value; }
         }
 
         public ArrayList<string>.ReadOnly Sources
@@ -164,6 +164,12 @@ namespace Latino.Workflows.WebMining
             set { mIncludeRawData = value; }
         }
 
+        public int MaxDocsPerCorpus
+        {
+            get { return mMaxDocsPerCorpus; }
+            set { mMaxDocsPerCorpus = value; }
+        }
+
         public bool IncludeRssXml
         {
             get { return mIncludeRssXml; }
@@ -185,10 +191,16 @@ namespace Latino.Workflows.WebMining
             get { return mSiteId; }
         }
 
-        public void Initialize(DatabaseConnection dbConnection)
+        public void Initialize(string dbConnectionString)
         {
-            Utils.ThrowException(dbConnection == null ? new ArgumentNullException("dbConnection") : null);
-            mHistory.Load(mSiteId, dbConnection);
+            Utils.ThrowException(dbConnectionString == null ? new ArgumentNullException("dbConnectionString") : null);
+            mDbConnectionString = dbConnectionString;
+            Initialize();
+        }
+
+        public void Initialize()
+        {
+            mHistory.Load(mSiteId, mDbConnectionString);
         }
 
         private static Guid MakeGuid(string title, string desc, string pubDate)
@@ -197,7 +209,13 @@ namespace Latino.Workflows.WebMining
             return new Guid(md5.ComputeHash(Encoding.UTF8.GetBytes(string.Format("{0} {1} {2}", title, desc, pubDate))));
         }
 
-        private void ProcessItem(Dictionary<string, string> itemAttr, ArrayList<DocumentCorpus> corpora, string rssXmlUrl, string xml)
+        private Encoding GetEncoding(string charSet)
+        {
+            charSet = Regex.Replace(charSet, @"^utf(\d+)$", "utf-$1", RegexOptions.IgnoreCase);
+            return Encoding.GetEncoding(charSet);
+        }
+
+        private void ProcessItem(Dictionary<string, string> itemAttr, DocumentCorpus corpus, string rssXmlUrl, string xml)
         {
             try
             {
@@ -209,14 +227,14 @@ namespace Latino.Workflows.WebMining
                 itemAttr.TryGetValue("pubDate", out pubDate);
                 Guid guid = MakeGuid(name, desc, pubDate);
                 mLogger.Info("ProcessItem", "Found item \"{0}\".", Utils.ToOneLine(name, /*compact=*/true));
-                if (mDbConnection != null)
+                if (mDbConnectionString != null)
                 {
                     string xmlHash = Utils.GetStringHashCode128(xml).ToString("N");
                     string category = null;
                     itemAttr.TryGetValue("category", out category);
                     string entities = null;
                     itemAttr.TryGetValue("emm:entity", out entities);
-                    using (SqlConnection connection = new SqlConnection("Server=(local);Database=DacqPipeExp_2;Trusted_Connection=Yes"))
+                    using (SqlConnection connection = new SqlConnection(mDbConnectionString))
                     {
                         connection.Open();
                         using (SqlCommand cmd = new SqlCommand("insert into Sources (siteId, docId, sourceUrl, category, entities, xmlHash) values (@siteId, @docId, @sourceUrl, @category, @entities, @xmlHash)", connection))
@@ -278,7 +296,7 @@ namespace Latino.Workflows.WebMining
                         else
                         { 
                             // save as text                                
-                            content = Encoding.GetEncoding(charSet).GetString(bytes);
+                            content = GetEncoding(charSet).GetString(bytes);
                             if (mIncludeRawData)
                             {
                                 itemAttr.Add("raw", Convert.ToBase64String(bytes));
@@ -304,12 +322,7 @@ namespace Latino.Workflows.WebMining
                     {
                         document.Features.SetFeatureValue(attr.Key, attr.Value);
                     }
-                    if (mMaxDocsPerCorpus > 0 && corpora.Last.Documents.Count == mMaxDocsPerCorpus)
-                    {
-                        corpora.Add(new DocumentCorpus());
-                        corpora.Last.Features.SetFeatureValue("guid", Guid.NewGuid().ToString());
-                    }
-                    corpora.Last.AddDocument(document);
+                    corpus.AddDocument(document);
                     mHistory.AddToHistory(guid, mSiteId);
                 }
             }
@@ -326,11 +339,58 @@ namespace Latino.Workflows.WebMining
             return xml.Substring(i); 
         }
 
+        private void ReadChannelAttributes(string url, string xml, DateTime timeStart, Dictionary<string, string> channelAttr)
+        { 
+            XmlTextReader reader = new XmlTextReader(new StringReader(xml));
+            mLogger.Info("ProduceData", "Reading channel attributes ...");
+            while (reader.Read())
+            {
+                if (reader.NodeType == XmlNodeType.Element && reader.Name == "channel" && !reader.IsEmptyElement)
+                {
+                    // handle channel
+                    while (reader.Read() && !(reader.NodeType == XmlNodeType.EndElement && reader.Name == "channel"))
+                    {
+                        if (reader.NodeType == XmlNodeType.Element)
+                        {
+                            // handle channel attributes                               
+                            if (mChannelElements.Contains(reader.Name))
+                            {
+                                string attrName = reader.Name;
+                                string value = Utils.XmlReadValue(reader, attrName);
+                                string oldValue;
+                                if (attrName == "pubDate") { string tmp = Utils.NormalizeDateTimeStr(value); if (tmp != null) { value = tmp; } }
+                                if (channelAttr.TryGetValue(attrName, out oldValue))
+                                {
+                                    channelAttr[attrName] = oldValue + " ;; " + value;
+                                }
+                                else
+                                {
+                                    channelAttr.Add(attrName, value);
+                                }
+                            }
+                            else
+                            {
+                                Utils.XmlSkip(reader, reader.Name);
+                            }
+                        }
+                    }
+                }
+            }
+            reader.Close();
+            channelAttr.Add("siteId", mSiteId);
+            channelAttr.Add("provider", GetType().ToString());
+            channelAttr.Add("sourceUrl", url);
+            if (mIncludeRssXml) { channelAttr.Add("source", xml); }
+            channelAttr.Add("timeBetweenPolls", TimeBetweenPolls.ToString());
+            channelAttr.Add("timeStart", timeStart.ToString(Utils.DATE_TIME_SIMPLE));            
+        }
+
         protected override object ProduceData()
         {
             for (int i = 0; i < mSources.Count; i++)
             {
                 string url = mSources[i];
+                int numNewItems = 0;
                 try
                 {                    
                     DateTime timeStart = DateTime.Now;
@@ -348,10 +408,12 @@ namespace Latino.Workflows.WebMining
                         return null;
                     }
                     Dictionary<string, string> channelAttr = new Dictionary<string, string>();
-                    ArrayList<DocumentCorpus> corpora = new ArrayList<DocumentCorpus>(new DocumentCorpus[] { new DocumentCorpus() });
-                    corpora.Last.Features.SetFeatureValue("guid", Guid.NewGuid().ToString());
+                    DocumentCorpus corpus = new DocumentCorpus();
+                    corpus.Features.SetFeatureValue("guid", Guid.NewGuid().ToString());
                     XmlTextReader reader = new XmlTextReader(new StringReader(xml));
-                    // first pass: items
+                    // first pass: channel attributes
+                    ReadChannelAttributes(url, xml, timeStart, channelAttr);
+                    // second pass: items
                     mLogger.Info("ProduceData", "Reading items ...");
                     while (reader.Read())
                     {
@@ -377,12 +439,10 @@ namespace Latino.Workflows.WebMining
                                             if (emmTrigger != null)
                                             {
                                                 value += " ; " + emmTrigger.Replace(';', ',').TrimEnd(' ', ',');
-                                                //Console.WriteLine(value);
                                             }
                                             if (emmEntityId != null && emmEntityName != null)
                                             {
                                                 value = string.Format("{0} ; {1} ; {2}", emmEntityName, value, emmEntityId);
-                                                //Console.WriteLine(value);
                                             }
                                             if (itemAttr.TryGetValue(attrName, out oldValue))
                                             {
@@ -403,79 +463,36 @@ namespace Latino.Workflows.WebMining
                             // stopped?
                             if (mStopped)
                             {
-                                if (corpora[0].Documents.Count == 0) { return null; }
+                                if (corpus.Documents.Count == 0) { return null; }
                                 break;
                             }
-                            ProcessItem(itemAttr, corpora, url, xml); 
+                            ProcessItem(itemAttr, corpus, url, xml);
+                            if (mMaxDocsPerCorpus > 0 && corpus.Documents.Count == mMaxDocsPerCorpus)
+                            {
+                                numNewItems += corpus.Documents.Count;
+                                foreach (KeyValuePair<string, string> attr in channelAttr)
+                                {
+                                    corpus.Features.SetFeatureValue(attr.Key, attr.Value);
+                                }
+                                corpus.Features.SetFeatureValue("timeEnd", DateTime.Now.ToString(Utils.DATE_TIME_SIMPLE));
+                                DispatchData(corpus);
+                                corpus = new DocumentCorpus();
+                                corpus.Features.SetFeatureValue("guid", Guid.NewGuid().ToString());
+                            }
                         }
                     }
                     reader.Close();
-                    reader = new XmlTextReader(new StringReader(xml));
-                    if (corpora[0].Documents.Count > 0)
+                    if (corpus.Documents.Count > 0)
                     {
-                        // second pass: channel attributes
-                        mLogger.Info("ProduceData", "Reading channel attributes ...");
-                        while (reader.Read())
+                        numNewItems += corpus.Documents.Count;
+                        foreach (KeyValuePair<string, string> attr in channelAttr)
                         {
-                            if (reader.NodeType == XmlNodeType.Element && reader.Name == "channel" && !reader.IsEmptyElement)
-                            {
-                                // handle channel
-                                while (reader.Read() && !(reader.NodeType == XmlNodeType.EndElement && reader.Name == "channel"))
-                                {
-                                    if (reader.NodeType == XmlNodeType.Element)
-                                    {
-                                        // handle channel attributes                               
-                                        if (mChannelElements.Contains(reader.Name))
-                                        {
-                                            string attrName = reader.Name;
-                                            string value = Utils.XmlReadValue(reader, attrName);
-                                            string oldValue;
-                                            if (attrName == "pubDate") { string tmp = Utils.NormalizeDateTimeStr(value); if (tmp != null) { value = tmp; } }
-                                            if (channelAttr.TryGetValue(attrName, out oldValue))
-                                            {
-                                                channelAttr[attrName] = oldValue + " ;; " + value;
-                                            }
-                                            else
-                                            {
-                                                channelAttr.Add(attrName, value);
-                                            }
-                                        }
-                                        else
-                                        {
-                                            Utils.XmlSkip(reader, reader.Name);
-                                        }
-                                    }
-                                }
-                            }
+                            corpus.Features.SetFeatureValue(attr.Key, attr.Value);
                         }
-                        reader.Close();
-                        channelAttr.Add("siteId", mSiteId);
-                        channelAttr.Add("provider", GetType().ToString());
-                        channelAttr.Add("sourceUrl", url);
-                        if (mIncludeRssXml) { channelAttr.Add("source", xml); }
-                        channelAttr.Add("timeBetweenPolls", TimeBetweenPolls.ToString());
-                        channelAttr.Add("timeStart", timeStart.ToString(Utils.DATE_TIME_SIMPLE));
-                        channelAttr.Add("timeEnd", DateTime.Now.ToString(Utils.DATE_TIME_SIMPLE));
-                        int newItems = 0;
-                        foreach (DocumentCorpus corpus in corpora)
-                        {
-                            newItems += corpus.Documents.Count;
-                            foreach (KeyValuePair<string, string> attr in channelAttr)
-                            {
-                                corpus.Features.SetFeatureValue(attr.Key, attr.Value);
-                            }
-                        }                        
-                        mLogger.Info("ProduceData", "{0} new items.", newItems);
-                        // dispatch data
-                        foreach (DocumentCorpus corpus in corpora)
-                        {
-                            DispatchData(corpus);
-                        }
+                        corpus.Features.SetFeatureValue("timeEnd", DateTime.Now.ToString(Utils.DATE_TIME_SIMPLE));
+                        DispatchData(corpus);                        
                     }
-                    else
-                    {
-                        mLogger.Info("ProduceData", "No new items.");
-                    }
+                    mLogger.Info("ProduceData", "{0} new items.", numNewItems);
                     // stopped?
                     if (mStopped) { return null; }
                 }
@@ -516,27 +533,44 @@ namespace Latino.Workflows.WebMining
                 return mHistory.First.Contains(id);
             }
 
-            public void Load(string siteId, DatabaseConnection dbConnection)
+            public void Load(string siteId, string dbConnectionString)
             {
                 if (mHistorySize > 0)
                 {
-                    DataTable table;
-                    if (siteId == null)
+                    using (SqlConnection connection = new SqlConnection(dbConnectionString))
                     {
-                        table = dbConnection.ExecuteQuery(string.Format("select top {0} c.siteId, d.id, d.time from Documents d, Corpora c where d.corpusId = c.id and c.SiteId is null order by time desc", mHistorySize));
-                    }
-                    else
-                    {
-                        table = dbConnection.ExecuteQuery(string.Format("select top {0} c.siteId, d.id, d.time from Documents d, Corpora c where d.corpusId = c.id and c.SiteId = ? order by time desc", mHistorySize), Utils.Truncate(siteId, 400));
-                    }
-                    mHistory.First.Clear();
-                    mHistory.Second.Clear();
-                    for (int i = table.Rows.Count - 1; i >= 0; i--)
-                    {
-                        DataRow row = table.Rows[i];
-                        Guid itemId = new Guid((string)row["id"]);
-                        mHistory.First.Add(itemId);
-                        mHistory.Second.Enqueue(itemId);
+                        connection.Open();
+                        DataTable table = new DataTable();
+                        if (siteId == null)
+                        {
+                            using (SqlCommand cmd = new SqlCommand(string.Format("select top {0} d.id from Documents d, Corpora c where d.corpusId = c.id and c.siteId is null order by time desc", mHistorySize), connection))
+                            { 
+                                using (SqlDataReader reader = cmd.ExecuteReader()) 
+                                { 
+                                    table.Load(reader); 
+                                }
+                            }
+                        }
+                        else
+                        {
+                            using (SqlCommand cmd = new SqlCommand(string.Format("select top {0} d.id from Documents d, Corpora c where d.corpusId = c.id and c.siteId = @siteId order by time desc", mHistorySize), connection))
+                            {
+                                WorkflowUtils.AssignParamsToCommand(cmd, "siteId", Utils.Truncate(siteId, 400));
+                                using (SqlDataReader reader = cmd.ExecuteReader())
+                                {
+                                    table.Load(reader);
+                                }
+                            }
+                        }
+                        mHistory.First.Clear();
+                        mHistory.Second.Clear();
+                        for (int i = table.Rows.Count - 1; i >= 0; i--)
+                        {
+                            DataRow row = table.Rows[i];
+                            Guid itemId = new Guid((string)row["id"]);
+                            mHistory.First.Add(itemId);
+                            mHistory.Second.Enqueue(itemId);
+                        }
                     }
                 }
             }
