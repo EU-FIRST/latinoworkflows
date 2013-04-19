@@ -25,6 +25,7 @@ using System.Text.RegularExpressions;
 using Latino.Web;
 using Latino.Persistance;
 using Latino.Workflows.TextMining;
+using System.Data.SqlClient;
 
 namespace Latino.Workflows.WebMining
 {
@@ -85,7 +86,7 @@ namespace Latino.Workflows.WebMining
         private ContentType mContentFilter // *** make this adjustable
             = ContentType.Html | ContentType.Text;
         private int mMaxDocsPerCorpus
-            = 50;//-1; // *** make this adjustable
+            = -1;//50;//-1; // *** make this adjustable
 
         private ContentType GetContentType(string mimeType)
         {
@@ -215,12 +216,28 @@ namespace Latino.Workflows.WebMining
                     itemAttr.TryGetValue("category", out category);
                     string entities = null;
                     itemAttr.TryGetValue("emm:entity", out entities);
-                    //lock (mDbConnection)
-                    //{
-                    //    mDbConnection.ExecuteNonQuery("if not exists (select * from Sources where siteId = ? and docId = ? and sourceUrl = ?) insert into Sources (siteId, docId, sourceUrl, category, entities, xmlHash) values (?, ?, ?, ?, ?, ?)",
-                    //        mSiteId, guid.ToString("N"), rssXmlUrl, mSiteId, guid.ToString("N"), rssXmlUrl, category, entities, xmlHash);
-                    //    mDbConnection.ExecuteNonQuery("if not exists (select * from rssXml where hash = ?) insert into rssXml (hash, xml) values (?, ?)", xmlHash, xmlHash, xml);
-                    //}
+                    using (SqlConnection connection = new SqlConnection("Server=(local);Database=DacqPipeExp_2;Trusted_Connection=Yes"))
+                    {
+                        connection.Open();
+                        using (SqlCommand cmd = new SqlCommand("insert into Sources (siteId, docId, sourceUrl, category, entities, xmlHash) values (@siteId, @docId, @sourceUrl, @category, @entities, @xmlHash)", connection))
+                        {
+                            WorkflowUtils.AssignParamsToCommand(cmd,
+                                "siteId", Utils.Truncate(mSiteId, 100),
+                                "docId", guid.ToString("N"),
+                                "sourceUrl", Utils.Truncate(rssXmlUrl, 400),
+                                "category", category,
+                                "entities", entities,
+                                "xmlHash", xmlHash);
+                            cmd.ExecuteNonQuery();
+                        }
+                        using (SqlCommand cmd = new SqlCommand("insert into RssXml (hash, xml) values (@hash, @xml)", connection))
+                        {
+                            WorkflowUtils.AssignParamsToCommand(cmd,
+                                "hash", xmlHash,
+                                "xml", xml);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
                 }                
                 if (!mHistory.CheckHistory(guid))
                 {
