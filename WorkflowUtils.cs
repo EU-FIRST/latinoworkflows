@@ -13,6 +13,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Data.SqlClient;
 
 namespace Latino.Workflows
 {
@@ -170,6 +171,16 @@ namespace Latino.Workflows
                 }
             }
             if (logger != null) { logger.Trace("DispatchData", "Data dispatched."); }
+        }
+
+        public static void AssignParamsToCommand(SqlCommand command, params object[] args)
+        {
+            for (int i = 0; i < args.Length; i += 2)
+            {
+                object val = args[i + 1];
+                SqlParameter param = new SqlParameter((string)args[i], val == null ? DBNull.Value : val);
+                command.Parameters.Add(param);
+            }
         }
     }
 }

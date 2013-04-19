@@ -25,6 +25,7 @@ using System.Text.RegularExpressions;
 using Latino.Web;
 using Latino.Persistance;
 using Latino.Workflows.TextMining;
+using System.Data.SqlClient;
 
 namespace Latino.Workflows.WebMining
 {
@@ -62,7 +63,7 @@ namespace Latino.Workflows.WebMining
         
         private int mPolitenessSleep
             = 1000;
-        private static DatabaseConnection mDbConnection
+        private static string mDbConnectionString
             = null;
                 
         private RssHistory mHistory
@@ -87,7 +88,7 @@ namespace Latino.Workflows.WebMining
         private int mMaxDocsPerCorpus
             = -1;
 
-        private ContentType GetContentType(string mimeType)
+        private static ContentType GetContentType(string mimeType)
         {
             if (mHtmlMimeTypeRegex.Match(mimeType).Success)
             {
@@ -131,10 +132,10 @@ namespace Latino.Workflows.WebMining
             TimeBetweenPolls = 300000; // poll every 5 minutes by default
         }
 
-        public static DatabaseConnection DatabaseConnection
+        public static string DatabaseConnectionString
         {
-            get { return mDbConnection; }
-            set { mDbConnection = value; }
+            get { return mDbConnectionString; }
+            set { mDbConnectionString = value; }
         }
 
         public ArrayList<string>.ReadOnly Sources
@@ -190,10 +191,16 @@ namespace Latino.Workflows.WebMining
             get { return mSiteId; }
         }
 
-        public void Initialize(DatabaseConnection dbConnection)
+        public void Initialize(string dbConnectionString)
         {
-            Utils.ThrowException(dbConnection == null ? new ArgumentNullException("dbConnection") : null);
-            mHistory.Load(mSiteId, dbConnection);
+            Utils.ThrowException(dbConnectionString == null ? new ArgumentNullException("dbConnectionString") : null);
+            mDbConnectionString = dbConnectionString;
+            Initialize();
+        }
+
+        public void Initialize()
+        {
+            mHistory.Load(mSiteId, mDbConnectionString);
         }
 
         private static Guid MakeGuid(string title, string desc, string pubDate)
@@ -220,24 +227,34 @@ namespace Latino.Workflows.WebMining
                 itemAttr.TryGetValue("pubDate", out pubDate);
                 Guid guid = MakeGuid(name, desc, pubDate);
                 mLogger.Info("ProcessItem", "Found item \"{0}\".", Utils.ToOneLine(name, /*compact=*/true));
-                if (mDbConnection != null)
+                if (mDbConnectionString != null)
                 {
                     string xmlHash = Utils.GetStringHashCode128(xml).ToString("N");
                     string category = null;
                     itemAttr.TryGetValue("category", out category);
                     string entities = null;
                     itemAttr.TryGetValue("emm:entity", out entities);
-                    lock (mDbConnection)
+                    using (SqlConnection connection = new SqlConnection(mDbConnectionString))
                     {
-                        mDbConnection.ExecuteNonQuery("if not exists (select * from Sources where siteId = ? and docId = ? and sourceUrl = ?) insert into Sources (siteId, docId, sourceUrl, category, entities, xmlHash) values (?, ?, ?, ?, ?, ?)",
-                            mSiteId, guid.ToString("N"), rssXmlUrl, mSiteId, guid.ToString("N"), rssXmlUrl, category, entities, xmlHash);
-                        mDbConnection.ExecuteNonQuery("if not exists (select * from RssXml where hash = ?) insert into RssXml (hash, xml) values (?, ?)", xmlHash, xmlHash, xml);
-                        // use this for better consistency in DB (?):
-                        //if (mDbConnection.ExecuteNonQuery("if not exists (select * from Sources where siteId = ? and docId = ? and sourceUrl = ?) insert into Sources (siteId, docId, sourceUrl, category, entities, xmlHash) values (?, ?, ?, ?, ?, ?)",
-                        //    mSiteId, guid.ToString("N"), rssXmlUrl, mSiteId, guid.ToString("N"), rssXmlUrl, category, entities, xmlHash))
-                        //{
-                        //    mDbConnection.ExecuteNonQuery("if not exists (select * from RssXml where hash = ?) insert into RssXml (hash, xml) values (?, ?)", xmlHash, xmlHash, xml);
-                        //}
+                        connection.Open();
+                        using (SqlCommand cmd = new SqlCommand("insert into Sources (siteId, docId, sourceUrl, category, entities, xmlHash) values (@siteId, @docId, @sourceUrl, @category, @entities, @xmlHash)", connection))
+                        {
+                            WorkflowUtils.AssignParamsToCommand(cmd,
+                                "siteId", Utils.Truncate(mSiteId, 100),
+                                "docId", guid.ToString("N"),
+                                "sourceUrl", Utils.Truncate(rssXmlUrl, 400),
+                                "category", category,
+                                "entities", entities,
+                                "xmlHash", xmlHash);
+                            cmd.ExecuteNonQuery();
+                        }
+                        using (SqlCommand cmd = new SqlCommand("insert into RssXml (hash, xml) values (@hash, @xml)", connection))
+                        {
+                            WorkflowUtils.AssignParamsToCommand(cmd,
+                                "hash", xmlHash,
+                                "xml", xml);
+                            cmd.ExecuteNonQuery();
+                        }
                     }
                 }                
                 if (!mHistory.CheckHistory(guid))
@@ -458,7 +475,6 @@ namespace Latino.Workflows.WebMining
                                     corpus.Features.SetFeatureValue(attr.Key, attr.Value);
                                 }
                                 corpus.Features.SetFeatureValue("timeEnd", DateTime.Now.ToString(Utils.DATE_TIME_SIMPLE));
-                                mLogger.Info("ProduceData", "*** DISPATCHING ***");
                                 DispatchData(corpus);
                                 corpus = new DocumentCorpus();
                                 corpus.Features.SetFeatureValue("guid", Guid.NewGuid().ToString());
@@ -474,10 +490,9 @@ namespace Latino.Workflows.WebMining
                             corpus.Features.SetFeatureValue(attr.Key, attr.Value);
                         }
                         corpus.Features.SetFeatureValue("timeEnd", DateTime.Now.ToString(Utils.DATE_TIME_SIMPLE));
-                        mLogger.Info("ProduceData", "*** DISPATCHING ***");
-                        DispatchData(corpus);
-                        mLogger.Info("ProduceData", "{0} new items.", numNewItems);
+                        DispatchData(corpus);                        
                     }
+                    mLogger.Info("ProduceData", "{0} new items.", numNewItems);
                     // stopped?
                     if (mStopped) { return null; }
                 }
@@ -518,27 +533,44 @@ namespace Latino.Workflows.WebMining
                 return mHistory.First.Contains(id);
             }
 
-            public void Load(string siteId, DatabaseConnection dbConnection)
+            public void Load(string siteId, string dbConnectionString)
             {
                 if (mHistorySize > 0)
                 {
-                    DataTable table;
-                    if (siteId == null)
+                    using (SqlConnection connection = new SqlConnection(dbConnectionString))
                     {
-                        table = dbConnection.ExecuteQuery(string.Format("select top {0} c.siteId, d.id, d.time from Documents d, Corpora c where d.corpusId = c.id and c.SiteId is null order by time desc", mHistorySize));
-                    }
-                    else
-                    {
-                        table = dbConnection.ExecuteQuery(string.Format("select top {0} c.siteId, d.id, d.time from Documents d, Corpora c where d.corpusId = c.id and c.SiteId = ? order by time desc", mHistorySize), Utils.Truncate(siteId, 400));
-                    }
-                    mHistory.First.Clear();
-                    mHistory.Second.Clear();
-                    for (int i = table.Rows.Count - 1; i >= 0; i--)
-                    {
-                        DataRow row = table.Rows[i];
-                        Guid itemId = new Guid((string)row["id"]);
-                        mHistory.First.Add(itemId);
-                        mHistory.Second.Enqueue(itemId);
+                        connection.Open();
+                        DataTable table = new DataTable();
+                        if (siteId == null)
+                        {
+                            using (SqlCommand cmd = new SqlCommand(string.Format("select top {0} d.id from Documents d, Corpora c where d.corpusId = c.id and c.siteId is null order by time desc", mHistorySize), connection))
+                            { 
+                                using (SqlDataReader reader = cmd.ExecuteReader()) 
+                                { 
+                                    table.Load(reader); 
+                                }
+                            }
+                        }
+                        else
+                        {
+                            using (SqlCommand cmd = new SqlCommand(string.Format("select top {0} d.id from Documents d, Corpora c where d.corpusId = c.id and c.siteId = @siteId order by time desc", mHistorySize), connection))
+                            {
+                                WorkflowUtils.AssignParamsToCommand(cmd, "siteId", Utils.Truncate(siteId, 400));
+                                using (SqlDataReader reader = cmd.ExecuteReader())
+                                {
+                                    table.Load(reader);
+                                }
+                            }
+                        }
+                        mHistory.First.Clear();
+                        mHistory.Second.Clear();
+                        for (int i = table.Rows.Count - 1; i >= 0; i--)
+                        {
+                            DataRow row = table.Rows[i];
+                            Guid itemId = new Guid((string)row["id"]);
+                            mHistory.First.Add(itemId);
+                            mHistory.Second.Enqueue(itemId);
+                        }
                     }
                 }
             }
