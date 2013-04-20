@@ -188,14 +188,14 @@ namespace Latino.Workflows.TextMining
                 SELECT DISTINCT domain FROM 
                 (SELECT * FROM (SELECT TOP {0} domain FROM Documents WHERE domain IS NOT NULL GROUP BY domain ORDER BY MAX(time) DESC) x 
                 UNION 
-                SELECT * FROM (SELECT TOP {0} domain FROM Documents WHERE domain IS NOT NULL GROUP BY domain ORDER BY COUNT(*) DESC) y) z", 1000/*3000*//*make this configurable!!*/));
+                SELECT * FROM (SELECT TOP {0} domain FROM Documents WHERE domain IS NOT NULL GROUP BY domain ORDER BY COUNT(*) DESC) y) z", 3000/*make this configurable!!*/));
             int domainCount = 0;
             foreach (DataRow row in domainsTbl.Rows)
             {
                 string domainName = (string)row["domain"];
                 DataTable urlInfoTbl = dbConnection.ExecuteQuery(string.Format(@"
                     SELECT TOP {0} d.id, d.corpusId, d.time, d.responseUrl, d.urlKey, d.rev, d.domain, (SELECT TOP 1 dd.rev from Documents dd WHERE dd.urlKey = d.urlKey ORDER BY dd.time DESC, dd.rev DESC) AS maxRev, tb.hashCodes FROM Documents d 
-                    INNER JOIN TextBlocks tb ON d.corpusId = tb.corpusId AND d.id = tb.docId WHERE d.domain = ? ORDER BY d.time DESC", /*mMaxQueueSize*/1000), domainName);
+                    INNER JOIN TextBlocks tb ON d.corpusId = tb.corpusId AND d.id = tb.docId WHERE d.domain = ? ORDER BY d.time DESC", mMaxQueueSize), domainName);
                 if (urlInfoTbl.Rows.Count == 0) { continue; }
                 Pair<UrlTree, Queue<TextBlockHistoryEntry>> textBlockInfo = GetTextBlockInfo(domainName);
                 DateTime then = DateTime.Parse((string)urlInfoTbl.Rows[0]["time"]) - new TimeSpan(mHistoryAgeDays, 0, 0, 0);
