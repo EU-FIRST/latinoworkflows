@@ -121,6 +121,7 @@ CREATE TABLE [dbo].[Sources](
 	[category] [ntext] NULL,
 	[entities] [ntext] NULL,
 	[xmlHash] [char](32) NOT NULL
+	constraint UQ_Sources unique (siteId, docId, sourceUrl) with (ignore_dup_key = on)
 ) ON [PRIMARY]
 GO
 SET ANSI_PADDING OFF
@@ -142,6 +143,7 @@ GO
 CREATE TABLE [dbo].[RssXml](
 	[hash] [char](32) NOT NULL,
 	[xml] [ntext] NOT NULL
+	constraint UQ_RssXml unique (hash) with (ignore_dup_key = on)
 ) ON [PRIMARY]
 GO
 SET ANSI_PADDING OFF
