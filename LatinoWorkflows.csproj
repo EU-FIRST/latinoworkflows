@@ -46,6 +46,7 @@
     <Compile Include="DocumentStreamReaderComponent.cs" />
     <Compile Include="DocumentFilterComponent.cs" />
     <Compile Include="PassOnComponent.cs" />
+    <Compile Include="Persistance\DocumentWriterComponent.cs" />
     <Compile Include="Semantics\DocumentCategorizerComponent.cs" />
     <Compile Include="Semantics\EntityRecognitionComponent.cs" />
     <Compile Include="Semantics\EntityRecognitionEngine.cs" />
@@ -104,6 +105,7 @@
   <ItemGroup>
     <None Include="Persistance\CleanupDb.sql" />
     <None Include="Persistance\CreateTables.sql" />
+    <None Include="Persistance\CreateTablesNew.sql" />
     <EmbeddedResource Include="TextMining\Resources\EnglishPOS.nbin" />
     <EmbeddedResource Include="TextMining\Resources\EnglishSD.nbin" />
     <EmbeddedResource Include="TextMining\Resources\EnglishTok.nbin" />

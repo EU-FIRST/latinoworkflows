@@ -86,9 +86,9 @@ namespace Latino.Workflows.WebMining
             DocumentCorpus corpus = new DocumentCorpus();
             StreamReader reader = new StreamReader(mFiles[mCurrentFileIdx]);
             corpus.ReadXml(new XmlTextReader(reader));
-            string fileName = new FileInfo(mFiles[mCurrentFileIdx]).Name;
-            string corpusId = new Guid(fileName.Split('_', '.')[3]).ToString();
-            corpus.Features.SetFeatureValue("guid", corpusId);
+            //string fileName = new FileInfo(mFiles[mCurrentFileIdx]).Name;
+            //string corpusId = new Guid(fileName.Split('_', '.')[3]).ToString();
+            //corpus.Features.SetFeatureValue("guid", corpusId);
             reader.Close();
             // remove underscores in feature names
             string[] tmp = new string[corpus.Features.Names.Count];
@@ -120,9 +120,12 @@ namespace Latino.Workflows.WebMining
                 foreach (string featureName in new string[] { 
                     "detectedLanguage", 
                     "detectedCharRange", 
-                    "bprHeuristicsType", 
+                    "bprBoilerplateCharCount", 
+                    "bprContentCharCount", 
                     "domainName", 
-                    "urlKey" })
+                    "urlKey",
+                    "rev",
+                    "blacklisted" })
                 {
                     doc.Features.RemoveFeature(featureName);
                 }

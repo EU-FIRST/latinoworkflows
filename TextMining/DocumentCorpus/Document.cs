@@ -54,7 +54,8 @@ namespace Latino.Workflows.TextMining
             mFeaturesInterface = new Features(mFeatures);
         }
 
-        public Document(BinarySerializer reader) {
+        public Document(BinarySerializer reader) 
+        {
             Load(reader);
         }
 
