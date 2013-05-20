@@ -32,10 +32,12 @@ CREATE TABLE [dbo].[Documents](
 	[unseenContentCharCount] [int] NULL,
 	[rev] [int] NULL,
 	[fileName] [varchar](100) NULL,
- CONSTRAINT [UQ_Documents_id] UNIQUE NONCLUSTERED 
-(
-	[id] ASC
-)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = ON, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
+	[oldIdCorpus] [uniqueidentifier] NULL,
+	[oldIdDocument] [uniqueidentifier] NULL,
+	CONSTRAINT [UQ_Documents_id] UNIQUE NONCLUSTERED 
+	(
+		[id] ASC
+	) WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = ON, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 
 GO

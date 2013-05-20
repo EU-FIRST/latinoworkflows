@@ -33,15 +33,13 @@ namespace Latino.Workflows.Persistance
             = new object();
         private bool mWriteToDatabase;
         private string mXmlDataRoot;
-        private string mHtmlDataRoot;
         private bool mIsDumpWriter
             = false;
 
-        public DocumentCorpusWriterComponent(string dbConnectionString, string xmlDataRoot, string htmlDataRoot) : base(typeof(DocumentCorpusWriterComponent))
+        public DocumentCorpusWriterComponent(string dbConnectionString, string xmlDataRoot) : base(typeof(DocumentCorpusWriterComponent))
         {
             mWriteToDatabase = dbConnectionString != null;
             mXmlDataRoot = xmlDataRoot;
-            mHtmlDataRoot = htmlDataRoot;
             if (mWriteToDatabase)
             {
                 mConnection.ConnectionString = dbConnectionString; // throws ArgumentNullException
@@ -84,18 +82,6 @@ namespace Latino.Workflows.Persistance
                 StreamWriter w = new StreamWriter(path + recordId + ".xml", /*append=*/false, Encoding.UTF8);
                 w.Write(stringWriter.ToString().Replace("<?xml version=\"1.0\" encoding=\"utf-16\"?>", "<?xml version=\"1.0\" encoding=\"utf-8\"?>"));
                 w.Close();
-            }
-            if (mHtmlDataRoot != null)
-            {
-                string pathHtml = string.Format(@"{4}\{0}\{1}\{2}\{3}\", timeEnd.Year, timeEnd.Month, timeEnd.Day, recordId, mHtmlDataRoot.TrimEnd('\\'));
-                if (!Directory.Exists(pathHtml))
-                {
-                    lock (mLock)
-                    {
-                        if (!Directory.Exists(pathHtml)) { Directory.CreateDirectory(pathHtml); }
-                    }
-                }
-                corpus.MakeHtmlPage(pathHtml, /*inlineCss=*/true);
             }
             // write to database
             if (mWriteToDatabase)

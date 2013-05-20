@@ -57,6 +57,8 @@ namespace Latino.Workflows.Persistance
             t.Columns.Add("unseenContentCharCount", typeof(int));
             t.Columns.Add("rev", typeof(int));
             t.Columns.Add("fileName", typeof(string));
+            t.Columns.Add("oldIdCorpus", typeof(Guid));
+            t.Columns.Add("oldIdDocument", typeof(Guid));
             return t;
         }
 
@@ -106,14 +108,13 @@ namespace Latino.Workflows.Persistance
                     {
                         lock (mLock) { if (!Directory.Exists(path)) { Directory.CreateDirectory(path); } }
                     }
-                    byte[] bytes = Convert.FromBase64String(rawHtml);
                     using (FileStream stream = new FileStream(outFileName, FileMode.Create))
                     {
                         using (GZipStream gzStream = new GZipStream(stream, CompressionMode.Compress))
                         {
                             using (BinaryWriter w = new BinaryWriter(gzStream))
                             {
-                                w.Write(bytes, 0, bytes.Length);
+                                w.Write(Convert.FromBase64String(rawHtml));
                             }
                         }
                     }
@@ -140,7 +141,9 @@ namespace Latino.Workflows.Persistance
                         Convert.ToInt32(d.Features.GetFeatureValue("bprContentCharCount")),
                         Convert.ToInt32(d.Features.GetFeatureValue("unseenContentCharCount")),
                         Convert.ToInt32(d.Features.GetFeatureValue("rev")),
-                        Utils.Truncate(fileName, 100)
+                        Utils.Truncate(fileName, 100),
+                        cGuid,
+                        dGuid 
                         );
                 }
             }
