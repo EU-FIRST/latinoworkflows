@@ -23,7 +23,7 @@ namespace Latino.Workflows.Semantics
 {
     public class EntityRecognitionEngine
     {
-        private MemoryStore mRdfStore
+        /*private*/public MemoryStore mRdfStore
             = new MemoryStore();
         private Dictionary<string, Gazetteer> mGazetteers
             = new Dictionary<string, Gazetteer>();
