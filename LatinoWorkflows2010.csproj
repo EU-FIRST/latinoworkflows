@@ -1,0 +1,164 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{EDE88AFF-1053-4175-B91C-4E683426706A}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>LatinoWorkflows</RootNamespace>
+    <AssemblyName>LatinoWorkflows</AssemblyName>
+    <StartupObject>
+    </StartupObject>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <OldToolsVersion>3.5</OldToolsVersion>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;THROW_EXCEPTIONS</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.configuration" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="DocumentStreamReaderComponent.cs" />
+    <Compile Include="DocumentFilterComponent.cs" />
+    <Compile Include="PassOnComponent.cs" />
+    <Compile Include="Persistance\DocumentWriterComponent.cs" />
+    <Compile Include="Semantics\DocumentCategorizerComponent.cs" />
+    <Compile Include="Semantics\EntityRecognitionComponent.cs" />
+    <Compile Include="Semantics\EntityRecognitionEngine.cs" />
+    <Compile Include="StreamDataProducer.cs" />
+    <Compile Include="Persistance\DocumentCorpusWriterComponent.cs" />
+    <Compile Include="TextMining\BoilerplateRemoverComponent.cs" />
+    <Compile Include="TextMining\HtmlTokenizerComponent.cs" />
+    <Compile Include="TextMining\DocumentCorpus\Tree.cs" />
+    <Compile Include="TextMining\EnglishLemmatizerComponent.cs" />
+    <Compile Include="TextMining\EnglishTokenizerComponent.cs" />
+    <Compile Include="TextMining\LanguageDetectorComponent.cs" />
+    <Compile Include="TextMining\EnglishPosTaggerComponent.cs" />
+    <Compile Include="TextMining\RssFeedComponent.cs" />
+    <Compile Include="GenericStreamDataProducerPoll.cs" />
+    <Compile Include="TextMining\DocumentCorpus\Annotation.cs" />
+    <Compile Include="TextMining\DocumentConsumer.cs" />
+    <Compile Include="TextMining\DocumentCorpus\Document.cs" />
+    <Compile Include="TextMining\DocumentCorpus\DocumentCorpus.cs" />
+    <Compile Include="StreamDataConsumer.cs" />
+    <Compile Include="StreamDataProducerPoll.cs" />
+    <Compile Include="IDataConsumer.cs" />
+    <Compile Include="IDataProducer.cs" />
+    <Compile Include="StreamDataProcessor.cs" />
+    <Compile Include="GenericStreamDataConsumer.cs" />
+    <Compile Include="TextMining\DocumentProcessor.cs" />
+    <Compile Include="GenericStreamDataProcessor.cs" />
+    <Compile Include="TextMining\DocumentCorpus\Features.cs" />
+    <Compile Include="TextMining\RegexTokenizerComponent.cs" />
+    <Compile Include="TextMining\DocumentCorpus\TextBlock.cs" />
+    <Compile Include="IWorkflowComponent.cs" />
+    <Compile Include="TextMining\SentenceSplitterComponent.cs" />
+    <Compile Include="TextMining\UrlTreeBoilerplateRemoverComponent.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="WebSiteDispatcher.cs" />
+    <Compile Include="WorkflowUtils.cs" />
+    <EmbeddedResource Include="TextMining\DocumentCorpus\Resources\DocumentTemplate.htm" />
+    <EmbeddedResource Include="TextMining\DocumentCorpus\Resources\IndexTemplate.htm" />
+    <EmbeddedResource Include="TextMining\DocumentCorpus\Resources\Style.css" />
+    <Content Include="TODO.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\SemWeb\SemWeb.csproj">
+      <Project>{4570B82E-34F5-4630-A44A-A1E3D92FD18C}</Project>
+      <Name>SemWeb</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\SharpNLP\OpenNLP\OpenNLP\OpenNLP.csproj">
+      <Project>{B70185DF-81FD-4417-914F-7C90E65E7D9F}</Project>
+      <Name>OpenNLP</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Latino\Latino2010.csproj">
+      <Project>{5B86AAD5-3FEA-487C-A518-4F846AF09E18}</Project>
+      <Name>Latino2010</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Persistance\CleanupDb.sql" />
+    <None Include="Persistance\CreateTables.sql" />
+    <None Include="Persistance\CreateTablesNew.sql" />
+    <EmbeddedResource Include="TextMining\Resources\EnglishPOS.nbin" />
+    <EmbeddedResource Include="TextMining\Resources\EnglishSD.nbin" />
+    <EmbeddedResource Include="TextMining\Resources\EnglishTok.nbin" />
+    <EmbeddedResource Include="TextMining\DocumentCorpus\DocumentCorpusSchema.xsd">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
