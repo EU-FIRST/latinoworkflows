@@ -229,7 +229,7 @@ namespace Latino.Workflows.WebMining
                 mLogger.Info("ProcessItem", "Found item \"{0}\".", Utils.ToOneLine(name, /*compact=*/true));
                 if (mDbConnectionString != null)
                 {
-                    string xmlHash = Utils.GetStringHashCode128(xml).ToString("N");
+                    string xmlHash = Utils.GetHashCode128(xml).ToString("N");
                     string category = null;
                     itemAttr.TryGetValue("category", out category);
                     string entities = null;
