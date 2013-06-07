@@ -25,15 +25,17 @@ namespace Latino.Workflows.Persistance
         private string mConnectionString;
         private string mXmlDataRoot;
         private string mHtmlDataRoot;
+        private int mCommandTimeout;
 
         private object mLock
             = new object();
 
-        public DocumentWriterComponent(string connectionString, string xmlDataRoot, string htmlDataRoot) : base(typeof(DocumentWriterComponent))
+        public DocumentWriterComponent(string connectionString, int CmdTimeout, string xmlDataRoot, string htmlDataRoot) : base(typeof(DocumentWriterComponent))
         {
             mConnectionString = connectionString;
             mXmlDataRoot = xmlDataRoot == null ? null : xmlDataRoot.TrimEnd('\\');
-            mHtmlDataRoot = htmlDataRoot == null ? null : htmlDataRoot.TrimEnd('\\');       
+            mHtmlDataRoot = htmlDataRoot == null ? null : htmlDataRoot.TrimEnd('\\');
+            mCommandTimeout = CmdTimeout;
         }
 
         private static DataTable CreateTable()
@@ -122,7 +124,7 @@ namespace Latino.Workflows.Persistance
                 // prepare for bulk write
                 if (mConnectionString != null) 
                 {
-                    string fileName = string.Format("{0:yyyy}\\{0:MM}\\{0:dd}\\{0:HH}_{0:mm}_{0:ss}_{1:N}.html.gz", time, docId);
+                    string fileName = string.Format("{0:yyyy}\\{0:MM}\\{0:dd}\\{0:HH}_{0:mm}_{0:ss}_{1:N}.xml.gz", time, docId);
                     dt.Rows.Add(
                         new Guid(d.Features.GetFeatureValue("guid")),
                         Utils.Truncate(d.Name, 400),
@@ -155,9 +157,9 @@ namespace Latino.Workflows.Persistance
                     connection.Open();
                     using (SqlBulkCopy bulkWriter = new SqlBulkCopy(connection))
                     {
-                        bulkWriter.BulkCopyTimeout = 0; // *** no timeout
+                        bulkWriter.BulkCopyTimeout = mCommandTimeout;
                         bulkWriter.DestinationTableName = "Documents";
-                        bulkWriter.WriteToServer(dt);
+                        bulkWriter.WriteToServerRetryOnDeadlock(dt);
                     }
                 }
             }
