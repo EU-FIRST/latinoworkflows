@@ -116,9 +116,12 @@ namespace Latino.Workflows.TextMining
 
         public UrlTreeBoilerplateRemoverComponent(string dbConnectionString) : base(typeof(UrlTreeBoilerplateRemoverComponent))
         {
-            mDbConnection = new DatabaseConnection();
-            mDbConnection.ConnectionString = dbConnectionString;
-            mDbConnection.Connect();
+            if (dbConnectionString != null)
+            {
+                mDbConnection = new DatabaseConnection();
+                mDbConnection.ConnectionString = dbConnectionString;
+                mDbConnection.Connect();
+            }
             mBlockSelector = "TextBlock";
         }
 
