@@ -30,12 +30,12 @@ namespace Latino.Workflows.Persistance
         private object mLock
             = new object();
 
-        public DocumentWriterComponent(string connectionString, int CmdTimeout, string xmlDataRoot, string htmlDataRoot) : base(typeof(DocumentWriterComponent))
+        public DocumentWriterComponent(string connectionString, int cmdTimeout, string xmlDataRoot, string htmlDataRoot) : base(typeof(DocumentWriterComponent))
         {
             mConnectionString = connectionString;
             mXmlDataRoot = xmlDataRoot == null ? null : xmlDataRoot.TrimEnd('\\');
             mHtmlDataRoot = htmlDataRoot == null ? null : htmlDataRoot.TrimEnd('\\');
-            mCommandTimeout = CmdTimeout;
+            mCommandTimeout = cmdTimeout;
         }
 
         private static DataTable CreateTable()
@@ -59,6 +59,7 @@ namespace Latino.Workflows.Persistance
             t.Columns.Add("unseenContentCharCount", typeof(int));
             t.Columns.Add("rev", typeof(int));
             t.Columns.Add("fileName", typeof(string));
+            t.Columns.Add("siteId", typeof(string));
             t.Columns.Add("oldIdCorpus", typeof(Guid));
             t.Columns.Add("oldIdDocument", typeof(Guid));
             return t;
@@ -144,6 +145,7 @@ namespace Latino.Workflows.Persistance
                         Convert.ToInt32(d.Features.GetFeatureValue("unseenContentCharCount")),
                         Convert.ToInt32(d.Features.GetFeatureValue("rev")),
                         Utils.Truncate(fileName, 100),
+                        Utils.Truncate(c.Features.GetFeatureValue("siteId"), 100),
                         cGuid,
                         dGuid 
                         );

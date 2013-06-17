@@ -693,6 +693,20 @@ namespace Latino.Workflows.TextMining
             WriteXml(writer, /*writeTopElement=*/false); // throws ArgumentNullException
         }
 
+        public string GetXml() 
+        {
+            StringWriter stringWriter;
+            XmlWriterSettings xmlSettings = new XmlWriterSettings();
+            xmlSettings.Indent = true;
+            xmlSettings.NewLineOnAttributes = true;
+            xmlSettings.CheckCharacters = false;
+            xmlSettings.IndentChars = "\t";
+            XmlWriter writer = XmlWriter.Create(stringWriter = new StringWriter(), xmlSettings);
+            WriteXml(writer, /*writeTopElement=*/true);
+            writer.Close();
+            return stringWriter.ToString();
+        }
+
         public void WriteGateXml(XmlWriter writer)
         {
             WriteGateXml(writer, /*writeTopElement=*/false, /*removeBoilerplate*/false); // throws ArgumentNullException

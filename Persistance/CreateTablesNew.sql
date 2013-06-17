@@ -32,6 +32,7 @@ CREATE TABLE [dbo].[Documents](
 	[unseenContentCharCount] [int] NULL,
 	[rev] [int] NULL,
 	[fileName] [varchar](100) NULL,
+	[siteId] [nvarchar](100) NULL,
 	[oldIdCorpus] [uniqueidentifier] NULL,
 	[oldIdDocument] [uniqueidentifier] NULL,
 	CONSTRAINT [UQ_Documents_id] UNIQUE NONCLUSTERED 
